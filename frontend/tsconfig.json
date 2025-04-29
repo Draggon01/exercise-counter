@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "outDir": "./dist",
+    "allowJs": true,
+    "strict": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": false,
+    "useDefineForClassFields": false, // Required for Lit reactivity
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["src/**/*"]
+}
