@@ -50,7 +50,7 @@ export class HomeView extends ConnectedLitElement {
                 <sl-button class="addButton" variant="primary" @click="${() => {
                     this.openDialog = true;
                 }}">
-                    Add Exercise
+                    Add Exercises
                 </sl-button>
             </div>
             ${this.listExercises.map((element) => {
