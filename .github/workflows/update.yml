@@ -1,0 +1,22 @@
+name: Run Script on Server
+
+on:
+  workflow_dispatch:
+    # Restrict manual runs to the master branch
+    inputs: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Run script on cloud server via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/exercise-counter/build
+            ./update-script.sh
