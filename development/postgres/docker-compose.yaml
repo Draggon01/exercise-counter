@@ -2,14 +2,14 @@ version: '3.9'
 
 services:
   postgreDb:
-    image: postgres:latest
+    image: postgres:17
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: exercisecounter
+      POSTGRES_PASSWORD: V2g0-f8S(sQ
       POSTGRES_DB: db
 
 volumes:
