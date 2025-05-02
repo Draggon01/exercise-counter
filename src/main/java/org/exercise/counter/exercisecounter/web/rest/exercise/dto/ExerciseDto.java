@@ -8,6 +8,8 @@ public record ExerciseDto(
         @JsonProperty("exerciseId")
         UUID exerciseId,
         @JsonProperty("exerciseTitle")
-        String exerciseTitle
+        String exerciseTitle,
+        @JsonProperty("creator")
+        String creator
 ) {
 }

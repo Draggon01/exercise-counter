@@ -1,11 +1,13 @@
-import {customElement} from 'lit/decorators.js';
+import {customElement, state} from 'lit/decorators.js';
 import {css, html, LitElement} from 'lit';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 import {store} from "../../store";
-import {logoutUser} from "../login/slice/userSlice";
+import {logoutUser, selectCurrentUser} from "../login/slice/userSlice";
+import {ConnectedLitElement} from "../../connectedLitElement";
+import {UserDto} from "../login/models/userDto";
 
 @customElement('overlay-view')
-export class OverlayView extends LitElement {
+export class OverlayView extends ConnectedLitElement {
     static styles = css`
         :host {
             position: absolute;
@@ -31,16 +33,29 @@ export class OverlayView extends LitElement {
         }
     `;
 
+    @state()
+    private user?: UserDto;
+
+    connectedCallback() {
+        super.connectedCallback();
+    }
+
     private async handleLogout() {
         await store.dispatch(logoutUser());
-        //TODO: redirect to login page
+    }
+
+    stateChanged(state: any) {
+        this.user = selectCurrentUser(state);
     }
 
     protected render() {
         return html`
             <header>
                 <h3>Exercise Counter</h3>
-                <sl-icon-button name="box-arrow-right" label="Logout" @click=${this.handleLogout}></sl-icon-button>
+                <div style="color:black">
+                    ${this.user?.username}
+                    <sl-icon-button name="box-arrow-right" label="Logout" @click=${this.handleLogout}></sl-icon-button>
+                </div>
             </header>
             <main>
                 <slot name="main"></slot>

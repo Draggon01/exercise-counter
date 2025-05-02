@@ -2,8 +2,9 @@ import {css, html} from 'lit';
 import {customElement, state} from "lit/decorators.js";
 import {RootState, store} from '../../store';
 import {ConnectedLitElement} from "../../connectedLitElement";
-import {listExercises, saveExercise, selectAllExercises} from './slice/exerciseSlice';
+import {deleteExercise, listExercises, saveExercise, selectAllExercises} from './slice/exerciseSlice';
 import {ExerciseDto} from "./models/exerciseDto";
+import './elements/exercise-card'
 
 @customElement("home-view")
 export class HomeView extends ConnectedLitElement {
@@ -11,7 +12,7 @@ export class HomeView extends ConnectedLitElement {
     private openDialog = false;
 
     @state()
-    private newExercise = "";
+    private newExercise?: ExerciseDto;
 
     @state()
     private listExercises: ExerciseDto[] = []
@@ -49,41 +50,71 @@ export class HomeView extends ConnectedLitElement {
             <div>
                 <sl-button class="addButton" variant="primary" @click="${() => {
                     this.openDialog = true;
+                    this.newExercise = {
+                        exerciseTitle: ""
+                    } as ExerciseDto;
                 }}">
-                    Add Exercises
+                    Add Exercise
                 </sl-button>
             </div>
-            ${this.listExercises.map((element) => {
-                return html`
-                    <div>${element.exerciseTitle}</div>`;
-            })}
-
+            ${this.renderItems()}
             <sl-dialog .open="${this.openDialog}"
                        @sl-hide="${() => this.openDialog = false}"
                        label="Exercise Form">
+                ${this.renderEditExercise()}
+            </sl-dialog>
+
+        `;
+    }
+
+    private renderEditExercise() {
+        if (!this.newExercise) {
+            return html``;
+        } else {
+            return html`
                 <sl-input label="Exercise Name"
-                          .value="${this.newExercise}"
+                          .value="${this.newExercise.exerciseTitle!}"
                           @sl-input="${(e: any) => {
-                              this.newExercise = e.target.value ?? "";
+                              this.newExercise!.exerciseTitle = e.target.value ?? "";
                           }}"
                 ></sl-input>
                 <sl-button slot="footer" variant="danger" @click="${() => {
-                    this.newExercise = "";
+                    this.newExercise!.exerciseTitle = "";
                     this.openDialog = false;
                 }}">
                     Close
                 </sl-button>
                 <sl-button slot="footer" variant="primary" @click="${() => {
-                    store.dispatch(saveExercise(
-                            {
-                                exerciseTitle: this.newExercise
-                            } as ExerciseDto
-                    ));
-                    this.newExercise = "";
+                    store.dispatch(saveExercise(this.newExercise!));
+                    this.newExercise = {
+                        exerciseTitle: ""
+                    } as ExerciseDto;
                     this.openDialog = false;
-                }}">Add
+                }}">
+                    Add
                 </sl-button>
-            </sl-dialog>
+            `
+        }
+    }
+
+    private renderItems() {
+        return html`
+            ${this.listExercises.map((element) => {
+                return html`
+                    <exercise-card
+                            .item="${element}"
+                            @deleteExercise="${(e: any) => {
+                                store.dispatch(deleteExercise(e.detail))
+                            }}"
+                            @editExercise="${(e: any) => {
+                                this.newExercise = {
+                                    exerciseId: e.detail.exerciseId,
+                                    exerciseTitle: e.detail.exerciseTitle
+                                } as ExerciseDto;
+                                this.openDialog = true;
+                            }}"
+                    ></exercise-card>`;
+            })}
         `;
     }
 }

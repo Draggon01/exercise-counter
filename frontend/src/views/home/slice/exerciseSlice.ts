@@ -20,7 +20,7 @@ const initialState: SliceState = {
     }
 }
 
-export const listExercises = createAsyncThunk<any, void, { rejectValue: any }>(
+export const listExercises = createAsyncThunk<ExerciseDto[], void, { rejectValue: any }>(
     'exercise/list', async (_, {rejectWithValue}) => {
         const res = await fetch("/api/exercises/list", {
             method: 'GET',
@@ -34,7 +34,7 @@ export const listExercises = createAsyncThunk<any, void, { rejectValue: any }>(
         }
     });
 
-export const saveExercise = createAsyncThunk<any, ExerciseDto, { rejectValue: any }>(
+export const saveExercise = createAsyncThunk<ExerciseDto, ExerciseDto, { rejectValue: any }>(
     'exercise/save', async (ex, {rejectWithValue}) => {
         console.log(ex);
         const res = await fetch("/api/exercises/save", {
@@ -46,6 +46,24 @@ export const saveExercise = createAsyncThunk<any, ExerciseDto, { rejectValue: an
             credentials: "include"
         });
         console.log("saveExercise:")
+        if (res.ok) {
+            return (await res.json());
+        } else {
+            let errorResponse = await res.json();
+            return rejectWithValue(errorResponse);
+        }
+    });
+
+export const deleteExercise = createAsyncThunk<ExerciseDto, ExerciseDto, { rejectValue: any }>(
+    'exercise/delete', async (exId, {rejectWithValue}) => {
+        const res = await fetch("/api/exercises/delete", {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(exId),
+            credentials: "include"
+        });
         if (res.ok) {
             return (await res.json());
         } else {
@@ -80,6 +98,17 @@ export const exerciseSlice = createSlice({
             .addCase(saveExercise.fulfilled, (state, action) => {
                 state.exercises.status = 'idle';
                 exerciseAdapter.upsertOne(state.exercises, action.payload);
+            })
+            .addCase(deleteExercise.pending, state => {
+                state.exercises.status = 'initial';
+            })
+            .addCase(deleteExercise.rejected, state => {
+                state.exercises.status = 'error';
+            })
+            .addCase(deleteExercise.fulfilled, (state, action) => {
+                state.exercises.status = 'idle';
+                console.log(action.payload)
+                exerciseAdapter.removeOne(state.exercises, action.payload.exerciseId);
             })
     }
 });

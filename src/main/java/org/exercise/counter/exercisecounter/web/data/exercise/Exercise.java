@@ -19,4 +19,7 @@ public class Exercise {
 
     @Column
     private String exerciseTitle;
+
+    @Column
+    private String exerciseCreator;
 }
