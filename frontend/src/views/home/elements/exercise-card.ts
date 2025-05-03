@@ -70,8 +70,9 @@ export class ExerciseCard extends ConnectedLitElement {
                 <h2 class="headline">${this.item.exerciseTitle}</h2>
                 <div class="options">
                     <div></div>
-                    <sl-icon-button name="pencil" @click="${this._editClick}"></sl-icon-button>
+                    
                     ${this.user && this.user.username === this.item.creator ? html`
+                        <sl-icon-button name="pencil" @click="${this._editClick}"></sl-icon-button>
                         <sl-icon-button name="trash" style="color:red" @click="${this._trashClick}"></sl-icon-button>
                     ` : html`
                     `}
