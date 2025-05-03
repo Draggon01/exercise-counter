@@ -117,7 +117,7 @@ export class HomeView extends ConnectedLitElement {
                                 this.newExercise = {
                                     exerciseId: e.detail.exerciseId,
                                     exerciseTitle: e.detail.exerciseTitle,
-                                    creator: e.detail.exerciseCreator,
+                                    creator: e.detail.creator,
                                 } as ExerciseDto;
                                 this.openDialog = true;
                             }}"
