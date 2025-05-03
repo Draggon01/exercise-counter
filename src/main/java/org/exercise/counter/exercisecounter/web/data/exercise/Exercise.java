@@ -21,5 +21,5 @@ public class Exercise {
     private String exerciseTitle;
 
     @Column
-    private String exerciseCreator;
+    private String creator;
 }

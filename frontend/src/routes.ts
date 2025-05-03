@@ -16,7 +16,6 @@ export const routes: RouteConfig[] = [
         path: '*',
         render: () => html``,
         enter: () => {
-            console.log("sadf");
             navigate("/");
             return false;
         }

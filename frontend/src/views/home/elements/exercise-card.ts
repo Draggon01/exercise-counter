@@ -1,4 +1,4 @@
-import {css, html, LitElement} from 'lit';
+import {css, html} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 import {ExerciseDto} from "../models/exerciseDto";
 import {ConnectedLitElement} from "../../../connectedLitElement";
@@ -50,11 +50,15 @@ export class ExerciseCard extends ConnectedLitElement {
     item: ExerciseDto = {
         exerciseId: "",
         exerciseTitle: "",
-        exerciseCreator: ""
+        creator: ""
     }
 
     @state()
     user?: UserDto;
+
+    connectedCallback() {
+        super.connectedCallback();
+    }
 
     stateChanged(state: any) {
         this.user = selectCurrentUser(state);
@@ -67,8 +71,9 @@ export class ExerciseCard extends ConnectedLitElement {
                 <div class="options">
                     <div></div>
                     <sl-icon-button name="pencil" @click="${this._editClick}"></sl-icon-button>
-                    ${this.user && this.user.username === this.item.exerciseCreator ? html`` : html`
+                    ${this.user && this.user.username === this.item.creator ? html`
                         <sl-icon-button name="trash" style="color:red" @click="${this._trashClick}"></sl-icon-button>
+                    ` : html`
                     `}
                 </div>
                 <div class="buttonBar">

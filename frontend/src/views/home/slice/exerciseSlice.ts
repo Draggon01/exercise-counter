@@ -36,7 +36,6 @@ export const listExercises = createAsyncThunk<ExerciseDto[], void, { rejectValue
 
 export const saveExercise = createAsyncThunk<ExerciseDto, ExerciseDto, { rejectValue: any }>(
     'exercise/save', async (ex, {rejectWithValue}) => {
-        console.log(ex);
         const res = await fetch("/api/exercises/save", {
             method: 'POST',
             headers: {
@@ -45,7 +44,6 @@ export const saveExercise = createAsyncThunk<ExerciseDto, ExerciseDto, { rejectV
             body: JSON.stringify(ex),
             credentials: "include"
         });
-        console.log("saveExercise:")
         if (res.ok) {
             return (await res.json());
         } else {
@@ -107,7 +105,6 @@ export const exerciseSlice = createSlice({
             })
             .addCase(deleteExercise.fulfilled, (state, action) => {
                 state.exercises.status = 'idle';
-                console.log(action.payload)
                 exerciseAdapter.removeOne(state.exercises, action.payload.exerciseId);
             })
     }

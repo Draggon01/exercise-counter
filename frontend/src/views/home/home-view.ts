@@ -5,6 +5,8 @@ import {ConnectedLitElement} from "../../connectedLitElement";
 import {deleteExercise, listExercises, saveExercise, selectAllExercises} from './slice/exerciseSlice';
 import {ExerciseDto} from "./models/exerciseDto";
 import './elements/exercise-card'
+import { UserDto } from '../login/models/userDto';
+import {selectCurrentUser} from "../login/slice/userSlice";
 
 @customElement("home-view")
 export class HomeView extends ConnectedLitElement {
@@ -16,6 +18,9 @@ export class HomeView extends ConnectedLitElement {
 
     @state()
     private listExercises: ExerciseDto[] = []
+
+    @state()
+    private user?: UserDto;
 
     static styles = css`
         :host {
@@ -43,6 +48,7 @@ export class HomeView extends ConnectedLitElement {
 
     stateChanged(state: RootState) {
         this.listExercises = selectAllExercises(state);
+        this.user = selectCurrentUser(state);
     }
 
     render() {
@@ -51,7 +57,8 @@ export class HomeView extends ConnectedLitElement {
                 <sl-button class="addButton" variant="primary" @click="${() => {
                     this.openDialog = true;
                     this.newExercise = {
-                        exerciseTitle: ""
+                        exerciseTitle: "",
+                        creator: this.user!.username
                     } as ExerciseDto;
                 }}">
                     Add Exercise
@@ -109,7 +116,8 @@ export class HomeView extends ConnectedLitElement {
                             @editExercise="${(e: any) => {
                                 this.newExercise = {
                                     exerciseId: e.detail.exerciseId,
-                                    exerciseTitle: e.detail.exerciseTitle
+                                    exerciseTitle: e.detail.exerciseTitle,
+                                    creator: e.detail.exerciseCreator,
                                 } as ExerciseDto;
                                 this.openDialog = true;
                             }}"

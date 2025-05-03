@@ -22,14 +22,14 @@ public class ExerciseController {
     @GetMapping("/list")
     public List<ExerciseDto> getAllExercises() {
         return StreamSupport.stream(exerciseRepository.findAll().spliterator(), false)
-                .map(exercise -> new ExerciseDto(exercise.getExerciseId(), exercise.getExerciseTitle(), exercise.getExerciseCreator()))
+                .map(exercise -> new ExerciseDto(exercise.getExerciseId(), exercise.getExerciseTitle(), exercise.getCreator()))
                 .toList();
     }
 
     @PostMapping("/save")
     public ExerciseDto addExercise(@RequestBody ExerciseDto exercise) {
         Exercise save = exerciseRepository.save(new Exercise(exercise.exerciseId(), exercise.exerciseTitle(), exercise.creator()));
-        return new ExerciseDto(save.getExerciseId(), save.getExerciseTitle(), save.getExerciseCreator());
+        return new ExerciseDto(save.getExerciseId(), save.getExerciseTitle(), save.getCreator());
     }
 
     @PostMapping("/delete")
