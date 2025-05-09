@@ -41,7 +41,6 @@ export class StatisticsView extends ConnectedLitElement {
 
     stateChanged(state: RootState) {
         this.statistic = selectStatistic(state);
-        console.log(this.statistic);
     }
 
     render() {

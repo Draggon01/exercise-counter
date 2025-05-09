@@ -54,8 +54,6 @@ export class LitRouter extends ConnectedLitElement {
 
             `,
             enter: (_) => {
-                console.log("try enter normal");
-                console.log(this.user)
                 if (this.user && !this.user.anonymous) {
                     return true;
                 }

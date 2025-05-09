@@ -77,15 +77,6 @@ export class HomeView extends ConnectedLitElement {
                 }}">
                     Add Exercise
                 </sl-button>
-                <sl-button class="addButton" variant="primary" @click="${() => {
-                    void fetch("/api/test2", {
-                        method: 'GET',
-                        credentials: "include"
-                    });
-                    //console.log(this.listChecks)
-                }}">
-                    TestButton
-                </sl-button>
             </div>
             ${this.renderItems()}
             <sl-dialog .open="${this.openDialog}"
@@ -158,7 +149,6 @@ export class HomeView extends ConnectedLitElement {
                             }}"
                             @checkChanged="${(e: any) => {
                                 let check = e.detail;
-                                console.log(check)
                                 if (check) {
                                     store.dispatch(saveCheck({exerciseId: element.exerciseId}))
                                 } else {
