@@ -26,9 +26,10 @@ public class StatisticController {
 
     @GetMapping("/statistic/load")
     public StatisticDto loadStatistic(@RequestParam String exerciseId) {
-        StatisticJpa statisticJpa = statisticRepository.findById(UUID.fromString(exerciseId)).orElse(
-                statisticRepository.save(new StatisticJpa(UUID.fromString(exerciseId), new Statistic()))
-        );
+        StatisticJpa statisticJpa = statisticRepository.findById(UUID.fromString(exerciseId)).orElse(null);
+        if(statisticJpa == null){
+            statisticJpa = statisticRepository.save(new StatisticJpa(UUID.fromString(exerciseId), new Statistic()));
+        }
         return this.map(statisticJpa.getStatistic());
     }
 
