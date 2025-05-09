@@ -1,6 +1,7 @@
 import {AsyncStoreState} from "../../../commons";
 import {ExerciseDto} from "../models/exerciseDto";
 import {createAsyncThunk, createEntityAdapter, createSlice, EntityState, Reducer} from "@reduxjs/toolkit";
+import {CheckDto} from "../models/checkDto";
 
 type SliceState = {
     exercises: {
@@ -71,8 +72,9 @@ export const deleteExercise = createAsyncThunk<ExerciseDto, ExerciseDto, { rejec
     });
 
 
+
 export const exerciseSlice = createSlice({
-    name: 'user',
+    name: 'exercise',
     initialState: initialState,
     reducers: {},
     extraReducers: builder => {
@@ -114,8 +116,11 @@ export const exerciseAdapter = createEntityAdapter<ExerciseDto, string>({
     selectId: (exercise: ExerciseDto) => exercise.exerciseId
 });
 
+
 export const {
     selectAll: selectAllExercises
 } = exerciseAdapter.getSelectors((state: SliceProjection) => state.exercise.exercises);
+
+
 
 export const exerciseReducer = exerciseSlice.reducer as Reducer<SliceState>

@@ -11,6 +11,7 @@ services:
       POSTGRES_USER: exercisecounter
       POSTGRES_PASSWORD: V2g0-f8S(sQ
       POSTGRES_DB: db
+      TZ: "UTC"
 
 volumes:
   pgdata:

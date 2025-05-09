@@ -5,6 +5,7 @@ import {store} from "../../store";
 import {logoutUser, selectCurrentUser} from "../login/slice/userSlice";
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {UserDto} from "../login/models/userDto";
+import {CustomRouter} from "../../index";
 
 @customElement('overlay-view')
 export class OverlayView extends ConnectedLitElement {
@@ -42,6 +43,7 @@ export class OverlayView extends ConnectedLitElement {
 
     private async handleLogout() {
         await store.dispatch(logoutUser());
+        void CustomRouter.goto("/");
     }
 
     stateChanged(state: any) {

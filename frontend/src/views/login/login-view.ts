@@ -2,6 +2,7 @@ import {css, html, LitElement} from 'lit';
 import {customElement, state} from 'lit/decorators.js';
 import {store} from "../../store";
 import {saveUserInfo} from "./slice/userSlice";
+import {CustomRouter} from "../../index";
 
 @customElement('login-view')
 export class LoginView extends LitElement {
@@ -9,17 +10,15 @@ export class LoginView extends LitElement {
     @state()
     private errorMessage = "";
 
-    private triedLogin = false;
-
     private async _login(event: SubmitEvent) {
         event.preventDefault();
         const formData = new FormData(event.target as HTMLFormElement);
         let urlSearchParams = new URLSearchParams();
         urlSearchParams.append("username", formData.get("username")!.toString());
         urlSearchParams.append("password", formData.get("password")!.toString());
-        this.triedLogin = true;
         (event.target as HTMLFormElement).reset();
         await store.dispatch(saveUserInfo(urlSearchParams));
+        void CustomRouter.goto("/");
         this.errorMessage = "Wrong Username or Password";
     }
 

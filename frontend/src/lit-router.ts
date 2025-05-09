@@ -7,7 +7,7 @@ import './views/overlay/overlay-view'
 import {RootState, store} from "./store";
 import {readUserInfo, selectCurrentUser, selectUserInit} from "./views/login/slice/userSlice";
 import {ConnectedLitElement} from "./connectedLitElement";
-import { UserDto } from "./views/login/models/userDto";
+import {UserDto} from "./views/login/models/userDto";
 
 @customElement('lit-router')
 export class LitRouter extends ConnectedLitElement {
@@ -20,6 +20,9 @@ export class LitRouter extends ConnectedLitElement {
     @state()
     init: boolean = false;
 
+    @state()
+    once: boolean = true;
+
     connectedCallback() {
         super.connectedCallback();
         store.dispatch(readUserInfo())
@@ -28,8 +31,9 @@ export class LitRouter extends ConnectedLitElement {
     stateChanged(state: RootState): void {
         this.user = selectCurrentUser(state);
         this.init = selectUserInit(state);
-        if(this.init){
+        if (this.init && this.once) {
             void this.router.goto("/");
+            this.once = false;
         }
     }
 
@@ -46,11 +50,13 @@ export class LitRouter extends ConnectedLitElement {
                     <children-routes slot="main"></children-routes>
                 </overlay-view>
 
-               
+
 
             `,
             enter: (_) => {
-                if(this.user && !this.user.anonymous){
+                console.log("try enter normal");
+                console.log(this.user)
+                if (this.user && !this.user.anonymous) {
                     return true;
                 }
                 void this.router.goto("login");
@@ -59,17 +65,19 @@ export class LitRouter extends ConnectedLitElement {
         },
     ]);
 
+
     render() {
-        if(!this.init){
-            return html`<div>Loading...</div>`;
+        if (!this.init) {
+            return html`
+                <div>Loading...</div>`;
         }
         return this.router.outlet();
     }
 }
 
 @customElement('children-routes')
-class ChildrenRoutes extends LitElement {
-    private routes = new Router(this, routes)
+export class ChildrenRoutes extends LitElement {
+    public routes = new Router(this, routes)
 
     protected render() {
         return this.routes.outlet();

@@ -1,8 +1,8 @@
 package org.exercise.counter.exercisecounter.web.data.exercise;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;
 
-public interface ExerciseRepository extends CrudRepository<Exercise, UUID> {
+public interface ExerciseRepository extends JpaRepository<Exercise, UUID> {
 }

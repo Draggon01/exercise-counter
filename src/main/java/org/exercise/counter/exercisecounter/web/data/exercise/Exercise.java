@@ -5,6 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Time;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
 import java.util.UUID;
 
 @Entity
@@ -22,4 +26,18 @@ public class Exercise {
 
     @Column
     private String creator;
+
+    @Column
+    private Integer daysRepeat;
+
+    @Column
+    private LocalTime startTime;
+
+    @Column
+    private Integer utcOffset;
+
+    @Enumerated(EnumType.STRING)
+    @Column
+    private ExerciseType exerciseType;
+
 }

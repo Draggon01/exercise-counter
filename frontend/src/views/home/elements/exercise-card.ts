@@ -4,6 +4,8 @@ import {ExerciseDto} from "../models/exerciseDto";
 import {ConnectedLitElement} from "../../../connectedLitElement";
 import {selectCurrentUser} from "../../login/slice/userSlice";
 import {UserDto} from "../../login/models/userDto";
+import {CustomRouter} from "../../../index";
+import {navigate} from "../../../lit-router";
 
 @customElement("exercise-card")
 export class ExerciseCard extends ConnectedLitElement {
@@ -51,7 +53,10 @@ export class ExerciseCard extends ConnectedLitElement {
         exerciseId: "",
         exerciseTitle: "",
         creator: ""
-    }
+    } as ExerciseDto
+
+    @property({type: Boolean})
+    checked: boolean = false;
 
     @state()
     user?: UserDto;
@@ -70,7 +75,7 @@ export class ExerciseCard extends ConnectedLitElement {
                 <h2 class="headline">${this.item.exerciseTitle}</h2>
                 <div class="options">
                     <div></div>
-                    
+
                     ${this.user && this.user.username === this.item.creator ? html`
                         <sl-icon-button name="pencil" @click="${this._editClick}"></sl-icon-button>
                         <sl-icon-button name="trash" style="color:red" @click="${this._trashClick}"></sl-icon-button>
@@ -79,11 +84,15 @@ export class ExerciseCard extends ConnectedLitElement {
                 </div>
                 <div class="buttonBar">
                     <div>
-                        <sl-button style="padding:5px" variant="primary">Statistics</sl-button>
+                        <sl-button @click="${() => {
+                            void CustomRouter.goto(`/statistics/` + this.item.exerciseId)
+                        }}" style="padding:5px" variant="primary">Statistics
+                        </sl-button>
                     </div>
                     <div style="align-content: center">
                         Finished
-                        <sl-checkbox size="large"></sl-checkbox>
+                        <sl-checkbox @sl-change="${this._checkChange}" ?checked=${this.checked}
+                                     size="large"></sl-checkbox>
                     </div>
                 </div>
             </div>
@@ -96,5 +105,9 @@ export class ExerciseCard extends ConnectedLitElement {
 
     private _editClick = () => {
         this.dispatchEvent(new CustomEvent("editExercise", {detail: this.item}))
+    }
+
+    private _checkChange = (e: any) => {
+        this.dispatchEvent(new CustomEvent("checkChanged", {detail: e.target.checked}))
     }
 }

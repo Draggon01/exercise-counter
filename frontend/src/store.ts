@@ -1,10 +1,14 @@
 import {combineReducers, configureStore} from "@reduxjs/toolkit";
 import {userReducer} from "./views/login/slice/userSlice";
 import {exerciseReducer} from "./views/home/slice/exerciseSlice";
+import {checkReducer} from "./views/home/slice/checkSlice";
+import {statisticReducer} from "./views/statistics/slice/statisticSlice";
 
 const rootReducer = combineReducers({
     user: userReducer,
-    exercise: exerciseReducer
+    exercise: exerciseReducer,
+    checks: checkReducer,
+    statistic: statisticReducer
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
