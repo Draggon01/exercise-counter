@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -48,7 +49,9 @@ public class ExerciseController {
                         exercise.getDaysRepeat(),
                         exercise.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")),
                         exercise.getUtcOffset(),
-                        ExerciseType.NUMBERREPEAT))
+                        exercise.getExerciseType(),
+                        exercise.getExerciseValue(),
+                        exercise.getExerciseIncrease()))
                 .toList();
     }
 
@@ -63,7 +66,9 @@ public class ExerciseController {
                         LocalTime.parse(exercise.startTime(),
                                 DateTimeFormatter.ofPattern("HH:mm:ss")),
                         exercise.utcOffset(),
-                        ExerciseType.NUMBERREPEAT));
+                        exercise.exerciseType(),
+                        exercise.exerciseValue(),
+                        exercise.exerciseIncrease()));
 
         //create statistic entry if not there already
         Optional<StatisticJpa> byId = statisticRepository.findById(save.getExerciseId());
@@ -78,7 +83,9 @@ public class ExerciseController {
                 save.getDaysRepeat(),
                 save.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")),
                 save.getUtcOffset(),
-                ExerciseType.NUMBERREPEAT);
+                save.getExerciseType(),
+                save.getExerciseValue() ,
+                save.getExerciseIncrease());
     }
 
     @PostMapping("/exercises/delete")
@@ -111,5 +118,10 @@ public class ExerciseController {
         CheckId checkId = new CheckId(checkDto.exerciseId(), username);
         checkRepository.deleteById(checkId);
         return checkDto;
+    }
+
+    @GetMapping("/exercises/exercisetype")
+    public Map<String, String> getExerciseTypes() {
+        return ExerciseType.getAllDescriptionsAsMap();
     }
 }

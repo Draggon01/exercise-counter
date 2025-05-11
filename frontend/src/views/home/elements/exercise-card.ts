@@ -82,6 +82,7 @@ export class ExerciseCard extends ConnectedLitElement {
                     ` : html`
                     `}
                 </div>
+                <div>today's Value: ${this.item.exerciseValue ?? "not Set"}</div>
                 <div class="buttonBar">
                     <div>
                         <sl-button @click="${() => {

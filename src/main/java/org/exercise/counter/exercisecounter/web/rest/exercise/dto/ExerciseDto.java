@@ -19,6 +19,10 @@ public record ExerciseDto(
         @JsonProperty("utcOffset")
         Integer utcOffset,
         @JsonProperty("exerciseType")
-        ExerciseType exerciseType
+        ExerciseType exerciseType,
+        @JsonProperty("exerciseValue")
+        String exerciseValue,
+        @JsonProperty("exerciseIncrease")
+        String exerciseIncrease
 ) {
 }

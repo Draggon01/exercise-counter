@@ -1,4 +1,4 @@
-import {css, html} from 'lit';
+import {css, html, TemplateResult} from 'lit';
 import {createRef, Ref, ref} from 'lit/directives/ref.js';
 import {customElement, state} from "lit/decorators.js";
 import {RootState, store} from '../../store';
@@ -33,7 +33,14 @@ export class HomeView extends ConnectedLitElement {
     @state()
     private user?: UserDto;
 
+    @state()
+    private exerciseTypes: Record<string, string> = {};
+
+    @state()
+    private currentType: string = "";
+
     formRef: Ref<HTMLFormElement> = createRef();
+
 
     static styles = css`
         :host {
@@ -58,6 +65,11 @@ export class HomeView extends ConnectedLitElement {
         super.connectedCallback();
         store.dispatch(listExercises());
         store.dispatch(listChecks())
+        fetch("/api/exercises/exercisetype", {
+            method: 'GET',
+            credentials: "include"
+        }).then(response => response.json())
+            .then(response => this.exerciseTypes = response)
     }
 
     stateChanged(state: RootState) {
@@ -93,12 +105,25 @@ export class HomeView extends ConnectedLitElement {
             return html``;
         } else {
             return html`
-                <form ${ref(this.formRef)}>
+                <form ${ref(this.formRef)} @sl-hide="${(e: any) => e.stopPropagation()}">
                     <sl-input name="exerciseTitle"
                               label="Exercise Name"
                               .value="${this.exerciseDto.exerciseTitle ?? ""}"
                               required
                     ></sl-input>
+                    <sl-select name="exerciseType"
+                               label="Exercise Type"
+                               .value="${this.currentType ?? ""}"
+                               required
+                               @sl-change="${(e: any) => this.currentType = e.target.value}"
+                    >
+                        ${Object.entries(this.exerciseTypes).map(([key, value]) => {
+                            return html`
+                                <sl-option value="${key}">${value}</sl-option>
+                            `
+                        })}
+                    </sl-select>
+                    ${this.renderOptionsForType(this.currentType)}
                     <sl-input name="startTime"
                               label="Cycle Time"
                               .value="${this.exerciseDto.startTime ?? ""}"
@@ -138,13 +163,18 @@ export class HomeView extends ConnectedLitElement {
                                 store.dispatch(deleteExercise(e.detail))
                             }}"
                             @editExercise="${(e: any) => {
+                                console.log(e.detail);
                                 this.exerciseDto = {
                                     exerciseId: e.detail.exerciseId,
                                     exerciseTitle: e.detail.exerciseTitle,
                                     creator: e.detail.creator,
                                     startTime: e.detail.startTime,
                                     daysRepeat: e.detail.daysRepeat,
+                                    exerciseType: e.detail.exerciseType,
+                                    exerciseValue: e.detail.exerciseValue,
+                                    exerciseIncrease: e.detail.exerciseIncrease,
                                 } as ExerciseDto;
+                                this.currentType = e.detail.exerciseType;
                                 this.openDialog = true;
                             }}"
                             @checkChanged="${(e: any) => {
@@ -173,6 +203,13 @@ export class HomeView extends ConnectedLitElement {
             this.exerciseDto.daysRepeat = +formData.get("daysRepeat")!;
             this.exerciseDto.startTime = formData.get("startTime")!.toString();
             this.exerciseDto.utcOffset = -new Date().getTimezoneOffset() / 60
+            this.exerciseDto.exerciseType = formData.get("exerciseType")!.toString();
+            if (formData.has("exerciseValue")) {
+                this.exerciseDto.exerciseValue = formData.get("exerciseValue")!.toString();
+            }
+            if (formData.has("exerciseIncrease")) {
+                this.exerciseDto.exerciseIncrease = formData.get("exerciseIncrease")!.toString();
+            }
             store.dispatch(saveExercise(this.exerciseDto!));
             this.exerciseDto = {} as ExerciseDto
             this.openDialog = false;
@@ -184,5 +221,42 @@ export class HomeView extends ConnectedLitElement {
     private getChecked(element: ExerciseDto) {
         let check = this.listChecks.find(check => check.exerciseId === element.exerciseId);
         return !!check;
+    }
+
+    private renderOptionsForType(currentType: string) {
+        switch (currentType) {
+            case "NUMBERREPEAT":
+            case "TIMEREPEAT":
+                return this.renderFields(this.renderValueField());
+            case "NUMBERINCREASE":
+            case "TIMEINCREASE":
+                return this.renderFields(this.renderValueField(), this.renderIncreaseField());
+            default:
+                return html`not implemented type`;
+        }
+    }
+
+    private renderValueField(time: boolean = false) {
+        return html`
+            <sl-input name="exerciseValue"
+                      label="Exercise Value ${time ? "in seconds" : "in repetitions"}"
+                      .value="${this.exerciseDto.exerciseValue ?? ""}"
+                      type="number"
+            ></sl-input>`
+    }
+
+    private renderIncreaseField(time: boolean = false) {
+        return html`
+            <sl-input name="exerciseIncrease"
+                      label="PeriodExercise ${time ? "time increase in seconds" : "repetition increase"}"
+                      .value="${this.exerciseDto.exerciseIncrease ?? ""}"
+                      type="number"
+            ></sl-input>`
+    }
+
+    private renderFields(...fields: TemplateResult[]) {
+        return html`
+            ${fields.map(field => field)}
+        `
     }
 }

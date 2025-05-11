@@ -6,4 +6,6 @@ export interface ExerciseDto {
     startTime: string;
     utcOffset: number;
     exerciseType: string;
+    exerciseValue: string;
+    exerciseIncrease: string;
 }

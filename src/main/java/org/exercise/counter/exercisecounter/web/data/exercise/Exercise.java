@@ -40,4 +40,10 @@ public class Exercise {
     @Column
     private ExerciseType exerciseType;
 
+    @Column
+    private String exerciseValue;
+
+    @Column
+    private String exerciseIncrease;
+
 }

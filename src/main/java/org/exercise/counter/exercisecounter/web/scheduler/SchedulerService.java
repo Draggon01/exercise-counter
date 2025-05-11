@@ -55,15 +55,21 @@ public class SchedulerService {
         }
         switch (exercise.getExerciseType()) {
             case ExerciseType.NUMBERREPEAT:
+            case ExerciseType.TIMEREPEAT:
                 this.addScheduledExerciseUpdate(
                         exercise.getExerciseId(),
-                        () -> numberRepeatFunction(exercise.getExerciseId()),
+                        () -> numberRepeatFunction(exercise),
                         this.generateStartTime(exercise.getStartTime(), exercise.getUtcOffset()),
                         Duration.ofDays(exercise.getDaysRepeat()));
                 break;
-            case ExerciseType.TIMEREPEAT:
             case ExerciseType.NUMBERINCREASE:
             case ExerciseType.TIMEINCREASE:
+                this.addScheduledExerciseUpdate(
+                        exercise.getExerciseId(),
+                        () -> numberIncreaseFunction(exercise),
+                        this.generateStartTime(exercise.getStartTime(), exercise.getUtcOffset()),
+                        Duration.ofDays(exercise.getDaysRepeat()));
+                break;
             default:
                 break;
         }
@@ -91,16 +97,34 @@ public class SchedulerService {
         return targetDateTime.toInstant();
     }
 
-    private void numberRepeatFunction(UUID exerciseId) {
+    private void numberRepeatFunction(Exercise exercise) {
         log.info("executed NumberRepeat function");
+        UUID exerciseId = exercise.getExerciseId();
         List<Check> checkByExerciseId =
                 checkRepository.findCheckByCheckIdExerciseId(exerciseId);
         List<String> users = new ArrayList<>();
         checkByExerciseId.forEach(check -> users.add(check.getCheckId().getUsername()));
         checkRepository.deleteAll(checkByExerciseId);
         StatisticJpa statisticJpa = statisticRepository.findById(exerciseId).orElse(new StatisticJpa(exerciseId, new Statistic()));
-        statisticJpa.getStatistic().upsertInformation(new StatisticId(), users);
+        statisticJpa.getStatistic().upsertInformation(new StatisticId(exercise.getUtcOffset()), users);
         statisticRepository.save(statisticJpa);
+    }
+
+    private void numberIncreaseFunction(Exercise exercise) {
+        log.info("executed NumberRepeat function");
+        UUID exerciseId = exercise.getExerciseId();
+        List<Check> checkByExerciseId =
+                checkRepository.findCheckByCheckIdExerciseId(exerciseId);
+        List<String> users = new ArrayList<>();
+        checkByExerciseId.forEach(check -> users.add(check.getCheckId().getUsername()));
+        checkRepository.deleteAll(checkByExerciseId);
+        StatisticJpa statisticJpa = statisticRepository.findById(exerciseId).orElse(new StatisticJpa(exerciseId, new Statistic()));
+        statisticJpa.getStatistic().upsertInformation(new StatisticId(exercise.getUtcOffset()), users);
+        statisticRepository.save(statisticJpa);
+        int exerciseValue = Integer.parseInt(exercise.getExerciseValue());
+        int exerciseIncrease = Integer.parseInt(exercise.getExerciseIncrease());
+        exercise.setExerciseValue(String.valueOf(exerciseValue + exerciseIncrease));
+        exerciseRepository.save(exercise);
     }
 
 }

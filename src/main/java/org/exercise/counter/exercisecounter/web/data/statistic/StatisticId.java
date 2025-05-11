@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 
 @JsonSerialize
@@ -31,8 +33,19 @@ public record StatisticId(
         return FORMAT.format(startingDate) + ":" + FORMAT.format(endingDate);
     }
 
+    //TODO: constructor with offset to see the actual day not the utc day
+
     public StatisticId() {
         this(new Date(), new Date());
+    }
+
+    public StatisticId(Integer offset){
+        this(createNowToOffset(offset), createNowToOffset(offset));
+    }
+
+    private static Date createNowToOffset(Integer offset){
+        LocalDateTime localDateTime = LocalDateTime.now(ZoneId.systemDefault()).plusHours(offset);
+        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
     }
 
     public StatisticId(Instant now) {
