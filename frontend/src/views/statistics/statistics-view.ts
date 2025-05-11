@@ -72,13 +72,22 @@ export class StatisticsView extends ConnectedLitElement {
                     Object.entries(this.statistic.finishedInformation).map(([key, value] :[string, string[]]) => {
                         return html`
                             <div class="statisticItem">
-                                <h3>${key}</h3>
-                                ${value.map(item => html`${item}`)}
+                                <h3>${this.statisticKeyDateResolver(key)}</h3>
+                                ${value.map(item => html`${item} `)}
                             </div>
                         `
                     })
 
             }
         `;
+    }
+
+    private statisticKeyDateResolver(key: string) {
+        let strings = key.split(":");
+        if(strings[0] === strings[1]) {
+            return strings[0] + " --> ";
+        } else {
+            return key + " --> ";
+        }
     }
 }
