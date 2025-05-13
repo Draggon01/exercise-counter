@@ -69,7 +69,9 @@ export class StatisticsView extends ConnectedLitElement {
         }
         return html`
             ${
-                    Object.entries(this.statistic.finishedInformation).map(([key, value] :[string, string[]]) => {
+                    Object.entries(this.statistic.finishedInformation).sort(([key1, _], [key2, __])=>{
+                        return key1.localeCompare(key2);
+                    }).map(([key, value] :[string, string[]]) => {
                         return html`
                             <div class="statisticItem">
                                 <h3>${this.statisticKeyDateResolver(key)}</h3>
