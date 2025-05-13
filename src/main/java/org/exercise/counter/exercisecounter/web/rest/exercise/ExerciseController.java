@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -84,7 +85,7 @@ public class ExerciseController {
                 save.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")),
                 save.getUtcOffset(),
                 save.getExerciseType(),
-                save.getExerciseValue() ,
+                save.getExerciseValue(),
                 save.getExerciseIncrease());
     }
 
@@ -99,9 +100,22 @@ public class ExerciseController {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         String username = user.getUsername();
         return checkRepository.findCheckByCheckIdUsername(username).stream().map(
-                check -> new CheckDto(check.getCheckId().getExerciseId())
+                check -> new CheckDto(check.getCheckId().getExerciseId(), username)
         ).toList();
     }
+
+    @GetMapping("/check/list/per/exercise")
+    public Map<UUID, List<CheckDto>> getAllChecksPerExercise() {
+        return exerciseRepository.findAll().stream().collect(Collectors.toMap(Exercise::getExerciseId,
+                ex -> checkRepository.findCheckByCheckIdExerciseId(ex.getExerciseId())
+                                .stream()
+                                .map(check ->
+                                        new CheckDto(check.getCheckId().getExerciseId(),
+                                                check.getCheckId().getUsername()))
+                                .toList()
+        ));
+    }
+
     @PostMapping("/check/save")
     public CheckDto addCheckForExercise(@RequestBody CheckDto checkDto, Authentication authentication) {
         UserDetails user = (UserDetails) authentication.getPrincipal();

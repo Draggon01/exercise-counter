@@ -3,18 +3,19 @@ import {createRef, Ref, ref} from 'lit/directives/ref.js';
 import {customElement, state} from "lit/decorators.js";
 import {RootState, store} from '../../store';
 import {ConnectedLitElement} from "../../connectedLitElement";
-import {
-    deleteExercise,
-    listExercises,
-    saveExercise,
-    selectAllExercises
-} from './slice/exerciseSlice';
+import {deleteExercise, listExercises, saveExercise, selectAllExercises} from './slice/exerciseSlice';
 import {ExerciseDto} from "./models/exerciseDto";
 import './elements/exercise-card'
 import {UserDto} from '../login/models/userDto';
 import {selectCurrentUser} from "../login/slice/userSlice";
 import {CheckDto} from "./models/checkDto";
-import {deleteCheck, listChecks, saveCheck, selectAllChecks} from "./slice/checkSlice";
+import {
+    deleteCheck,
+    listChecksPerExercise,
+    listUserChecks,
+    saveCheck,
+    selectAllChecks, selectChecksPerExercise
+} from "./slice/checkSlice";
 
 @customElement("home-view")
 export class HomeView extends ConnectedLitElement {
@@ -38,6 +39,15 @@ export class HomeView extends ConnectedLitElement {
 
     @state()
     private currentType: string = "";
+
+    @state()
+    private openWarningDialog = false;
+
+    @state()
+    private exerciseToDelete?: ExerciseDto;
+
+    @state()
+    private checks: Record<string, CheckDto[]> = {}
 
     formRef: Ref<HTMLFormElement> = createRef();
 
@@ -64,7 +74,9 @@ export class HomeView extends ConnectedLitElement {
     connectedCallback() {
         super.connectedCallback();
         store.dispatch(listExercises());
-        store.dispatch(listChecks())
+        store.dispatch(listUserChecks())
+        store.dispatch(listChecksPerExercise());
+
         fetch("/api/exercises/exercisetype", {
             method: 'GET',
             credentials: "include"
@@ -76,6 +88,7 @@ export class HomeView extends ConnectedLitElement {
         this.listExercises = selectAllExercises(state);
         this.listChecks = selectAllChecks(state);
         this.user = selectCurrentUser(state);
+        this.checks = selectChecksPerExercise(state);
     }
 
     render() {
@@ -96,8 +109,40 @@ export class HomeView extends ConnectedLitElement {
                        label="Exercise Form">
                 ${this.renderEditExercise()}
             </sl-dialog>
+            <sl-dialog .open="${this.openWarningDialog}"
+                       @sl-hide="${() => {
+                           this.openWarningDialog = false
+                           this.exerciseToDelete = undefined;
+                       }}"
+                       label="Warning">
+                ${this.renderWarningDialog()}
+            </sl-dialog>
 
         `;
+    }
+
+    private renderWarningDialog() {
+        return html`
+            <p>
+                You are about to delete this exercise.
+                This action cannot be undone.
+                Are you sure you want to proceed?
+            </p>
+            <sl-button slot="footer" variant="primary" @click="${() => {
+                this.openWarningDialog = false;
+                this.exerciseToDelete = undefined;
+            }}"> Close
+            </sl-button>
+            <sl-button slot="footer" variant="danger" @click="${() => {
+                this.openWarningDialog = false;
+                if (this.exerciseToDelete) {
+                    store.dispatch(deleteExercise(this.exerciseToDelete));
+                }
+                this.exerciseToDelete = undefined;
+            }}">
+                Delete Exercise
+            </sl-button>
+        `
     }
 
     private renderEditExercise() {
@@ -154,39 +199,49 @@ export class HomeView extends ConnectedLitElement {
 
     private renderItems() {
         return html`
-            ${this.listExercises.map((element) => {
-                return html`
-                    <exercise-card
-                            .item="${element}"
-                            .checked="${this.getChecked(element)}"
-                            @deleteExercise="${(e: any) => {
-                                store.dispatch(deleteExercise(e.detail))
-                            }}"
-                            @editExercise="${(e: any) => {
-                                console.log(e.detail);
-                                this.exerciseDto = {
-                                    exerciseId: e.detail.exerciseId,
-                                    exerciseTitle: e.detail.exerciseTitle,
-                                    creator: e.detail.creator,
-                                    startTime: e.detail.startTime,
-                                    daysRepeat: e.detail.daysRepeat,
-                                    exerciseType: e.detail.exerciseType,
-                                    exerciseValue: e.detail.exerciseValue,
-                                    exerciseIncrease: e.detail.exerciseIncrease,
-                                } as ExerciseDto;
-                                this.currentType = e.detail.exerciseType;
-                                this.openDialog = true;
-                            }}"
-                            @checkChanged="${(e: any) => {
-                                let check = e.detail;
-                                if (check) {
-                                    store.dispatch(saveCheck({exerciseId: element.exerciseId}))
-                                } else {
-                                    store.dispatch(deleteCheck({exerciseId: element.exerciseId}))
-                                }
-                            }}"
-                    ></exercise-card>`;
-            })}
+            ${this.listExercises.sort((a, b) =>
+                    a.exerciseTitle.localeCompare(b.exerciseTitle))
+                    .map((element) => {
+                        return html`
+                            <exercise-card
+                                    .item="${element}"
+                                    .checked="${this.getChecked(element)}"
+                                    .finishedUser="${this.checks[element.exerciseId] ?? []}"
+                                    @deleteExercise="${(e: any) => {
+                                        this.exerciseToDelete = e.detail;
+                                        this.openWarningDialog = true;
+                                    }}"
+                                    @editExercise="${(e: any) => {
+                                        this.exerciseDto = {
+                                            exerciseId: e.detail.exerciseId,
+                                            exerciseTitle: e.detail.exerciseTitle,
+                                            creator: e.detail.creator,
+                                            startTime: e.detail.startTime,
+                                            daysRepeat: e.detail.daysRepeat,
+                                            exerciseType: e.detail.exerciseType,
+                                            exerciseValue: e.detail.exerciseValue,
+                                            exerciseIncrease: e.detail.exerciseIncrease,
+                                        } as ExerciseDto;
+                                        this.currentType = e.detail.exerciseType;
+                                        this.openDialog = true;
+                                    }}"
+                                    @checkChanged="${async (e: any) => {
+                                        let check = e.detail;
+                                        if (check) {
+                                            await store.dispatch(saveCheck({
+                                                exerciseId: element.exerciseId,
+                                                user: "checked by Backend"
+                                            }))
+                                        } else {
+                                            await store.dispatch(deleteCheck({
+                                                exerciseId: element.exerciseId,
+                                                user: "checked by Backend"
+                                            }))
+                                        }
+                                        store.dispatch(listChecksPerExercise());
+                                    }}"
+                            ></exercise-card>`;
+                    })}
         `;
     }
 

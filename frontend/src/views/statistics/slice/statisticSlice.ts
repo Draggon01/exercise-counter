@@ -1,6 +1,6 @@
 import {StatisticDto} from "../models/statisticDto";
 import {createAsyncThunk, createSlice, Reducer} from "@reduxjs/toolkit";
-import {checkAdapter, listChecks} from "../../home/slice/checkSlice";
+import {checkAdapter, listUserChecks} from "../../home/slice/checkSlice";
 import {AsyncStoreState} from "../../../commons";
 
 type SliceState = {

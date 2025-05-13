@@ -6,6 +6,10 @@ type SliceState = {
     checks: {
         status: AsyncStoreState;
     } & EntityState<CheckDto, string>
+    checksPerExercise: {
+        status: AsyncStoreState;
+        data: Record<string, CheckDto[]>
+    }
 }
 
 type SliceProjection = {
@@ -17,10 +21,14 @@ const initialState: SliceState = {
         status: "initial",
         ids: [],
         entities: {}
+    },
+    checksPerExercise: {
+        status: "initial",
+        data: {}
     }
 }
 
-export const listChecks = createAsyncThunk<CheckDto[], void, { rejectValue: any }>(
+export const listUserChecks = createAsyncThunk<CheckDto[], void, { rejectValue: any }>(
     'checks/list', async (_, {rejectWithValue}) => {
         const res = await fetch("/api/check/list", {
             method: 'GET',
@@ -28,6 +36,21 @@ export const listChecks = createAsyncThunk<CheckDto[], void, { rejectValue: any 
         });
         if (res.ok) {
             return (await res.json());
+        } else {
+            let errorResponse = await res.json();
+            return rejectWithValue(errorResponse);
+        }
+    }
+)
+
+export const listChecksPerExercise = createAsyncThunk<Record<string, CheckDto[]>, void, { rejectValue: any }>(
+    'checks/listPerExercise', async (_, {rejectWithValue}) => {
+        const res = await fetch("/api/check/list/per/exercise", {
+            method: 'GET',
+            credentials: "include"
+        });
+        if (res.ok) {
+            return await res.json();
         } else {
             let errorResponse = await res.json();
             return rejectWithValue(errorResponse);
@@ -80,13 +103,13 @@ export const checkSlice = createSlice({
     reducers: {},
     extraReducers: builder => {
         builder
-            .addCase(listChecks.pending, state => {
+            .addCase(listUserChecks.pending, state => {
                 state.checks.status = 'initial';
             })
-            .addCase(listChecks.rejected, state => {
+            .addCase(listUserChecks.rejected, state => {
                 state.checks.status = 'error';
             })
-            .addCase(listChecks.fulfilled, (state, action) => {
+            .addCase(listUserChecks.fulfilled, (state, action) => {
                 state.checks.status = 'idle';
                 checkAdapter.setAll(state.checks, action.payload);
             })
@@ -110,8 +133,20 @@ export const checkSlice = createSlice({
                 state.checks.status = 'idle';
                 checkAdapter.removeOne(state.checks, action.payload.exerciseId);
             })
+            .addCase(listChecksPerExercise.pending, state => {
+                state.checks.status = 'initial';
+            })
+            .addCase(listChecksPerExercise.rejected, state => {
+                state.checks.status = 'error';
+            })
+            .addCase(listChecksPerExercise.fulfilled, (state, action) => {
+                state.checksPerExercise.status = 'idle';
+                state.checksPerExercise.data = action.payload;
+            })
     }
 });
+
+export const selectChecksPerExercise = (state: SliceProjection) => state.checks.checksPerExercise.data;
 
 export const checkAdapter = createEntityAdapter<CheckDto, string>({
     selectId: (check: CheckDto) => check.exerciseId

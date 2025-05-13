@@ -6,6 +6,7 @@ import {selectCurrentUser} from "../../login/slice/userSlice";
 import {UserDto} from "../../login/models/userDto";
 import {CustomRouter} from "../../../index";
 import {navigate} from "../../../lit-router";
+import {CheckDto} from "../models/checkDto";
 
 @customElement("exercise-card")
 export class ExerciseCard extends ConnectedLitElement {
@@ -58,6 +59,9 @@ export class ExerciseCard extends ConnectedLitElement {
     @property({type: Boolean})
     checked: boolean = false;
 
+    @property()
+    finishedUser: CheckDto[] = [];
+
     @state()
     user?: UserDto;
 
@@ -83,6 +87,7 @@ export class ExerciseCard extends ConnectedLitElement {
                     `}
                 </div>
                 <div>today's Value: ${this.item.exerciseValue ?? "not Set"}</div>
+                <div>finished Users for today: ${this.finishedUser.map(check => check.user + ", ")}</div>
                 <div class="buttonBar">
                     <div>
                         <sl-button @click="${() => {
