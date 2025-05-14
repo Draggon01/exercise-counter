@@ -13,6 +13,7 @@ export class ExerciseCard extends ConnectedLitElement {
     static styles = css`
         :host {
             width: 100%;
+            font-family: Open Sans, sans-serif;
         }
 
         .card {
@@ -41,12 +42,21 @@ export class ExerciseCard extends ConnectedLitElement {
             display: grid;
             height: 100%;
             grid-template-columns: 1fr auto auto;
+            min-height: 32px;
         }
 
         .buttonBar {
             display: grid;
             grid-template-columns: 1fr auto;
         }
+
+        .element-box {
+            margin: 12px;
+            display: grid;
+            grid-template-columns: max-content auto;
+            gap: 8px;
+        }
+        
     `;
 
     @property()
@@ -79,15 +89,21 @@ export class ExerciseCard extends ConnectedLitElement {
                 <h2 class="headline">${this.item.exerciseTitle}</h2>
                 <div class="options">
                     <div></div>
-
                     ${this.user && this.user.username === this.item.creator ? html`
                         <sl-icon-button name="pencil" @click="${this._editClick}"></sl-icon-button>
                         <sl-icon-button name="trash" style="color:red" @click="${this._trashClick}"></sl-icon-button>
                     ` : html`
                     `}
                 </div>
-                <div>today's Value: ${this.item.exerciseValue ?? "not Set"}</div>
-                <div>finished Users for today: ${this.finishedUser.map(check => check.user + ", ")}</div>
+                <div class="element-box">
+                    <div>Today's Value:</div>
+                    <div style="font-weight: bold"> ${this.item.exerciseValue ?? "not Set"}</div>
+                    <div>Finished By:</div>
+                    <div>
+                        ${this.finishedUser.map((check, idx) => 
+                                check.user + ((idx < this.finishedUser.length - 1) ? ", " : ""))}
+                    </div>
+                </div>
                 <div class="buttonBar">
                     <div>
                         <sl-button @click="${() => {

@@ -68,7 +68,6 @@ export class HomeView extends ConnectedLitElement {
         .addButton {
             margin-top: 1rem;
         }
-
     `
 
     connectedCallback() {
