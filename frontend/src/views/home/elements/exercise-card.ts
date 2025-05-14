@@ -26,6 +26,7 @@ export class ExerciseCard extends ConnectedLitElement {
             display: grid;
             border: 1px solid teal;
             grid-template-rows: 0.5fr 1fr;
+            min-width: 340px;
         }
 
         .headline {
@@ -35,6 +36,8 @@ export class ExerciseCard extends ConnectedLitElement {
             transform: translateX(-50%);
             padding: 8px;
             margin-top: 0;
+            overflow: hidden;
+            white-space: nowrap;
         }
 
         .options {
