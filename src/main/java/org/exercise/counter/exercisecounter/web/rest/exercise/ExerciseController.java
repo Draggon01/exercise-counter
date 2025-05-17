@@ -57,7 +57,8 @@ public class ExerciseController {
     }
 
     @PostMapping("/exercises/save")
-    public ExerciseDto addExercise(@RequestBody ExerciseDto exercise) {
+    public ExerciseDto addExercise(@RequestBody ExerciseDto exercise, Authentication authentication) {
+        checkExerciseAuthority(exercise.exerciseId(), authentication);
         Exercise save = exerciseRepository.save(
                 new Exercise(
                         exercise.exerciseId(),
@@ -90,9 +91,24 @@ public class ExerciseController {
     }
 
     @PostMapping("/exercises/delete")
-    public ExerciseDto deleteExercise(@RequestBody ExerciseDto exerciseToDelete) {
-        exerciseRepository.deleteById(UUID.fromString(exerciseToDelete.exerciseId().toString()));
+    public ExerciseDto deleteExercise(@RequestBody ExerciseDto exerciseToDelete, Authentication authentication) {
+        UUID exerciseId = exerciseToDelete.exerciseId();
+        checkExerciseAuthority(exerciseId, authentication);
+        exerciseRepository.deleteById(exerciseId);
         return exerciseToDelete;
+    }
+
+    private void checkExerciseAuthority(UUID exerciseId, Authentication authentication) {
+        if (exerciseId == null) {
+            return;
+        }
+        exerciseRepository.findById(exerciseId)
+                .ifPresent(ex -> {
+                    String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+                    if (!username.equals(ex.getCreator())) {
+                        throw new RuntimeException(username + " tried to edit/delete exercise " + ex.getExerciseId() + " which he did not create!");
+                    }
+                });
     }
 
     @GetMapping("/check/list")
@@ -108,11 +124,11 @@ public class ExerciseController {
     public Map<UUID, List<CheckDto>> getAllChecksPerExercise() {
         return exerciseRepository.findAll().stream().collect(Collectors.toMap(Exercise::getExerciseId,
                 ex -> checkRepository.findCheckByCheckIdExerciseId(ex.getExerciseId())
-                                .stream()
-                                .map(check ->
-                                        new CheckDto(check.getCheckId().getExerciseId(),
-                                                check.getCheckId().getUsername()))
-                                .toList()
+                        .stream()
+                        .map(check ->
+                                new CheckDto(check.getCheckId().getExerciseId(),
+                                        check.getCheckId().getUsername()))
+                        .toList()
         ));
     }
 

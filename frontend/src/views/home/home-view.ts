@@ -205,7 +205,10 @@ export class HomeView extends ConnectedLitElement {
                             <exercise-card
                                     .item="${element}"
                                     .checked="${this.getChecked(element)}"
-                                    .finishedUser="${this.checks[element.exerciseId] ?? []}"
+                                    .finishedUser="${this.checks[element.exerciseId] ? 
+                                            this.checks[element.exerciseId]
+                                                    .sort((a, b) => 
+                                                            a.user.localeCompare(b.user)) : []}"
                                     @deleteExercise="${(e: any) => {
                                         this.exerciseToDelete = e.detail;
                                         this.openWarningDialog = true;
