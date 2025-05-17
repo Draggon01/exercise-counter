@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.NonNull;
+import org.hibernate.annotations.NotFound;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -33,8 +35,6 @@ public record StatisticId(
         return FORMAT.format(startingDate) + ":" + FORMAT.format(endingDate);
     }
 
-    //TODO: constructor with offset to see the actual day not the utc day
-
     public StatisticId() {
         this(new Date(), new Date());
     }
@@ -50,5 +50,24 @@ public record StatisticId(
 
     public StatisticId(Instant now) {
         this(Date.from(now), Date.from(now));
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof StatisticId other) {
+            return this.toKeyString().equals(other.toKeyString());
+        }
+        return false;
+    }
+
+    @Override
+    @NonNull
+    public String toString() {
+        return toKeyString();
+    }
+
+    @Override
+    public int hashCode() {
+        return this.toKeyString().hashCode();
     }
 }

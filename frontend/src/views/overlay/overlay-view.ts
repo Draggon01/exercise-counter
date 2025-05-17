@@ -16,6 +16,7 @@ export class OverlayView extends ConnectedLitElement {
             left: 0;
             right: 0;
             bottom: 0;
+            font-family: Open Sans, sans-serif;
         }
 
         header {

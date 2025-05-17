@@ -5,7 +5,6 @@ import {ConnectedLitElement} from "../../../connectedLitElement";
 import {selectCurrentUser} from "../../login/slice/userSlice";
 import {UserDto} from "../../login/models/userDto";
 import {CustomRouter} from "../../../index";
-import {navigate} from "../../../lit-router";
 import {CheckDto} from "../models/checkDto";
 
 @customElement("exercise-card")
@@ -13,7 +12,6 @@ export class ExerciseCard extends ConnectedLitElement {
     static styles = css`
         :host {
             width: 100%;
-            font-family: Open Sans, sans-serif;
         }
 
         .card {

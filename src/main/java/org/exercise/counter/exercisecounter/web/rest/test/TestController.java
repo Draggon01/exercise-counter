@@ -1,5 +1,6 @@
 package org.exercise.counter.exercisecounter.web.rest.test;
 
+import jakarta.transaction.Transactional;
 import org.exercise.counter.exercisecounter.web.data.statistic.Statistic;
 import org.exercise.counter.exercisecounter.web.data.statistic.StatisticId;
 import org.exercise.counter.exercisecounter.web.data.statistic.StatisticJpa;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.*;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -21,6 +23,17 @@ public class TestController {
     public TestController(SchedulerService schedulerService, StatisticRepository statisticRepository) {
         this.schedulerService = schedulerService;
         this.statisticRepository = statisticRepository;
+    }
+
+    @GetMapping("/api/test3")
+    @Transactional
+    public String test3() {
+        StatisticJpa statistic = statisticRepository.findById(UUID.fromString("b8848131-2d75-4a15-be6d-b0e002a056ce")).orElse(null);
+        if(statistic != null && statistic.getStatistic() != null){
+            statistic.getStatistic().upsertInformation(new StatisticId(), List.of("user1", "user2"));
+            statisticRepository.save(statistic);
+        }
+        return "tet";
     }
 
     @GetMapping("/api/test2")
