@@ -101,14 +101,6 @@ export class HomeView extends ConnectedLitElement {
                 }}">
                     Add Exercise
                 </sl-button>
-                <sl-button class="addButton" variant="primary" @click="${() => {
-                    void fetch("/api/test", {
-                        method: 'GET',
-                        credentials: "include"
-                    })
-                }}">
-                    test
-                </sl-button>
             </div>
             
             ${this.renderItems()}

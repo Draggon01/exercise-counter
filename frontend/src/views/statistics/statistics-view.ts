@@ -58,8 +58,6 @@ export class StatisticsView extends ConnectedLitElement {
     }
 
     private createGraph() {
-        console.log(this.statisticCanvas.value);
-
         if (this.chart) {
             this.chart.destroy();
         }
