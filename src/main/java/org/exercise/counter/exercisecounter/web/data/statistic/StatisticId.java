@@ -10,24 +10,28 @@ import org.hibernate.annotations.NotFound;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 @JsonSerialize
 public record StatisticId(
-        @JsonProperty("startingDate") Date startingDate, @JsonProperty("endingDate") Date endingDate
+        @JsonProperty("startingDate") LocalDateTime startingDate,
+        @JsonProperty("endingDate") LocalDateTime endingDate
 ) {
 
-    private static final SimpleDateFormat FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+    private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static StatisticId fromString(String key) throws ParseException {
         // Expected format: "2025-01-01:2025-01-07"
         String[] parts = key.split(":");
-        Date start = FORMAT.parse(parts[0]);
-        Date end = FORMAT.parse(parts[1]);
+        LocalDateTime start = LocalDate.parse(parts[0], FORMAT).atStartOfDay();
+        LocalDateTime end = LocalDate.parse(parts[1], FORMAT).atStartOfDay();
         return new StatisticId(start, end);
+
     }
 
     @JsonValue
@@ -36,20 +40,20 @@ public record StatisticId(
     }
 
     public StatisticId() {
-        this(new Date(), new Date());
+        this(LocalDateTime.now(), LocalDateTime.now());
     }
 
-    public StatisticId(Integer offset){
+    public StatisticId(Integer offset) {
         this(createNowToOffset(offset), createNowToOffset(offset));
     }
 
-    private static Date createNowToOffset(Integer offset){
-        LocalDateTime localDateTime = LocalDateTime.now(ZoneId.systemDefault()).plusHours(offset);
-        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+    private static LocalDateTime createNowToOffset(Integer offset) {
+        return LocalDateTime.now(ZoneId.systemDefault()).plusHours(offset);
     }
 
     public StatisticId(Instant now) {
-        this(Date.from(now), Date.from(now));
+        this(LocalDateTime.ofInstant(now, ZoneId.systemDefault()),
+                LocalDateTime.ofInstant(now, ZoneId.systemDefault()));
     }
 
     @Override

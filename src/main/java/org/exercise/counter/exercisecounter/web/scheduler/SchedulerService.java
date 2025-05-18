@@ -1,6 +1,7 @@
 package org.exercise.counter.exercisecounter.web.scheduler;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.exercise.counter.exercisecounter.web.data.checks.Check;
 import org.exercise.counter.exercisecounter.web.data.checks.CheckRepository;
@@ -49,6 +50,7 @@ public class SchedulerService {
         }
     }
 
+    @Transactional
     public void restartSchedulerFor(Exercise exercise) {
         if (this.scheduledExerciseUpdates.containsKey(exercise.getExerciseId())) {
             this.removeScheduledExerciseUpdate(exercise.getExerciseId());
@@ -75,10 +77,21 @@ public class SchedulerService {
         }
     }
 
+    @Transactional
+    public void restartSchedulerForExTest(Exercise exercise) {
+        this.addScheduledExerciseUpdate(
+                exercise.getExerciseId(),
+                () -> numberIncreaseFunction(exercise),
+                Instant.now().plusMillis(1000),
+                Duration.ofMinutes(1)
+        );
+    }
+
     /**
      * Start timers for exercises
      */
     @PostConstruct
+    @Transactional
     public void startExerciseTimers() {
         log.info("Starting Schedulers for exercises");
         exerciseRepository.findAll().forEach(this::restartSchedulerFor);
@@ -97,7 +110,8 @@ public class SchedulerService {
         return targetDateTime.toInstant();
     }
 
-    private void numberRepeatFunction(Exercise exercise) {
+    @Transactional
+    protected void numberRepeatFunction(Exercise exercise) {
         log.info("executed NumberRepeat function");
         UUID exerciseId = exercise.getExerciseId();
         List<Check> checkByExerciseId =
@@ -110,8 +124,9 @@ public class SchedulerService {
         statisticRepository.save(statisticJpa);
     }
 
-    private void numberIncreaseFunction(Exercise exercise) {
-        log.info("executed NumberRepeat function");
+    @Transactional
+    protected void numberIncreaseFunction(Exercise exercise) {
+        log.info("executed NumberIncrease function");
         UUID exerciseId = exercise.getExerciseId();
         List<Check> checkByExerciseId =
                 checkRepository.findCheckByCheckIdExerciseId(exerciseId);

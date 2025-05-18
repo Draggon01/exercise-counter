@@ -1,19 +1,34 @@
 package org.exercise.counter.exercisecounter.web.data.statistic;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Statistic {
-    private Map<StatisticId, List<String>> finishedInformation = new HashMap<>();
+
+    @JsonDeserialize(keyUsing = StatisticIdKeyDeserializer.class)
+    private Map<StatisticId, List<String>> finishedInformation = new LinkedHashMap<>();
+
+    public Statistic() {
+
+    }
+
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    public Statistic(@JsonProperty("finishedInformation") Map<StatisticId, List<String>> finishedInformation) {
+        if (finishedInformation != null) {
+            this.finishedInformation.putAll(finishedInformation);
+        }
+    }
 
     public void upsertInformation(StatisticId statisticId, List<String> users) {
         finishedInformation.put(statisticId, users);

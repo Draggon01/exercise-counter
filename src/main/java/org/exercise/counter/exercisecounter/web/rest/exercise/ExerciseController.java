@@ -1,5 +1,6 @@
 package org.exercise.counter.exercisecounter.web.rest.exercise;
 
+import jakarta.transaction.Transactional;
 import org.exercise.counter.exercisecounter.web.data.checks.Check;
 import org.exercise.counter.exercisecounter.web.data.checks.CheckId;
 import org.exercise.counter.exercisecounter.web.data.checks.CheckRepository;
@@ -57,6 +58,7 @@ public class ExerciseController {
     }
 
     @PostMapping("/exercises/save")
+    @Transactional
     public ExerciseDto addExercise(@RequestBody ExerciseDto exercise, Authentication authentication) {
         checkExerciseAuthority(exercise.exerciseId(), authentication);
         Exercise save = exerciseRepository.save(

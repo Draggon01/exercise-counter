@@ -1,6 +1,8 @@
 package org.exercise.counter.exercisecounter.web.rest.test;
 
 import jakarta.transaction.Transactional;
+import org.exercise.counter.exercisecounter.web.data.exercise.Exercise;
+import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseRepository;
 import org.exercise.counter.exercisecounter.web.data.statistic.Statistic;
 import org.exercise.counter.exercisecounter.web.data.statistic.StatisticId;
 import org.exercise.counter.exercisecounter.web.data.statistic.StatisticJpa;
@@ -19,10 +21,12 @@ public class TestController {
 
     private final SchedulerService schedulerService;
     private final StatisticRepository statisticRepository;
+    private final ExerciseRepository exerciseRepository;
 
-    public TestController(SchedulerService schedulerService, StatisticRepository statisticRepository) {
+    public TestController(SchedulerService schedulerService, StatisticRepository statisticRepository, ExerciseRepository exerciseRepository) {
         this.schedulerService = schedulerService;
         this.statisticRepository = statisticRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     @GetMapping("/api/test3")
@@ -50,12 +54,10 @@ public class TestController {
 
     @GetMapping("/api/test")
     public String test() {
-//        schedulerService.addScheduledExerciseUpdate(UUID.randomUUID(), () -> {
-//            LocalTime now = LocalTime.now(ZoneId.systemDefault());
-//            System.out.println(now);
-//            System.out.println("Scheduling is working!");
-//        }, this.generateStartTime(),  Duration.ofMinutes(1));
-
+        List<Exercise> all = exerciseRepository.findAll();
+        for (Exercise exercise : all) {
+            schedulerService.restartSchedulerForExTest(exercise);
+        }
         return "Test endpoint is working!";
     }
 
