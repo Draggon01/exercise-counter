@@ -7,6 +7,7 @@ import {loadStatistic, selectStatistic} from "./slice/statisticSlice";
 import {CustomRouter} from "../../index";
 import {createRef, Ref, ref} from "lit/directives/ref.js";
 import {Chart} from "chart.js/auto";
+import {SlChangeEvent} from "@shoelace-style/shoelace";
 
 @customElement('statistics-view')
 export class StatisticsView extends ConnectedLitElement {
@@ -39,6 +40,9 @@ export class StatisticsView extends ConnectedLitElement {
     @state()
     statisticCanvas: Ref<HTMLCanvasElement> = createRef();
 
+    @state()
+    showLastXEntries: number = -1;
+
     chart: any;
 
     connectedCallback() {
@@ -48,6 +52,10 @@ export class StatisticsView extends ConnectedLitElement {
 
     stateChanged(state: RootState) {
         this.statistic = selectStatistic(state);
+        if (this.statistic && this.statistic.finishedInformation) {
+            this.showLastXEntries = Object.keys(this.statistic.finishedInformation).length < 10 ?
+                Object.keys(this.statistic.finishedInformation).length : 10;
+        }
     }
 
     protected updated(_changedProperties: PropertyValues) {
@@ -71,7 +79,7 @@ export class StatisticsView extends ConnectedLitElement {
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Chart.js Bar Chart - Stacked'
+                            text: 'Exercise Completions'
                         },
                     },
                     responsive: true,
@@ -100,6 +108,25 @@ export class StatisticsView extends ConnectedLitElement {
                     >Back
                     </sl-button>
                     <h2>Statistics</h2>
+                </div>
+                <div>
+                    <sl-input label="Show last x entries" min="0"
+                              .max="${this.statistic && this.statistic.finishedInformation ? Object.keys(this.statistic.finishedInformation).length : 0}"
+                              type="number"
+                              .value="${this.showLastXEntries}"
+                              @sl-change="${(e: any) => {
+                                  if (e.target.value > Object.keys(this.statistic.finishedInformation).length) {
+                                      this.showLastXEntries = Object.keys(this.statistic.finishedInformation).length;
+                                      e.target.value = Object.keys(this.statistic.finishedInformation).length;
+                                  } else if (e.target.value < 0) {
+                                      this.showLastXEntries = 0;
+                                      e.target.value = 0;
+                                  }
+                                  this.showLastXEntries = e.target.value;
+                                  this.chart.data = this.generateData();
+                                  this.chart.update();
+                              }}"
+                    ></sl-input>
                 </div>
                 ${this.showStatistics()}
             </div>
@@ -135,6 +162,9 @@ export class StatisticsView extends ConnectedLitElement {
     }
 
     private statisticKeyDateResolver(key: string) {
+        if(!key.includes(":")) {
+            return key;
+        }
         let strings = key.split(":");
         if (strings[0] === strings[1]) {
             return strings[0];
@@ -147,6 +177,8 @@ export class StatisticsView extends ConnectedLitElement {
         let sortedInfo = Object.entries(this.statistic.finishedInformation).sort(([key1, _], [key2, __]) => {
             return key1.localeCompare(key2);
         });
+
+        sortedInfo = sortedInfo.slice(sortedInfo.length - this.showLastXEntries, sortedInfo.length);
 
         let userDataSets: Record<string, (number | null)[]> = {};
         let labels = sortedInfo.map(([key, finishers]: [string, string[]]) => {
@@ -168,12 +200,12 @@ export class StatisticsView extends ConnectedLitElement {
 
         let map = Object.entries(userDataSets)
             .map(([key, value]: [string, (number | null)[]]) => {
-            return {
-                label: key,
-                data: value,
-                backgroundColor: this.randomColor()
-            }
-        });
+                return {
+                    label: key,
+                    data: value,
+                    backgroundColor: this.randomColor()
+                }
+            });
 
 
         return {
