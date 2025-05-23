@@ -7,7 +7,6 @@ import {loadStatistic, selectStatistic} from "./slice/statisticSlice";
 import {CustomRouter} from "../../index";
 import {createRef, Ref, ref} from "lit/directives/ref.js";
 import {Chart} from "chart.js/auto";
-import {SlChangeEvent} from "@shoelace-style/shoelace";
 
 @customElement('statistics-view')
 export class StatisticsView extends ConnectedLitElement {
@@ -162,7 +161,7 @@ export class StatisticsView extends ConnectedLitElement {
     }
 
     private statisticKeyDateResolver(key: string) {
-        if(!key.includes(":")) {
+        if (!key.includes(":")) {
             return key;
         }
         let strings = key.split(":");
@@ -199,11 +198,11 @@ export class StatisticsView extends ConnectedLitElement {
 
 
         let map = Object.entries(userDataSets)
-            .map(([key, value]: [string, (number | null)[]]) => {
+            .map(([key, value]: [string, (number | null)[]], index) => {
                 return {
                     label: key,
                     data: value,
-                    backgroundColor: this.randomColor()
+                    backgroundColor: this.colors[index % 8]
                 }
             });
 
@@ -213,6 +212,17 @@ export class StatisticsView extends ConnectedLitElement {
             datasets: map
         };
     }
+
+    private colors: string[] = [
+        "rgb(188, 182, 217)",
+        "rgb(45, 59, 134)",
+        "rgb(196, 232, 253)",
+        "rgb(8, 132, 196)",
+        "rgb(129, 207,251)",
+        "rgb(87, 60, 145)",
+        "rgb(184, 212, 249)",
+        "rgb(7, 48, 74)"
+    ]
 
     private randomColor() {
         return "rgb(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ")";
