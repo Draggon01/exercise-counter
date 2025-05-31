@@ -33,6 +33,16 @@ export class OverlayView extends ConnectedLitElement {
             flex: 1;
             overflow: auto;
         }
+
+        .sizeing {
+            --size: 1.8rem;
+        }
+        
+        .scroller {
+            max-height: calc(100vh - 48px);
+            overflow: scroll;
+            display: block;
+        }
     `;
 
     @state()
@@ -55,12 +65,27 @@ export class OverlayView extends ConnectedLitElement {
         return html`
             <header>
                 <h3>Exercise Counter</h3>
-                <div style="color:black">
-                    ${this.user?.username}
-                    <sl-icon-button name="box-arrow-right" label="Logout" @click=${this.handleLogout}></sl-icon-button>
+                <div style="color:black;">
+                    <sl-dropdown>
+                        <div slot="trigger">
+                            <sl-avatar class="sizeing" label="User avatar"></sl-avatar>
+                            ${" " + this.user?.username + " ▾"}
+                        </div>
+                        <sl-menu>
+                            <sl-menu-item @click="${() => {
+                                void CustomRouter.goto("/groups");
+                            }}"> Groups
+                            </sl-menu-item>
+                            <sl-menu-item @click=${this.handleLogout}> Logout
+                                <sl-icon-button slot="suffix" style="margin-right: 0" name="box-arrow-right"
+                                                label="Logout"
+                                ></sl-icon-button>
+                            </sl-menu-item>
+                        </sl-menu>
+                    </sl-dropdown>
                 </div>
             </header>
-            <main>
+            <main class="scroller">
                 <slot name="main"></slot>
             </main>
         `;

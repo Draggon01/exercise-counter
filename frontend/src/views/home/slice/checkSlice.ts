@@ -5,7 +5,7 @@ import {CheckDto} from "../models/checkDto";
 type SliceState = {
     checks: {
         status: AsyncStoreState;
-    } & EntityState<CheckDto, string>
+    } & EntityState<CheckDto, string>,
     checksPerExercise: {
         status: AsyncStoreState;
         data: Record<string, CheckDto[]>

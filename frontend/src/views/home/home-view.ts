@@ -3,7 +3,13 @@ import {createRef, Ref, ref} from 'lit/directives/ref.js';
 import {customElement, state} from "lit/decorators.js";
 import {RootState, store} from '../../store';
 import {ConnectedLitElement} from "../../connectedLitElement";
-import {deleteExercise, listExercises, saveExercise, selectAllExercises} from './slice/exerciseSlice';
+import {
+    deleteExercise,
+    listExercisesSelected,
+    saveExercise,
+    selectAllExercises,
+    unselectExercise
+} from './slice/exerciseSlice';
 import {ExerciseDto} from "./models/exerciseDto";
 import './elements/exercise-card'
 import {UserDto} from '../login/models/userDto';
@@ -14,8 +20,12 @@ import {
     listChecksPerExercise,
     listUserChecks,
     saveCheck,
-    selectAllChecks, selectChecksPerExercise
+    selectAllChecks,
+    selectChecksPerExercise
 } from "./slice/checkSlice";
+import {listUserMappings, selectUserMappingByUser} from "../groups/slice/groupSlice";
+import {CustomRouter} from "../../index";
+
 
 @customElement("home-view")
 export class HomeView extends ConnectedLitElement {
@@ -38,7 +48,13 @@ export class HomeView extends ConnectedLitElement {
     private exerciseTypes: Record<string, string> = {};
 
     @state()
+    private visibility: string[] = [];
+
+    @state()
     private currentType: string = "";
+
+    @state()
+    private currentVisibility: string = "";
 
     @state()
     private openWarningDialog = false;
@@ -48,6 +64,9 @@ export class HomeView extends ConnectedLitElement {
 
     @state()
     private checks: Record<string, CheckDto[]> = {}
+
+    @state()
+    private groups: string[] = [];
 
     formRef: Ref<HTMLFormElement> = createRef();
 
@@ -63,6 +82,8 @@ export class HomeView extends ConnectedLitElement {
             justify-content: center;
             align-items: center;
             flex-direction: column;
+            overflow-y: auto;
+            height: 100%;
         }
 
         .addButton {
@@ -72,15 +93,22 @@ export class HomeView extends ConnectedLitElement {
 
     connectedCallback() {
         super.connectedCallback();
-        store.dispatch(listExercises());
+        store.dispatch(listExercisesSelected());
         store.dispatch(listUserChecks())
         store.dispatch(listChecksPerExercise());
+        store.dispatch(listUserMappings());
 
         fetch("/api/exercises/exercisetype", {
             method: 'GET',
             credentials: "include"
         }).then(response => response.json())
             .then(response => this.exerciseTypes = response)
+
+        fetch("/api/exercises/visibility", {method: 'GET', credentials: "include"})
+            .then(response => response.json())
+            .then(response => {
+                this.visibility = response;
+            })
     }
 
     stateChanged(state: RootState) {
@@ -88,11 +116,16 @@ export class HomeView extends ConnectedLitElement {
         this.listChecks = selectAllChecks(state);
         this.user = selectCurrentUser(state);
         this.checks = selectChecksPerExercise(state);
+        let user = selectCurrentUser(state);
+        if (user) {
+            let groups = selectUserMappingByUser(state, user.username)
+            this.groups = groups ? groups.groupInformation.map(group => group.groupName) : [];
+        }
     }
 
     render() {
         return html`
-            <div>
+            <div style="display: flex; gap: 8px">
                 <sl-button class="addButton" variant="primary" @click="${() => {
                     this.openDialog = true;
                     this.exerciseDto = {
@@ -101,8 +134,14 @@ export class HomeView extends ConnectedLitElement {
                 }}">
                     Add Exercise
                 </sl-button>
+
+                <sl-button class="addButton" variant="primary" @click="${() => {
+                    void CustomRouter.goto(`/browse`);
+                }}">
+                    Browse Exercises
+                </sl-button>
             </div>
-            
+
             ${this.renderItems()}
             <sl-dialog .open="${this.openDialog}"
                        @sl-hide="${() => this.openDialog = false}"
@@ -181,6 +220,21 @@ export class HomeView extends ConnectedLitElement {
                               .value="${this.exerciseDto.daysRepeat ?? 1}"
                               type="number"
                               required></sl-input>
+
+                    <sl-select
+                            name="visibility"
+                            label="Visibility"
+                            .value="${this.currentVisibility ?? ""}"
+                            required
+                            @sl-change="${(e: any) => this.currentVisibility = e.target.value}"
+                    >
+                        ${this.visibility.map(visibility => {
+                            return html`
+                                <sl-option value="${visibility}">${visibility}</sl-option>
+                            `
+                        })}
+                    </sl-select>
+                    ${this.renderOptionsForVisibility(this.currentVisibility)}
                 </form>
                 <sl-button slot="footer" variant="danger" @click="${() => {
                     this.exerciseDto!.exerciseTitle = "";
@@ -221,8 +275,11 @@ export class HomeView extends ConnectedLitElement {
                                             exerciseType: e.detail.exerciseType,
                                             exerciseValue: e.detail.exerciseValue,
                                             exerciseIncrease: e.detail.exerciseIncrease,
+                                            visibility: e.detail.visibility,
+                                            groups: e.detail.groups,
                                         } as ExerciseDto;
                                         this.currentType = e.detail.exerciseType;
+                                        this.currentVisibility = e.detail.visibility;
                                         this.openDialog = true;
                                     }}"
                                     @checkChanged="${async (e: any) => {
@@ -239,6 +296,11 @@ export class HomeView extends ConnectedLitElement {
                                             }))
                                         }
                                         store.dispatch(listChecksPerExercise());
+                                    }}"
+                                    @hideExercise="${() => {
+                                        if(element.exerciseId){
+                                            store.dispatch(unselectExercise(element.exerciseId))
+                                        }
                                     }}"
                             ></exercise-card>`;
                     })}
@@ -265,6 +327,9 @@ export class HomeView extends ConnectedLitElement {
             if (formData.has("exerciseIncrease")) {
                 this.exerciseDto.exerciseIncrease = formData.get("exerciseIncrease")!.toString();
             }
+            this.exerciseDto.visibility = formData.get("visibility")!.toString();
+            this.exerciseDto.groups = formData.has("groups") ? formData.getAll("groups") as string[] : [];
+
             store.dispatch(saveExercise(this.exerciseDto!));
             this.exerciseDto = {} as ExerciseDto
             this.openDialog = false;
@@ -313,5 +378,25 @@ export class HomeView extends ConnectedLitElement {
         return html`
             ${fields.map(field => field)}
         `
+    }
+
+    private renderOptionsForVisibility(currentVisibility: string) {
+        switch (currentVisibility) {
+            case "GROUPS":
+                return html`
+                    <sl-select
+                            name="groups"
+                            label="Select Groups"
+                            .value="${this.exerciseDto && this.exerciseDto.groups ? this.exerciseDto.groups?.join(" ") : ""}"
+                            multiple
+                            clearable>
+                        ${this.groups.map(group => html`
+                            <sl-option value="${group}">${group}</sl-option>
+                        `)}
+                    </sl-select>
+                `
+            default:
+                return html``;
+        }
     }
 }

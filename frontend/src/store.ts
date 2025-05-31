@@ -3,12 +3,14 @@ import {userReducer} from "./views/login/slice/userSlice";
 import {exerciseReducer} from "./views/home/slice/exerciseSlice";
 import {checkReducer} from "./views/home/slice/checkSlice";
 import {statisticReducer} from "./views/statistics/slice/statisticSlice";
+import {groupReducer} from "./views/groups/slice/groupSlice";
 
 const rootReducer = combineReducers({
     user: userReducer,
     exercise: exerciseReducer,
     checks: checkReducer,
-    statistic: statisticReducer
+    statistic: statisticReducer,
+    group: groupReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

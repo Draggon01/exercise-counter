@@ -3,6 +3,8 @@ import {html} from "lit";
 
 import "./views/home/home-view"
 import "./views/statistics/statistics-view"
+import "./views/groups/groups-view"
+import "./views/home/browse-view"
 import {navigate} from "./lit-router";
 
 export const routes: RouteConfig[] = [
@@ -16,6 +18,14 @@ export const routes: RouteConfig[] = [
             <statistics-view
                     .exerciseId="${elements["id"]}"
             ></statistics-view>`
+    },
+    {
+      path: '/groups', render: () => html`
+            <groups-view></groups-view>`
+    },
+    {
+      path: '/browse', render: () => html`
+            <browse-view></browse-view>`
     },
     {
         path: '*',

@@ -42,7 +42,7 @@ export class ExerciseCard extends ConnectedLitElement {
             width: 100%;
             display: grid;
             height: 100%;
-            grid-template-columns: 1fr auto auto;
+            grid-template-columns: 1fr auto auto auto;
             min-height: 32px;
         }
 
@@ -91,9 +91,13 @@ export class ExerciseCard extends ConnectedLitElement {
                 <div class="options">
                     <div></div>
                     ${this.user && this.user.username === this.item.creator ? html`
+                        <sl-icon-button name="layer-backward" style="color: lightblue" @click="${this._hideClick}"></sl-icon-button>
                         <sl-icon-button name="pencil" @click="${this._editClick}"></sl-icon-button>
                         <sl-icon-button name="trash" style="color:red" @click="${this._trashClick}"></sl-icon-button>
                     ` : html`
+                        <div></div>
+                        <div></div>
+                        <sl-icon-button name="layer-backward" style="color: lightblue" @click="${this._hideClick}"></sl-icon-button>
                     `}
                 </div>
                 <div class="element-box">
@@ -120,6 +124,10 @@ export class ExerciseCard extends ConnectedLitElement {
                 </div>
             </div>
         `;
+    }
+
+    private _hideClick = () => {
+        this.dispatchEvent(new CustomEvent("hideExercise", {detail: this.item}))
     }
 
     private _trashClick = () => {

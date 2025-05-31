@@ -8,4 +8,6 @@ export interface ExerciseDto {
     exerciseType: string;
     exerciseValue: string;
     exerciseIncrease: string;
+    visibility: string;
+    groups?: string[];
 }

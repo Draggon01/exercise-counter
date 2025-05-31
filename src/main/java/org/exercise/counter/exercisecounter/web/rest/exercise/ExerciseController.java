@@ -7,9 +7,12 @@ import org.exercise.counter.exercisecounter.web.data.checks.CheckRepository;
 import org.exercise.counter.exercisecounter.web.data.exercise.Exercise;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseRepository;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseType;
+import org.exercise.counter.exercisecounter.web.data.exercise.Visibiltiy;
+import org.exercise.counter.exercisecounter.web.data.groups.*;
 import org.exercise.counter.exercisecounter.web.data.statistic.Statistic;
 import org.exercise.counter.exercisecounter.web.data.statistic.StatisticJpa;
 import org.exercise.counter.exercisecounter.web.data.statistic.StatisticRepository;
+import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.CheckDto;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
 import org.exercise.counter.exercisecounter.web.scheduler.SchedulerService;
@@ -19,10 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -33,12 +33,18 @@ public class ExerciseController {
     private final CheckRepository checkRepository;
     private final StatisticRepository statisticRepository;
     private final SchedulerService schedulerService;
+    private final ExerciseGroupMappingRepository exerciseGroupMappingRepository;
+    private final UserGroupMappingRepository userGroupMappingRepository;
+    private final UserSelectionRepository userSelectionRepository;
 
-    public ExerciseController(ExerciseRepository exerciseRepository, CheckRepository checkRepository, StatisticRepository statisticRepository, SchedulerService schedulerService) {
+    public ExerciseController(ExerciseRepository exerciseRepository, CheckRepository checkRepository, StatisticRepository statisticRepository, SchedulerService schedulerService, ExerciseGroupMappingRepository exerciseGroupMappingRepository, UserGroupMappingRepository userGroupMappingRepository, UserSelectionRepository userSelectionRepository) {
         this.exerciseRepository = exerciseRepository;
         this.checkRepository = checkRepository;
         this.statisticRepository = statisticRepository;
         this.schedulerService = schedulerService;
+        this.exerciseGroupMappingRepository = exerciseGroupMappingRepository;
+        this.userGroupMappingRepository = userGroupMappingRepository;
+        this.userSelectionRepository = userSelectionRepository;
     }
 
     @GetMapping("/exercises/list")
@@ -53,7 +59,84 @@ public class ExerciseController {
                         exercise.getUtcOffset(),
                         exercise.getExerciseType(),
                         exercise.getExerciseValue(),
-                        exercise.getExerciseIncrease()))
+                        exercise.getExerciseIncrease(),
+                        exercise.getVisibility(),
+                        this.GroupsForExercise(exercise.getExerciseId())
+                ))
+                .toList();
+    }
+
+
+    @GetMapping("/exercises/list/selected")
+    public List<ExerciseDto> getAllExercisesForUser(Authentication authentication) {
+        UserDetails user = (UserDetails) authentication.getPrincipal();
+        String username = user.getUsername();
+
+        return userSelectionRepository.findByUserSelectionId_Username(username)
+                .stream()
+                .map(selection -> new ExerciseDto(
+                        selection.getExercise().getExerciseId(),
+                        selection.getExercise().getExerciseTitle(),
+                        selection.getExercise().getCreator(),
+                        selection.getExercise().getDaysRepeat(),
+                        selection.getExercise().getStartTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")),
+                        selection.getExercise().getUtcOffset(),
+                        selection.getExercise().getExerciseType(),
+                        selection.getExercise().getExerciseValue(),
+                        selection.getExercise().getExerciseIncrease(),
+                        selection.getExercise().getVisibility(),
+                        this.GroupsForExercise(selection.getExercise().getExerciseId())
+                )).toList();
+    }
+
+    @GetMapping("/exercises/list/available")
+    public List<ExerciseDto> getAllExercisesAvailableForUser(Authentication authentication) {
+        UserDetails user = (UserDetails) authentication.getPrincipal();
+        String username = user.getUsername();
+
+        //get groups from user
+        List<String> groups = userGroupMappingRepository.findByUserGroupMappingId_Username(username)
+                .stream()
+                .filter(groupMapping -> !groupMapping.getIsInvited())
+                .map(groupMapping -> groupMapping.getGroup().getGroupName())
+                .toList();
+
+        List<UUID> alreadySelectedExercises = userSelectionRepository.findByUserSelectionId_Username(username)
+                .stream()
+                .map(selection -> selection.getExercise().getExerciseId())
+                .toList();
+
+        return exerciseRepository.findAll()
+                .stream()
+                .filter(exercise -> !alreadySelectedExercises.contains(exercise.getExerciseId()))
+                .filter(exercise -> switch (exercise.getVisibility()) {
+                    case Visibiltiy.PUBLIC -> true;
+                    case Visibiltiy.PRIVATE -> exercise.getCreator().equals(username);
+                    case Visibiltiy.GROUPS ->
+                            exerciseGroupMappingRepository.findByExerciseGroupMappingId_ExerciseId(exercise.getExerciseId())
+                                    .stream()
+                                    .map(groupMapping -> groupMapping.getGroup().getGroupName())
+                                    .anyMatch(groups::contains);
+                })
+                .map(exercise -> new ExerciseDto(
+                        exercise.getExerciseId(),
+                        exercise.getExerciseTitle(),
+                        exercise.getCreator(),
+                        exercise.getDaysRepeat(),
+                        exercise.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")),
+                        exercise.getUtcOffset(),
+                        exercise.getExerciseType(),
+                        exercise.getExerciseValue(),
+                        exercise.getExerciseIncrease(),
+                        exercise.getVisibility(),
+                        this.GroupsForExercise(exercise.getExerciseId())
+                )).toList();
+    }
+
+    private List<String> GroupsForExercise(UUID exerciseId) {
+        return exerciseGroupMappingRepository.findByExerciseGroupMappingId_ExerciseId(exerciseId)
+                .stream()
+                .map(mapping -> mapping.getGroup().getGroupName())
                 .toList();
     }
 
@@ -72,7 +155,21 @@ public class ExerciseController {
                         exercise.utcOffset(),
                         exercise.exerciseType(),
                         exercise.exerciseValue(),
-                        exercise.exerciseIncrease()));
+                        exercise.exerciseIncrease(),
+                        exercise.visibility()));
+
+        exerciseGroupMappingRepository.deleteAll(exerciseGroupMappingRepository.findByExerciseGroupMappingId_ExerciseId(save.getExerciseId()));
+        List<UserGroupMapping> byUserGroupMappingIdUsername =
+                userGroupMappingRepository.findByUserGroupMappingId_Username(((UserDetails) authentication.getPrincipal()).getUsername());
+        for (String group : exercise.groups()) {
+            byUserGroupMappingIdUsername
+                    .stream()
+                    .filter(mapping -> mapping.getGroup().getGroupName().equals(group))
+                    .findFirst()
+                    .ifPresent(mapping -> exerciseGroupMappingRepository.save(
+                            new ExerciseGroupMapping(new ExerciseGroupMappingId(exercise.exerciseId(), mapping.getGroup().getGroupId()), mapping.getGroup())
+                    ));
+        }
 
         //create statistic entry if not there already
         Optional<StatisticJpa> byId = statisticRepository.findById(save.getExerciseId());
@@ -89,7 +186,9 @@ public class ExerciseController {
                 save.getUtcOffset(),
                 save.getExerciseType(),
                 save.getExerciseValue(),
-                save.getExerciseIncrease());
+                save.getExerciseIncrease(),
+                save.getVisibility(),
+                this.GroupsForExercise(save.getExerciseId()));
     }
 
     @PostMapping("/exercises/delete")
@@ -155,5 +254,10 @@ public class ExerciseController {
     @GetMapping("/exercises/exercisetype")
     public Map<String, String> getExerciseTypes() {
         return ExerciseType.getAllDescriptionsAsMap();
+    }
+
+    @GetMapping("/exercises/visibility")
+    public List<String> getExerciseVisibilities() {
+        return Arrays.stream(Visibiltiy.values()).map(Enum::toString).toList();
     }
 }

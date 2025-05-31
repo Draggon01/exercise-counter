@@ -46,4 +46,8 @@ public class Exercise {
     @Column
     private String exerciseIncrease;
 
+    @Enumerated(EnumType.STRING)
+    @Column
+    private Visibiltiy visibility;
+
 }
