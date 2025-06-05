@@ -1,12 +1,8 @@
 import {css, html} from 'lit';
-import {customElement, property, state} from 'lit/decorators.js';
+import {customElement, property} from 'lit/decorators.js';
 import {ExerciseDto} from "../models/exerciseDto";
 import {ConnectedLitElement} from "../../../connectedLitElement";
-import {selectCurrentUser} from "../../login/slice/userSlice";
-import {UserDto} from "../../login/models/userDto";
-import {CustomRouter} from "../../../index";
-import {CheckDto} from "../models/checkDto";
-import { RootState } from '../../../store';
+import {RootState} from '../../../store';
 
 @customElement("browse-card")
 export class BrowseCard extends ConnectedLitElement {
@@ -32,6 +28,7 @@ export class BrowseCard extends ConnectedLitElement {
             position: absolute;
             top: 0;
             left: 50%;
+            max-width: 50%;
             transform: translateX(-50%);
             padding: 8px;
             margin-top: 0;
