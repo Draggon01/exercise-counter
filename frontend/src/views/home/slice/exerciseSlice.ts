@@ -185,8 +185,7 @@ export const exerciseSlice = createSlice({
             })
             .addCase(saveExercise.fulfilled, (state, action) => {
                 state.exercises.status = 'idle';
-                //TODO handle this correctly or thing how it should behave now
-                //exerciseAdapter.upsertOne(state.exercises, action.payload);
+                exerciseAdapter.upsertOne(state.exercises, action.payload);
             })
             .addCase(deleteExercise.pending, state => {
                 state.exercises.status = 'initial';

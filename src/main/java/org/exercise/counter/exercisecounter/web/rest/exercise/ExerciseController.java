@@ -13,6 +13,8 @@ import org.exercise.counter.exercisecounter.web.data.groups.*;
 import org.exercise.counter.exercisecounter.web.data.statistic.Statistic;
 import org.exercise.counter.exercisecounter.web.data.statistic.StatisticJpa;
 import org.exercise.counter.exercisecounter.web.data.statistic.StatisticRepository;
+import org.exercise.counter.exercisecounter.web.data.userselection.UserSelection;
+import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionId;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.CheckDto;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
@@ -174,6 +176,15 @@ public class ExerciseController {
                             new ExerciseGroupMapping(new ExerciseGroupMappingId(save.getExerciseId(), mapping.getGroup().getGroupId()), mapping.getGroup())
                     ));
         }
+
+        //add exercise to user, as it should be there if one is created
+        userSelectionRepository.save(
+                new UserSelection(
+                        new UserSelectionId(
+                                ((UserDetails) authentication.getPrincipal()).getUsername(),
+                                save.getExerciseId())
+                )
+        );
 
         //create statistic entry if not there already
         Optional<StatisticJpa> byId = statisticRepository.findById(save.getExerciseId());
