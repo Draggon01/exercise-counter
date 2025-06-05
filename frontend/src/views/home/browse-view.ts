@@ -14,6 +14,8 @@ export class BrowseView extends ConnectedLitElement {
     @state()
     private browseExercises: ExerciseDto[] = [];
 
+    private idx = 0;
+
     static styles = css`
         :host {
             display: block;
@@ -41,7 +43,10 @@ export class BrowseView extends ConnectedLitElement {
     }
 
     stateChanged(state: RootState): void {
-        this.browseExercises = selectAllExercises(state);
+        if(state.exercise.exercises.status === "idle" && this.idx != 0){
+            this.browseExercises = selectAllExercises(state);
+        }
+        this.idx++;
     }
 
     protected render() {
