@@ -1,5 +1,6 @@
 package org.exercise.counter.exercisecounter.web.rest.exercise;
 
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.exercise.counter.exercisecounter.web.data.checks.Check;
 import org.exercise.counter.exercisecounter.web.data.checks.CheckId;
@@ -36,8 +37,10 @@ public class ExerciseController {
     private final ExerciseGroupMappingRepository exerciseGroupMappingRepository;
     private final UserGroupMappingRepository userGroupMappingRepository;
     private final UserSelectionRepository userSelectionRepository;
+    private final EntityManager em;
 
-    public ExerciseController(ExerciseRepository exerciseRepository, CheckRepository checkRepository, StatisticRepository statisticRepository, SchedulerService schedulerService, ExerciseGroupMappingRepository exerciseGroupMappingRepository, UserGroupMappingRepository userGroupMappingRepository, UserSelectionRepository userSelectionRepository) {
+
+    public ExerciseController(ExerciseRepository exerciseRepository, CheckRepository checkRepository, StatisticRepository statisticRepository, SchedulerService schedulerService, ExerciseGroupMappingRepository exerciseGroupMappingRepository, UserGroupMappingRepository userGroupMappingRepository, UserSelectionRepository userSelectionRepository, EntityManager entityManager) {
         this.exerciseRepository = exerciseRepository;
         this.checkRepository = checkRepository;
         this.statisticRepository = statisticRepository;
@@ -45,6 +48,7 @@ public class ExerciseController {
         this.exerciseGroupMappingRepository = exerciseGroupMappingRepository;
         this.userGroupMappingRepository = userGroupMappingRepository;
         this.userSelectionRepository = userSelectionRepository;
+        this.em = entityManager;
     }
 
     @GetMapping("/exercises/list")
@@ -167,7 +171,7 @@ public class ExerciseController {
                     .filter(mapping -> mapping.getGroup().getGroupName().equals(group))
                     .findFirst()
                     .ifPresent(mapping -> exerciseGroupMappingRepository.save(
-                            new ExerciseGroupMapping(new ExerciseGroupMappingId(exercise.exerciseId(), mapping.getGroup().getGroupId()), mapping.getGroup())
+                            new ExerciseGroupMapping(new ExerciseGroupMappingId(save.getExerciseId(), mapping.getGroup().getGroupId()), mapping.getGroup())
                     ));
         }
 
