@@ -1,5 +1,5 @@
 import {customElement, state} from 'lit/decorators.js';
-import {css, html, LitElement} from 'lit';
+import {css, html} from 'lit';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 import {store} from "../../store";
 import {logoutUser, selectCurrentUser} from "../login/slice/userSlice";
@@ -37,7 +37,7 @@ export class OverlayView extends ConnectedLitElement {
         .sizeing {
             --size: 1.8rem;
         }
-        
+
         .scroller {
             max-height: calc(100vh - 48px);
             overflow: scroll;
@@ -47,6 +47,12 @@ export class OverlayView extends ConnectedLitElement {
 
     @state()
     private user?: UserDto;
+
+    @state()
+    private openLinkDialog?: boolean = false;
+
+    @state()
+    private inviteLink?: string;
 
     connectedCallback() {
         super.connectedCallback();
@@ -76,6 +82,18 @@ export class OverlayView extends ConnectedLitElement {
                                 void CustomRouter.goto("/groups");
                             }}"> Groups
                             </sl-menu-item>
+                            <sl-menu-item @click="${async () => {
+                                await fetch("/api/user/getInviteLink", {
+                                    method: 'POST',
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: window.location.host,
+                                    credentials: "include"
+                                }).then(res => res.text()).then(res => this.inviteLink = res);
+                                this.openLinkDialog = true;
+                            }}"> Get invite link
+                            </sl-menu-item>
                             <sl-menu-item @click=${this.handleLogout}> Logout
                                 <sl-icon-button slot="suffix" style="margin-right: 0" name="box-arrow-right"
                                                 label="Logout"
@@ -88,6 +106,24 @@ export class OverlayView extends ConnectedLitElement {
             <main class="scroller">
                 <slot name="main"></slot>
             </main>
+            <sl-dialog .open=${this.openLinkDialog}
+                       @sl-hide=${() => {
+                           this.openLinkDialog = false;
+                       }}>
+                <sl-input readonly
+                          .value=${this.inviteLink}
+                          label="Your invite link is:">
+                    <sl-button slot="suffix" variant="neutral" size="medium" @click=${async () => {
+                        if (this.inviteLink) {
+                            await navigator.clipboard.writeText(this.inviteLink);
+                        }
+                    }}>
+                        <sl-icon name="clipboard"></sl-icon>
+                    </sl-button>
+                </sl-input>
+
+                <p>it works for one invite and is valid for an uncertain time</p>
+            </sl-dialog>
         `;
     }
 }

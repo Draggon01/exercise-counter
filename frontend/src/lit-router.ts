@@ -4,6 +4,7 @@ import {Router} from "@lit-labs/router";
 import {routes} from "./routes";
 import './views/login/login-view'
 import './views/overlay/overlay-view'
+import './views/register/register-view'
 import {RootState, store} from "./store";
 import {readUserInfo, selectCurrentUser, selectUserInit} from "./views/login/slice/userSlice";
 import {ConnectedLitElement} from "./connectedLitElement";
@@ -39,9 +40,31 @@ export class LitRouter extends ConnectedLitElement {
 
     public router = new Router(this, [
         {
-            path: 'login',
+            path: '/login',
             render: () => html`
                 <login-view></login-view>`
+        },
+        {
+            path: '/register/:id',
+            render: (params) => html`
+                <register-view .registerId="${params["id"]}"></register-view>
+            `,
+            enter: async (params) => {
+                let x = await (await fetch("/api/public/isInviteLinkValid", {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: params["id"]
+                })).json();
+
+                if(x){
+                    return true;
+                } else {
+                    navigate("/");
+                    return false;
+                }
+            }
         },
         {
             path: '*',
@@ -49,15 +72,15 @@ export class LitRouter extends ConnectedLitElement {
                 <overlay-view>
                     <children-routes slot="main"></children-routes>
                 </overlay-view>
-
-
-
             `,
             enter: (_) => {
+                if (window.location.pathname.includes("register")) {
+                    return false;
+                }
                 if (this.user && !this.user.anonymous) {
                     return true;
                 }
-                void this.router.goto("login");
+                void this.router.goto("/login");
                 return false;
             }
         },

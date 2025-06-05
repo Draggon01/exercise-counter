@@ -1,6 +1,7 @@
 import {AsyncStoreState} from "../../../commons";
 import {createAsyncThunk, createSlice, Reducer} from "@reduxjs/toolkit";
 import {UserDto} from "../models/userDto";
+import {RegisterDto} from "../../register/model/registerDto";
 
 type SliceState = {
     status: AsyncStoreState;
@@ -62,7 +63,48 @@ export const saveUserInfo = createAsyncThunk<any, any, { rejectValue: any }>(
             credentials: "include"
         });
 
-        const res = await fetch("api/public/userinfo", {
+        const res = await fetch("/api/public/userinfo", {
+            method: 'POST',
+            credentials: 'include'
+        });
+        if (res.ok) {
+            return (await res.json());
+        } else {
+            let errorResponse = await res.json();
+            return rejectWithValue(errorResponse);
+        }
+    });
+
+export const registerUser = createAsyncThunk<UserDto, RegisterDto, {rejectValue: any}>(
+    'user/register', async (data, {rejectWithValue}) => {
+        const reg = await fetch("/api/public/register", {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+            credentials: "include"
+        });
+
+        if(!reg.ok){
+            let errorResponse = await reg.json();
+            return rejectWithValue(errorResponse);
+        }
+
+        let loginData = new URLSearchParams();
+        loginData.append("username", data.username);
+        loginData.append("password", data.password);
+
+        await fetch("/api/login", {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: loginData,
+            credentials: "include"
+        });
+
+        const res = await fetch("/api/public/userinfo", {
             method: 'POST',
             credentials: 'include'
         });
@@ -87,6 +129,17 @@ export const userSlice = createSlice({
                 state.status = 'error';
             })
             .addCase(readUserInfo.fulfilled, (state, action) => {
+                state.status = 'idle';
+                state.user = action.payload;
+                state.init = true;
+            })
+            .addCase(registerUser.pending, state => {
+                state.status = 'initial';
+            })
+            .addCase(registerUser.rejected, state => {
+                state.status = 'error';
+            })
+            .addCase(registerUser.fulfilled, (state, action) => {
                 state.status = 'idle';
                 state.user = action.payload;
                 state.init = true;
