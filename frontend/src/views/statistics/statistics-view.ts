@@ -138,6 +138,7 @@ export class StatisticsView extends ConnectedLitElement {
                 <h3>No Statistics Loaded</h3>
             `
         }
+        let finishedInformation = Object.entries(this.statistic.finishedInformation);
         return html`
 
             <div style="width: 800px">
@@ -145,16 +146,18 @@ export class StatisticsView extends ConnectedLitElement {
             </div>
 
             ${
-                    Object.entries(this.statistic.finishedInformation).sort(([key1, _], [key2, __]) => {
+                    finishedInformation.sort(([key1, _], [key2, __]) => {
                         return key1.localeCompare(key2);
-                    }).map(([key, value]: [string, string[]]) => {
-                        return html`
-                            <div class="statisticItem">
-                                <h3 style="margin: 0">${this.statisticKeyDateResolver(key)} → </h3>
-                                ${value.map(item => html`${item} `)}
-                            </div>
-                        `
                     })
+                            .slice(finishedInformation.length - this.showLastXEntries, finishedInformation.length)
+                            .map(([key, value]: [string, string[]]) => {
+                                return html`
+                                    <div class="statisticItem">
+                                        <h3 style="margin: 0">${this.statisticKeyDateResolver(key)} → </h3>
+                                        ${value.map(item => html`${item} `)}
+                                    </div>
+                                `
+                            })
 
             }
         `;
