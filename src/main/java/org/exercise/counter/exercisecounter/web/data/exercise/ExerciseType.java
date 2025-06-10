@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 public enum ExerciseType {
-    NUMBERREPEAT("Repeat a Single amount"),
-    TIMEREPEAT("Repeat a single time"),
-    NUMBERINCREASE("Repeat with an increasing number"),
-    TIMEINCREASE("Repeat with an increasing time");
+    NUMBERREPEAT("Constant repetitions"),
+    TIMEREPEAT("Constant duration"),
+    NUMBERINCREASE("Increasing repetitions"),
+    TIMEINCREASE("Increasing duration");
 
     private final String description;
 

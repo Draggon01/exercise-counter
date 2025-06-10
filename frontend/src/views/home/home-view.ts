@@ -209,8 +209,8 @@ export class HomeView extends ConnectedLitElement {
                     </sl-select>
                     ${this.renderOptionsForType(this.currentType)}
                     <sl-input name="startTime"
-                              label="Cycle Time"
-                              .value="${this.exerciseDto.startTime ?? ""}"
+                              label="Refresh Time"
+                              .value="${this.exerciseDto.startTime ?? "23:59:00"}"
                               pattern="^([0-2][0-3]|[0-1][0-9]):[0-5][0-9]:[0-5][0-9]$"
                               placeholder="00:00:00"
                               required
@@ -245,7 +245,7 @@ export class HomeView extends ConnectedLitElement {
                 <sl-button slot="footer" variant="primary" @click="${() => {
                     this.handleEditExercise()
                 }}">
-                    Add
+                    Save
                 </sl-button>
             `
         }
@@ -346,11 +346,13 @@ export class HomeView extends ConnectedLitElement {
     private renderOptionsForType(currentType: string) {
         switch (currentType) {
             case "NUMBERREPEAT":
-            case "TIMEREPEAT":
                 return this.renderFields(this.renderValueField());
+            case "TIMEREPEAT":
+                return this.renderFields(this.renderValueField(true));
             case "NUMBERINCREASE":
-            case "TIMEINCREASE":
                 return this.renderFields(this.renderValueField(), this.renderIncreaseField());
+            case "TIMEINCREASE":
+                return this.renderFields(this.renderValueField(true), this.renderIncreaseField(true));
             default:
                 return html`not implemented type`;
         }
@@ -359,7 +361,7 @@ export class HomeView extends ConnectedLitElement {
     private renderValueField(time: boolean = false) {
         return html`
             <sl-input name="exerciseValue"
-                      label="Exercise Value ${time ? "in seconds" : "in repetitions"}"
+                      .label="${(time ? "Duration" : "Repetitions") + " :"}"
                       .value="${this.exerciseDto.exerciseValue ?? ""}"
                       type="number"
             ></sl-input>`
@@ -368,7 +370,7 @@ export class HomeView extends ConnectedLitElement {
     private renderIncreaseField(time: boolean = false) {
         return html`
             <sl-input name="exerciseIncrease"
-                      label="PeriodExercise ${time ? "time increase in seconds" : "repetition increase"}"
+                      .label="${(time ? "Duration increase" : "Repetition increase") + " :"}"
                       .value="${this.exerciseDto.exerciseIncrease ?? ""}"
                       type="number"
             ></sl-input>`
