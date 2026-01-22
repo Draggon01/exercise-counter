@@ -30,9 +30,8 @@ export class ExerciseCard extends ConnectedLitElement {
         .headline {
             position: absolute;
             top: 0;
-            left: 50%;
+            left: 5px;
             max-width: 60%;
-            transform: translateX(-50%);
             padding: 8px;
             margin-top: 0;
             overflow: hidden;
