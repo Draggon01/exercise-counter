@@ -32,28 +32,81 @@ export class LoginView extends LitElement {
             display: flex;
             justify-content: center;
             align-items: center;
+            background-color: var(--sl-color-neutral-50);
+            font-family: Open Sans, sans-serif;
+        }
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 1rem;
         }
 
         .login-form {
             padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: var(--sl-border-radius-medium);
+            box-shadow: var(--sl-shadow-medium);
             background: white;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        h2 {
+            margin: 0 0 0.5rem 0;
+            text-align: center;
+            color: var(--sl-color-neutral-900);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        sl-button {
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .error-message {
+            text-align: center;
+            padding-top: 1rem;
+            color: var(--sl-color-danger-600);
+            font-weight: var(--sl-font-weight-semibold);
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                max-width: none;
+            }
+
+            .login-form {
+                padding: 1.5rem;
+                box-shadow: none;
+                border-radius: 0;
+                background: transparent;
+            }
+
+            :host {
+                background-color: white;
+                align-items: flex-start;
+                padding-top: 10vh;
+            }
         }
     `;
 
     render() {
         return html`
-            <div>
+            <div class="login-container">
                 <div class="login-form">
                     <h2>Login</h2>
                     <form @submit=${this._login}>
-                        <sl-input name="username" label="Username" required></sl-input>
-                        <sl-input name="password" type="password" label="Password" required></sl-input>
-                        <sl-button type="submit" variant="primary">Log in</sl-button>
+                        <sl-input name="username" label="Username" help-text="Enter your username" required clearable></sl-input>
+                        <sl-input name="password" type="password" label="Password" help-text="Enter your password" required password-toggle></sl-input>
+                        <sl-button type="submit" variant="primary" size="large">Log in</sl-button>
                     </form>
                 </div>
-                <div style="text-align: center; padding-top: 8px; color: red">${this.errorMessage}</div>
+                ${this.errorMessage ? html`<div class="error-message">${this.errorMessage}</div>` : ''}
             </div>
         `;
     }

@@ -64,10 +64,10 @@ public class UserController {
         List<Register> byIssuer = registerRepository.findByIssuer(principal.getUsername());
         if (byIssuer.size() > 10) {
             byIssuer.getFirst();
-            return baseUrl + "/register/" + byIssuer.getFirst().getRegisterId();
+            return "https://" + baseUrl + "/register/" + byIssuer.getFirst().getRegisterId();
         }
         Register reg = registerRepository.save(new Register(null, principal.getUsername()));
-        return baseUrl + "/register/" + reg.getRegisterId();
+        return "https://" + baseUrl + "/register/" + reg.getRegisterId();
     }
 
     @PostMapping("api/public/isInviteLinkValid")

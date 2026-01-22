@@ -16,7 +16,6 @@ export class RegisterView extends LitElement {
     private errorMessage = "";
 
     private async userExists(username: string | undefined): Promise<boolean> {
-        console.log(username)
         if(!username || username === ""){
             return false;
         }
@@ -48,7 +47,6 @@ export class RegisterView extends LitElement {
             return;
         }
 
-        console.log("register");
         await store.dispatch(registerUser({
             username: formData.get("username")!.toString(),
             password: formData.get("password1")!.toString(),
@@ -57,7 +55,6 @@ export class RegisterView extends LitElement {
 
         target.reset();
         navigate("/");
-        //void CustomRouter.goto("/");
     }
 
     static styles = css`
@@ -70,29 +67,104 @@ export class RegisterView extends LitElement {
             display: flex;
             justify-content: center;
             align-items: center;
+            background-color: var(--sl-color-neutral-50);
+            font-family: Open Sans, sans-serif;
+        }
+
+        .register-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 1rem;
         }
 
         .register-form {
             padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: var(--sl-border-radius-medium);
+            box-shadow: var(--sl-shadow-medium);
             background: white;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        h2 {
+            margin: 0 0 0.5rem 0;
+            text-align: center;
+            color: var(--sl-color-neutral-900);
+            font-size: 1.75rem;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        sl-input {
+            font-size: 1.125rem;
+        }
+
+        sl-button {
+            width: 100%;
+            margin-top: 0.5rem;
+            font-size: 1.125rem;
+            padding: 0.75rem;
+        }
+
+        .error-message {
+            text-align: center;
+            padding-top: 1rem;
+            color: var(--sl-color-danger-600);
+            font-weight: var(--sl-font-weight-semibold);
+            font-size: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .register-container {
+                max-width: none;
+            }
+
+            .register-form {
+                padding: 1.5rem;
+                box-shadow: none;
+                border-radius: 0;
+                background: transparent;
+            }
+
+            :host {
+                background-color: white;
+                align-items: flex-start;
+                padding-top: 10vh;
+            }
+
+            h2 {
+                font-size: 2rem;
+            }
+
+            sl-input {
+                font-size: 1.25rem;
+            }
+
+            sl-button {
+                font-size: 1.25rem;
+                padding: 1rem;
+            }
         }
     `;
 
     render() {
         return html`
-            <div>
+            <div class="register-container">
                 <div class="register-form">
                     <h2>Register</h2>
                     <form @submit=${this._register}>
-                        <sl-input name="username" label="Username" required></sl-input>
-                        <sl-input name="password1" type="password" label="Password" required></sl-input>
-                        <sl-input name="password2" type="password" label="Password" required></sl-input>
-                        <sl-button type="submit" variant="primary">Log in</sl-button>
+                        <sl-input name="username" label="Username" help-text="Enter your username" required clearable></sl-input>
+                        <sl-input name="password1" type="password" label="Password" help-text="Enter your password" required password-toggle></sl-input>
+                        <sl-input name="password2" type="password" label="Confirm Password" help-text="Re-enter your password" required password-toggle></sl-input>
+                        <sl-button type="submit" variant="primary" size="large">Register</sl-button>
                     </form>
                 </div>
-                <div style="text-align: center; padding-top: 8px; color: red">${this.errorMessage}</div>
+                ${this.errorMessage ? html`<div class="error-message">${this.errorMessage}</div>` : ''}
             </div>
         `;
     }
