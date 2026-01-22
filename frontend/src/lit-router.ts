@@ -90,7 +90,7 @@ export class LitRouter extends ConnectedLitElement {
     render() {
         if (!this.init) {
             return html`
-                <div>Loading...</div>`;
+                <div style="padding: 5px">Restarting...</div>`;
         }
         return this.router.outlet();
     }
