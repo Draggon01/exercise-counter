@@ -25,8 +25,42 @@ export class StatisticsView extends ConnectedLitElement {
 
         .statisticItem {
             display: flex;
-            align-items: center;
+            flex-wrap: wrap;
+            align-items: baseline;
             gap: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .statisticItem h3 {
+            margin: 0;
+            flex-basis: auto;
+            flex-shrink: 0;
+        }
+
+        .statisticItem .statisticText {
+            flex: 1 1 auto;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .chartContainer {
+            width: 100%;
+            max-width: 800px;
+            height: auto;
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .chartContainer {
+                max-width: 100%;
+                aspect-ratio: 1 / 1.25;
+                max-height: 600px;
+            }
         }
     `;
 
@@ -68,6 +102,7 @@ export class StatisticsView extends ConnectedLitElement {
         if (this.chart) {
             this.chart.destroy();
         }
+        const isMobile = window.innerWidth < 768;
 
         this.chart = new Chart(
             this.statisticCanvas.value!,
@@ -80,11 +115,19 @@ export class StatisticsView extends ConnectedLitElement {
                             display: true,
                             text: 'Exercise Completions'
                         },
+                        legend: {
+                            position: isMobile ? 'bottom' : 'top',
+                        }
                     },
                     responsive: true,
+                    maintainAspectRatio: !isMobile,
                     scales: {
                         x: {
                             stacked: true,
+                            ticks: {
+                                maxRotation: isMobile ? 45 : 0,
+                                minRotation: isMobile ? 45 : 0,
+                            }
                         },
                         y: {
                             stacked: true
@@ -141,7 +184,7 @@ export class StatisticsView extends ConnectedLitElement {
         let finishedInformation = Object.entries(this.statistic.finishedInformation);
         return html`
 
-            <div style="width: 800px">
+            <div class="chartContainer">
                 <canvas id="statistic" ${ref(this.statisticCanvas)}></canvas>
             </div>
 
@@ -154,7 +197,7 @@ export class StatisticsView extends ConnectedLitElement {
                                 return html`
                                     <div class="statisticItem">
                                         <h3 style="margin: 0">${this.statisticKeyDateResolver(key)} → </h3>
-                                        ${value.map(item => html`${item} `)}
+                                        <div class="statisticText">${value.join(', ')}</div>
                                     </div>
                                 `
                             })
