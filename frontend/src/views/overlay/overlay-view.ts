@@ -43,6 +43,15 @@ export class OverlayView extends ConnectedLitElement {
             overflow: scroll;
             display: block;
         }
+        
+        .linkField{
+            display: flex; 
+            align-items: end
+        }
+        
+        .linkField sl-input{
+            width: 70%;
+        }
     `;
 
     @state()
@@ -109,10 +118,13 @@ export class OverlayView extends ConnectedLitElement {
             <sl-dialog .open=${this.openLinkDialog}
                        @sl-hide=${() => {
                            this.openLinkDialog = false;
-                       }}>
-                <sl-input readonly
-                          .value=${this.inviteLink}
-                          label="Your invite link is:">
+                       }}
+                       label="Your invite link is:"
+            >
+                <div class="linkField">
+                    <sl-input readonly
+                              .value=${this.inviteLink}>
+                    </sl-input>
                     <sl-button slot="suffix" variant="neutral" size="medium" @click=${async () => {
                         if (this.inviteLink) {
                             await navigator.clipboard.writeText(this.inviteLink);
@@ -120,7 +132,7 @@ export class OverlayView extends ConnectedLitElement {
                     }}>
                         <sl-icon name="clipboard"></sl-icon>
                     </sl-button>
-                </sl-input>
+                </div>
 
                 <p>it works for one invite and is valid for an uncertain time</p>
             </sl-dialog>
