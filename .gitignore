@@ -39,3 +39,6 @@ frontend/node_modules/
 
 ### maven build ####
 target
+
+### env vars ###
+.env

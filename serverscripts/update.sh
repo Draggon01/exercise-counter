@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e  # Exit on error
 
+echo "Loading environment Variables"
+set -a
+source /opt/exercise-counter/build/excountvars.env
+set +a
+
 export JAVA_HOME=/opt/java/jdk-23.0.2+7
 export PATH=$JAVA_HOME/bin:$PATH
 export PATH="$HOME/.nvm/versions/node/v23.11.0/bin:$PATH"
