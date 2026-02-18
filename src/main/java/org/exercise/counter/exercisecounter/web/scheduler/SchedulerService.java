@@ -142,4 +142,14 @@ public class SchedulerService {
         exerciseRepository.save(exercise);
     }
 
+    @Transactional
+    protected void streakUpdateFunction(Exercise exercise, List<String> users) {
+        log.info("Execute StreakUpdate function for exercise: "
+                + exercise.getExerciseId()
+                + " with the title "
+                + exercise.getExerciseTitle());
+
+
+    }
+
 }
