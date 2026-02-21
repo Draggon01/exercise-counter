@@ -1,5 +1,6 @@
 package org.exercise.counter.exercisecounter.web.rest.user;
 
+import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 import org.exercise.counter.exercisecounter.web.data.register.Register;
 import org.exercise.counter.exercisecounter.web.data.register.RegisterRepository;
@@ -7,6 +8,8 @@ import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.rest.user.dto.RegisterDto;
 import org.exercise.counter.exercisecounter.web.rest.user.dto.UserDto;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -73,5 +77,19 @@ public class UserController {
     @PostMapping("api/public/isInviteLinkValid")
     public Boolean validateInviteLink(@RequestBody String registerId) {
         return registerRepository.findById(UUID.fromString(registerId)).isPresent();
+    }
+
+    @GetMapping("/api/auth/check")
+    public ResponseEntity<?> healthCheck(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
+        return ResponseEntity.ok().body(Map.of(
+                "authenticated", true,
+                "username", userDetails.getUsername()
+        ));
     }
 }

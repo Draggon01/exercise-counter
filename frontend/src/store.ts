@@ -4,6 +4,8 @@ import {exerciseReducer} from "./views/home/slice/exerciseSlice";
 import {checkReducer} from "./views/home/slice/checkSlice";
 import {statisticReducer} from "./views/statistics/slice/statisticSlice";
 import {groupReducer} from "./views/groups/slice/groupSlice";
+import {authReducer} from "./othrSlices/auth/authSlice";
+import {authMiddleware} from "./othrSlices/auth/authMiddleware";
 
 const rootReducer = combineReducers({
     user: userReducer,
@@ -11,6 +13,7 @@ const rootReducer = combineReducers({
     checks: checkReducer,
     statistic: statisticReducer,
     group: groupReducer,
+    auth: authReducer
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
@@ -20,5 +23,5 @@ export const store = configureStore({
     middleware: getDefaultMiddleware => getDefaultMiddleware({
         immutableCheck: true,
         serializableCheck: true
-    })
+    }).prepend(authMiddleware.middleware)
 });

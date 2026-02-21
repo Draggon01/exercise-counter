@@ -33,10 +33,10 @@ CREATE INDEX idx_user_group_mapping_group_id ON user_group_mapping (group_id);
 CREATE INDEX idx_exercise_group_mapping_group_id ON exercise_group_mapping (group_id);
 CREATE INDEX idx_exercise_group_mapping_exercise_id ON exercise_group_mapping (exercise_id);
 
-alter table db.public.exercise
+alter table exercise
     add column visibility varchar(256) not null default 'PRIVATE'; -- should be PRIVATE|PUBLIC|GROUPS
 
-alter table db.public.users
+alter table users
     add column issuer varchar(256); --store issuer of the link which allows to create a new account no fk because users should be deletable but reference should still stay
 
 create table register_link
@@ -44,7 +44,7 @@ create table register_link
     register_link_id uuid not null,
     creator_username          varchar(64) not null,
     CONSTRAINT pk_register_link primary key (register_link_id),
-    CONSTRAINT fk_creator_user_username foreign key (creator_username) references db.public.users (username)
-)
+    CONSTRAINT fk_creator_user_username foreign key (creator_username) references users (username)
+);
 
 
