@@ -154,7 +154,6 @@ export const userSlice = createSlice({
                 state.status = 'idle';
                 state.user = action.payload;
                 state.init = true;
-                console.log("saveUserInforFullfilled");
             })
             .addCase(logoutUser.pending, state => {
                 state.status = 'initial';
