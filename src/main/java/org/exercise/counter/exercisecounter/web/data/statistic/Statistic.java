@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +15,7 @@ import java.util.Map;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Statistic {
+public class Statistic implements Serializable {
 
     @JsonDeserialize(keyUsing = StatisticIdKeyDeserializer.class)
     private Map<StatisticId, List<String>> finishedInformation = new LinkedHashMap<>();
