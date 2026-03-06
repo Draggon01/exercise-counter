@@ -85,7 +85,7 @@ export class StatisticsView extends ConnectedLitElement {
 
     stateChanged(state: RootState) {
         this.statistic = selectStatistic(state);
-        if (this.statistic && this.statistic.finishedInformation) {
+        if (this.statistic && this.statistic.finishedInformation && this.showLastXEntries === -1) {
             this.showLastXEntries = Object.keys(this.statistic.finishedInformation).length < 10 ?
                 Object.keys(this.statistic.finishedInformation).length : 10;
         }
