@@ -9,9 +9,8 @@ import lombok.Setter;
 import org.exercise.counter.exercisecounter.web.data.exercise.Exercise;
 import org.hibernate.annotations.Type;
 
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Entity
@@ -19,6 +18,8 @@ import java.util.UUID;
 @Getter
 @Setter
 public class Period {
+
+    private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -31,4 +32,11 @@ public class Period {
     @Type(PostgreSQLRangeType.class)
     @Column(name = "time_range", columnDefinition = "tsrange", nullable = false)
     private Range<LocalDateTime> timeRange;
+
+
+    public String toKeyString() {
+        return FORMAT.format(timeRange.lower()) + ":" + FORMAT.format(timeRange.upper());
+    }
+
+
 }

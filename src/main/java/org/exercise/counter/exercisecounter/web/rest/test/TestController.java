@@ -32,32 +32,32 @@ public class TestController {
     @GetMapping("/api/test3")
     @Transactional
     public String test3() {
-        StatisticJpa statistic = statisticRepository.findById(UUID.fromString("b8848131-2d75-4a15-be6d-b0e002a056ce")).orElse(null);
-        if(statistic != null && statistic.getStatistic() != null){
-            statistic.getStatistic().upsertInformation(new StatisticId(), List.of("user1", "user2"));
-            statisticRepository.save(statistic);
-        }
+//        StatisticJpa statistic = statisticRepository.findById(UUID.fromString("b8848131-2d75-4a15-be6d-b0e002a056ce")).orElse(null);
+//        if(statistic != null && statistic.getStatistic() != null){
+//            statistic.getStatistic().upsertInformation(new StatisticId(), List.of("user1", "user2"));
+//            statisticRepository.save(statistic);
+//        }
         return "tet";
     }
 
     @GetMapping("/api/test2")
     public String test2() {
-        StatisticJpa statisticJpa = statisticRepository.findAll().stream().findFirst().orElse(null);
-        System.out.println(statisticJpa);
-        if(statisticJpa != null){
-            Statistic statistic = statisticJpa.getStatistic();
-            statistic.upsertInformation(new StatisticId(), List.of("user1", "user2"));
-            statisticRepository.save(statisticJpa);
-        }
+//        StatisticJpa statisticJpa = statisticRepository.findAll().stream().findFirst().orElse(null);
+//        System.out.println(statisticJpa);
+//        if(statisticJpa != null){
+//            Statistic statistic = statisticJpa.getStatistic();
+//            statistic.upsertInformation(new StatisticId(), List.of("user1", "user2"));
+//            statisticRepository.save(statisticJpa);
+//        }
         return "tet";
     }
 
     @GetMapping("/api/test")
     public String test() {
-        List<Exercise> all = exerciseRepository.findAll();
-        for (Exercise exercise : all) {
-            schedulerService.restartSchedulerForExTest(exercise);
-        }
+//        List<Exercise> all = exerciseRepository.findAll();
+//        for (Exercise exercise : all) {
+//            schedulerService.restartSchedulerForExTest(exercise);
+//        }
         return "Test endpoint is working!";
     }
 
