@@ -9,6 +9,9 @@ import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseRepository
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseType;
 import org.exercise.counter.exercisecounter.web.data.exercise.Visibiltiy;
 import org.exercise.counter.exercisecounter.web.data.groups.*;
+import org.exercise.counter.exercisecounter.web.data.statistic.FinishedUserRepository;
+import org.exercise.counter.exercisecounter.web.data.statistic.Period;
+import org.exercise.counter.exercisecounter.web.data.statistic.PeriodRepository;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelection;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionId;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
@@ -37,6 +40,8 @@ public class ExerciseController {
     private final ExerciseGroupMappingRepository exerciseGroupMappingRepository;
     private final UserGroupMappingRepository userGroupMappingRepository;
     private final UserSelectionRepository userSelectionRepository;
+    private final PeriodRepository periodRepository;
+    private final FinishedUserRepository finishedUserRepository;
 
 
     public ExerciseController(
@@ -45,13 +50,15 @@ public class ExerciseController {
             SchedulerService schedulerService,
             ExerciseGroupMappingRepository exerciseGroupMappingRepository,
             UserGroupMappingRepository userGroupMappingRepository,
-            UserSelectionRepository userSelectionRepository) {
+            UserSelectionRepository userSelectionRepository, PeriodRepository periodRepository, FinishedUserRepository finishedUserRepository) {
         this.exerciseRepository = exerciseRepository;
         this.checkRepository = checkRepository;
         this.schedulerService = schedulerService;
         this.exerciseGroupMappingRepository = exerciseGroupMappingRepository;
         this.userGroupMappingRepository = userGroupMappingRepository;
         this.userSelectionRepository = userSelectionRepository;
+        this.periodRepository = periodRepository;
+        this.finishedUserRepository = finishedUserRepository;
     }
 
     @GetMapping("/exercises/list")
@@ -227,7 +234,7 @@ public class ExerciseController {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         String username = user.getUsername();
         return checkRepository.findCheckByCheckIdUsername(username).stream().map(
-                check -> new CheckDto(check.getCheckId().getExerciseId(), username)
+                check -> new CheckDto(check.getCheckId().getExerciseId(), username, -1)
         ).toList();
     }
 
@@ -238,9 +245,30 @@ public class ExerciseController {
                         .stream()
                         .map(check ->
                                 new CheckDto(check.getCheckId().getExerciseId(),
-                                        check.getCheckId().getUsername()))
+                                        check.getCheckId().getUsername(), getStreak(check)))
                         .toList()
         ));
+    }
+
+    private Integer getStreak(Check check) {
+        List<Period> periods = periodRepository.findByExerciseExerciseId(check.getCheckId().getExerciseId());
+        List<Period> sortedPeriods = periods.stream()
+                .sorted((p1, p2) -> p2.getTimeRange().lower().compareTo(p1.getTimeRange().lower()))
+                .toList();
+
+        int streak = 1; // 1 to add the one from checked if it is shown
+        for (Period period : sortedPeriods) {
+            boolean finished = finishedUserRepository.findByPeriod_PeriodId(period.getPeriodId())
+                    .stream()
+                    .anyMatch(fu -> fu.getUsername().getUsername().equals(check.getCheckId().getUsername()));
+
+            if (finished) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+        return streak;
     }
 
     @PostMapping("/check/save")

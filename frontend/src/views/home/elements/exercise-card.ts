@@ -106,7 +106,7 @@ export class ExerciseCard extends ConnectedLitElement {
                     <div>Finished By:</div>
                     <div>
                         ${this.finishedUser.map((check, idx) => 
-                                check.user + ((idx < this.finishedUser.length - 1) ? ", " : ""))}
+                                check.user + "{" + check.streak + "}" + ((idx < this.finishedUser.length - 1) ? ", " : ""))}
                     </div>
                 </div>
                 <div class="buttonBar">

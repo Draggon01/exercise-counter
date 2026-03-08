@@ -8,6 +8,8 @@ public record CheckDto(
         @JsonProperty("exerciseId")
         UUID exerciseId,
         @JsonProperty("user")
-        String user
+        String user,
+        @JsonProperty("streak")
+        Integer streak
 ) {
 }
