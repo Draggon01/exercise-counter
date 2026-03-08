@@ -1,6 +1,5 @@
 package org.exercise.counter.exercisecounter.web.rest.exercise;
 
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.exercise.counter.exercisecounter.web.data.checks.Check;
 import org.exercise.counter.exercisecounter.web.data.checks.CheckId;
@@ -10,9 +9,6 @@ import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseRepository
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseType;
 import org.exercise.counter.exercisecounter.web.data.exercise.Visibiltiy;
 import org.exercise.counter.exercisecounter.web.data.groups.*;
-import org.exercise.counter.exercisecounter.web.data.statistic.Statistic;
-import org.exercise.counter.exercisecounter.web.data.statistic.StatisticJpa;
-import org.exercise.counter.exercisecounter.web.data.statistic.StatisticRepository;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelection;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionId;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
@@ -25,7 +21,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -34,23 +33,25 @@ public class ExerciseController {
 
     private final ExerciseRepository exerciseRepository;
     private final CheckRepository checkRepository;
-    private final StatisticRepository statisticRepository;
     private final SchedulerService schedulerService;
     private final ExerciseGroupMappingRepository exerciseGroupMappingRepository;
     private final UserGroupMappingRepository userGroupMappingRepository;
     private final UserSelectionRepository userSelectionRepository;
-    private final EntityManager em;
 
 
-    public ExerciseController(ExerciseRepository exerciseRepository, CheckRepository checkRepository, StatisticRepository statisticRepository, SchedulerService schedulerService, ExerciseGroupMappingRepository exerciseGroupMappingRepository, UserGroupMappingRepository userGroupMappingRepository, UserSelectionRepository userSelectionRepository, EntityManager entityManager) {
+    public ExerciseController(
+            ExerciseRepository exerciseRepository,
+            CheckRepository checkRepository,
+            SchedulerService schedulerService,
+            ExerciseGroupMappingRepository exerciseGroupMappingRepository,
+            UserGroupMappingRepository userGroupMappingRepository,
+            UserSelectionRepository userSelectionRepository) {
         this.exerciseRepository = exerciseRepository;
         this.checkRepository = checkRepository;
-        this.statisticRepository = statisticRepository;
         this.schedulerService = schedulerService;
         this.exerciseGroupMappingRepository = exerciseGroupMappingRepository;
         this.userGroupMappingRepository = userGroupMappingRepository;
         this.userSelectionRepository = userSelectionRepository;
-        this.em = entityManager;
     }
 
     @GetMapping("/exercises/list")
@@ -185,12 +186,6 @@ public class ExerciseController {
                                 save.getExerciseId())
                 )
         );
-
-        //create statistic entry if not there already
-        Optional<StatisticJpa> byId = statisticRepository.findById(save.getExerciseId());
-        if (byId.isEmpty()) {
-            statisticRepository.save(new StatisticJpa(save.getExerciseId(), new Statistic()));
-        }
         schedulerService.restartSchedulerFor(save);
         return new ExerciseDto(
                 save.getExerciseId(),
