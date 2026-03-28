@@ -1,5 +1,6 @@
 package org.exercise.counter.exercisecounter.web.rest.groups;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -7,14 +8,15 @@ import java.util.stream.Collectors;
 import org.exercise.counter.exercisecounter.web.data.groups.*;
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
+import org.exercise.counter.exercisecounter.web.rest.groups.dto.CreateGroupRequestDto;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.GroupInformationDto;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.UserGroupMappingDto;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.ExerciseGroupMappingDto;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController()
 @RequestMapping("/api/groups")
@@ -48,29 +50,59 @@ public class GroupsController {
         return userGroupMappingRepository.findAll().stream()
                 .collect(Collectors.groupingBy(
                         mapping -> mapping.getUserGroupMappingId().getUsername(),
-                        Collectors.mapping(mapping -> new GroupInformationDto(mapping.getGroup().getGroupName(), mapping.getIsInvited()), Collectors.toList())))
+                        Collectors.mapping(mapping -> new GroupInformationDto(
+                                mapping.getGroup().getGroupName(),
+                                mapping.getIsInvited(),
+                                mapping.getGroup().getVisibility()), Collectors.toList())))
                 .entrySet().stream()
                 .map(entry -> new UserGroupMappingDto(entry.getKey(), entry.getValue()))
                 .toList();
     }
 
+    @GetMapping("/public/search")
+    public List<String> searchPublicGroups(@RequestParam String query) {
+        return groupRepository.findByGroupNameContainingIgnoreCaseAndVisibility(query, GroupVisibility.PUBLIC)
+                .stream()
+                .map(Group::getGroupName)
+                .toList();
+    }
+
     @PostMapping("/user/create")
-    public UserGroupMappingDto createGroupOnUser(@RequestBody String groupName, Authentication authentication) {
+    public UserGroupMappingDto createGroupOnUser(@RequestBody CreateGroupRequestDto request, Authentication authentication) {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         String username = user.getUsername();
+
         Group group = new Group();
-        group.setGroupName(groupName);
+        group.setGroupName(request.groupName());
+        group.setVisibility(request.visibility() != null ? request.visibility() : GroupVisibility.INVITE_ONLY);
         Group save = groupRepository.save(group);
         userGroupMappingRepository.save(new UserGroupMapping(username, save.getGroupId()));
 
-        return new UserGroupMappingDto(
-                username,
-                userGroupMappingRepository.findByUserGroupMappingId_Username(username)
-                        .stream()
-                        .map(mapping ->
-                                new GroupInformationDto(
-                                        mapping.getGroup() == null ? groupName : mapping.getGroup().getGroupName(),
-                                        mapping.getIsInvited() != null && mapping.getIsInvited())).toList());
+        return buildUserMappingDto(username);
+    }
+
+    @PostMapping("/user/join")
+    public UserGroupMappingDto joinPublicGroup(@RequestBody String groupName, Authentication authentication) {
+        UserDetails user = (UserDetails) authentication.getPrincipal();
+        String username = user.getUsername();
+
+        List<Group> byGroupName = groupRepository.findByGroupName(groupName);
+        if (byGroupName.size() != 1) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
+        }
+
+        Group group = byGroupName.getFirst();
+        if (group.getVisibility() != GroupVisibility.PUBLIC) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Group is not public");
+        }
+
+        Optional<UserGroupMapping> existing = userGroupMappingRepository.findById(
+                new UserGroupMappingId(username, group.getGroupId()));
+        if (existing.isEmpty()) {
+            userGroupMappingRepository.save(new UserGroupMapping(username, group.getGroupId()));
+        }
+
+        return buildUserMappingDto(username);
     }
 
     @PostMapping("/user/delete")
@@ -85,22 +117,14 @@ public class GroupsController {
 
         if (userGroupMapping != null) {
             userGroupMappingRepository.deleteById(userGroupMapping.getUserGroupMappingId());
-            //check if group is used by other users
             if (userGroupMappingRepository.findByUserGroupMappingId_GroupId(userGroupMapping.getGroup().getGroupId()).isEmpty()) {
                 groupRepository.deleteById(userGroupMapping.getGroup().getGroupId());
             }
         }
 
-        return new UserGroupMappingDto(
-                username,
-                userGroupMappingRepository.findByUserGroupMappingId_Username(username)
-                        .stream()
-                        .map(mapping ->
-                                new GroupInformationDto(
-                                        mapping.getGroup().getGroupName(),
-                                        mapping.getIsInvited())).toList());
-
+        return buildUserMappingDto(username);
     }
+
     @PostMapping("/user/accept")
     public UserGroupMappingDto acceptUserToGroup(@RequestBody String groupName, Authentication authentication) {
         UserDetails user = (UserDetails) authentication.getPrincipal();
@@ -110,19 +134,12 @@ public class GroupsController {
                 .stream()
                 .filter(mapping -> mapping.getGroup().getGroupName().equals(groupName) && mapping.getIsInvited())
                 .findFirst();
-        if(first.isPresent()) {
+        if (first.isPresent()) {
             first.get().setIsInvited(false);
             userGroupMappingRepository.save(first.get());
         }
 
-        return new UserGroupMappingDto(
-                username,
-                userGroupMappingRepository.findByUserGroupMappingId_Username(username)
-                        .stream()
-                        .map(mapping ->
-                                new GroupInformationDto(
-                                        mapping.getGroup().getGroupName(),
-                                        mapping.getIsInvited())).toList());
+        return buildUserMappingDto(username);
     }
 
     @PostMapping("/user/invite")
@@ -131,17 +148,17 @@ public class GroupsController {
         String groupName = request.get("groupName");
 
         Optional<User> byUsername = userRepository.findByUsername(username);
-        if(byUsername.isEmpty()) {
+        if (byUsername.isEmpty()) {
             return false;
         }
 
         List<Group> byGroupName = groupRepository.findByGroupName(groupName);
-        if(byGroupName.size() != 1){
+        if (byGroupName.size() != 1) {
             return false;
         }
 
         Optional<UserGroupMapping> byId = userGroupMappingRepository.findById(new UserGroupMappingId(username, byGroupName.getFirst().getGroupId()));
-        if(byId.isPresent()){
+        if (byId.isPresent()) {
             return false;
         }
 
@@ -153,4 +170,15 @@ public class GroupsController {
         return true;
     }
 
+    private UserGroupMappingDto buildUserMappingDto(String username) {
+        return new UserGroupMappingDto(
+                username,
+                userGroupMappingRepository.findByUserGroupMappingId_Username(username)
+                        .stream()
+                        .map(mapping -> new GroupInformationDto(
+                                mapping.getGroup() == null ? null : mapping.getGroup().getGroupName(),
+                                mapping.getIsInvited() != null && mapping.getIsInvited(),
+                                mapping.getGroup() == null ? null : mapping.getGroup().getVisibility()))
+                        .toList());
+    }
 }

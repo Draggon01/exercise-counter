@@ -8,11 +8,15 @@ import {
     createGroupOnUser,
     deleteGroupOnUser,
     inviteUserToGroup,
+    joinPublicGroup,
     listUserMappings,
+    searchPublicGroups,
+    selectPublicGroupSearchResults,
     selectUserMappingByUser
 } from "./slice/groupSlice";
 import {selectCurrentUser} from "../login/slice/userSlice";
 import {GroupInformationDto} from "./models/GroupInformationDto";
+import {GroupVisibility} from "./models/GroupVisibility";
 import {createRef, ref, Ref} from "lit/directives/ref.js";
 import {SlInput} from "@shoelace-style/shoelace";
 
@@ -44,6 +48,8 @@ export class GroupsView extends ConnectedLitElement {
         }
 
         .actions {
+            display: flex;
+            gap: 8px;
             margin-bottom: 1rem;
         }
 
@@ -86,6 +92,57 @@ export class GroupsView extends ConnectedLitElement {
             color: green;
         }
 
+        .visibility-badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            flex-shrink: 0;
+        }
+
+        .visibility-badge.public {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .visibility-badge.invite-only {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .search-results {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-top: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item:hover {
+            background: #f0f9ff;
+        }
+
+        .search-result-item.selected {
+            background: #e0f2fe;
+            font-weight: bold;
+        }
+
+        .no-results {
+            padding: 8px 12px;
+            color: #666;
+            font-style: italic;
+        }
+
         @media (max-width: 768px) {
             :host {
                 padding: 0.5rem;
@@ -111,16 +168,31 @@ export class GroupsView extends ConnectedLitElement {
     groupName: string = "";
 
     @state()
+    groupVisibility: GroupVisibility = "INVITE_ONLY";
+
+    @state()
     openWarningDialog: boolean = false;
 
     @state()
     openInviteDialog: boolean = false;
 
     @state()
+    openJoinDialog: boolean = false;
+
+    @state()
     groupToDelete?: string = "";
 
     @state()
     inviteToGroup?: string = "";
+
+    @state()
+    joinSearchQuery: string = "";
+
+    @state()
+    joinSearchResults: string[] = [];
+
+    @state()
+    selectedGroupToJoin: string = "";
 
     formRef: Ref<HTMLFormElement> = createRef();
 
@@ -136,6 +208,7 @@ export class GroupsView extends ConnectedLitElement {
             let groups = selectUserMappingByUser(state, user.username)
             this.groups = groups ? groups.groupInformation : [];
         }
+        this.joinSearchResults = selectPublicGroupSearchResults(state);
     }
 
     protected render() {
@@ -157,6 +230,16 @@ export class GroupsView extends ConnectedLitElement {
                             variant="primary"
                     >
                         Create Group
+                    </sl-button>
+                    <sl-button
+                            @click="${() => {
+                                this.joinSearchQuery = "";
+                                this.selectedGroupToJoin = "";
+                                this.openJoinDialog = true;
+                            }}"
+                            variant="default"
+                    >
+                        Join Group
                     </sl-button>
                 </div>
                 <div class="groups-list">
@@ -185,6 +268,9 @@ export class GroupsView extends ConnectedLitElement {
                             html`
                                 <div class="groupCard">
                                     <div class="group-label">${group.groupName}</div>
+                                    <span class="visibility-badge ${group.visibility === 'PUBLIC' ? 'public' : 'invite-only'}">
+                                        ${group.visibility === 'PUBLIC' ? 'Public' : 'Invite only'}
+                                    </span>
                                     <div class="group-actions">
                                         <sl-icon-button
                                                 name="plus-lg"
@@ -212,6 +298,16 @@ export class GroupsView extends ConnectedLitElement {
                            this.openGroupDialog = false;
                        }}">
                 ${this.renderGroupCreateDialog()}
+            </sl-dialog>
+
+            <sl-dialog label="Join Public Group"
+                       .open="${this.openJoinDialog}"
+                       @sl-hide="${() => {
+                           this.openJoinDialog = false;
+                           this.joinSearchQuery = "";
+                           this.selectedGroupToJoin = "";
+                       }}">
+                ${this.renderJoinDialog()}
             </sl-dialog>
 
             <sl-dialog .open="${this.openWarningDialog}"
@@ -246,9 +342,19 @@ export class GroupsView extends ConnectedLitElement {
                         pattern="[^\\s]+"
                         required>
                 </sl-input>
+                <sl-radio-group
+                        label="Visibility"
+                        name="visibility"
+                        .value="${this.groupVisibility}"
+                        @sl-change="${(e: any) => { this.groupVisibility = e.target.value as GroupVisibility; }}"
+                        style="margin-top: 1rem;">
+                    <sl-radio value="INVITE_ONLY">Invite Only</sl-radio>
+                    <sl-radio value="PUBLIC">Public</sl-radio>
+                </sl-radio-group>
             </form>
             <sl-button slot="footer" variant="danger" @click="${() => {
                 this.groupName = "";
+                this.groupVisibility = "INVITE_ONLY";
                 this.openGroupDialog = false;
             }}">
                 Close
@@ -271,12 +377,67 @@ export class GroupsView extends ConnectedLitElement {
         if (this.formRef.value!.checkValidity()) {
             let formData = new FormData(this.formRef.value!);
             let groupName = formData!.get("groupName")!.toString();
-            store.dispatch(createGroupOnUser(groupName))
+            store.dispatch(createGroupOnUser({groupName, visibility: this.groupVisibility}))
             this.openGroupDialog = false;
             this.groupName = "";
+            this.groupVisibility = "INVITE_ONLY";
         } else {
             this.formRef.value!.reportValidity();
         }
+    }
+
+    private renderJoinDialog() {
+        return html`
+            <p>Search for public groups to join:</p>
+            <sl-input
+                    label="Group Name"
+                    placeholder="Type to search..."
+                    .value="${this.joinSearchQuery}"
+                    @sl-input="${(e: any) => {
+                        this.joinSearchQuery = e.target.value;
+                        this.selectedGroupToJoin = "";
+                        if (this.joinSearchQuery.length > 0) {
+                            store.dispatch(searchPublicGroups(this.joinSearchQuery));
+                        } else {
+                            store.dispatch({type: 'group/clearSearch'});
+                        }
+                    }}">
+            </sl-input>
+            ${this.joinSearchQuery.length > 0 ? html`
+                <div class="search-results">
+                    ${this.joinSearchResults.length > 0 ? this.joinSearchResults.map(name => html`
+                        <div class="search-result-item ${this.selectedGroupToJoin === name ? 'selected' : ''}"
+                             @click="${() => {
+                                 this.selectedGroupToJoin = name;
+                                 this.joinSearchQuery = name;
+                             }}">
+                            ${name}
+                        </div>
+                    `) : html`
+                        <div class="no-results">No public groups found</div>
+                    `}
+                </div>
+            ` : ''}
+            <sl-button slot="footer" variant="primary" @click="${() => {
+                this.openJoinDialog = false;
+                this.joinSearchQuery = "";
+                this.selectedGroupToJoin = "";
+            }}">
+                Close
+            </sl-button>
+            <sl-button slot="footer" variant="success"
+                       ?disabled="${!this.selectedGroupToJoin}"
+                       @click="${() => {
+                           if (this.selectedGroupToJoin) {
+                               store.dispatch(joinPublicGroup(this.selectedGroupToJoin));
+                               this.openJoinDialog = false;
+                               this.joinSearchQuery = "";
+                               this.selectedGroupToJoin = "";
+                           }
+                       }}">
+                Join
+            </sl-button>
+        `;
     }
 
     private renderWarningDialog() {

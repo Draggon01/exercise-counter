@@ -7,4 +7,6 @@ import java.util.UUID;
 
 public interface GroupRepository extends JpaRepository<Group, UUID> {
     List<Group> findByGroupName(String groupName);
+
+    List<Group> findByGroupNameContainingIgnoreCaseAndVisibility(String groupName, GroupVisibility visibility);
 }
