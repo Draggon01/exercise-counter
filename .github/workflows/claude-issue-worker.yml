@@ -8,7 +8,7 @@ jobs:
     # Only run on issue comments (not PR comments) by YOU
     if: |
       github.event.issue.pull_request == null &&
-      github.event.comment.user.login == 'YOUR_GITHUB_USERNAME' &&
+      github.event.comment.user.login == 'Draggon01' &&
       contains(github.event.comment.body, '@claude')
 
     runs-on: [self-hosted, pi, claude]
