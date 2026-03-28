@@ -36,6 +36,9 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
 
+          git config user.name "Claude Bot"
+          git config user.email "claude-bot@noreply"
+
           BRANCH="claude/fix-issue-${ISSUE_NUMBER}"
           git checkout -b "$BRANCH"
 
@@ -81,7 +84,7 @@ jobs:
           git config user.email "claude-bot@noreply"
 
           # Only push if there are actual changes
-          if git diff --quiet HEAD; then
+          if git diff --quiet HEAD && git diff --cached --quiet; then
             echo "No changes made by Claude."
             gh issue comment "$ISSUE_NUMBER" \
               --body "🤖 Claude analyzed this issue but made no code changes. Check the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."
