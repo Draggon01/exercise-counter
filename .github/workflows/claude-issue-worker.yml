@@ -32,7 +32,7 @@ jobs:
           TRIGGER_COMMENT: ${{ github.event.comment.body }}
           REPO: ${{ github.repository }}
         run: |
-          cd /mnt/external/repos/${{ github.event.repository.name }}
+          cd $GITHUB_WORKSPACE
 
           BRANCH="claude/fix-issue-${ISSUE_NUMBER}"
           git checkout -b "$BRANCH"
@@ -72,7 +72,7 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
         run: |
-          cd /mnt/external/repos/${{ github.event.repository.name }}
+          cd $GITHUB_WORKSPACE
           BRANCH="claude/fix-issue-${ISSUE_NUMBER}"
 
           git config user.name "Claude Bot"
