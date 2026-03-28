@@ -26,23 +26,78 @@ export class GroupsView extends ConnectedLitElement {
             padding: 1rem;
         }
 
+        .page-container {
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
         .header {
             display: flex;
             align-items: center;
             gap: 20px;
-            grid-template-columns: auto auto;
+            margin-bottom: 1rem;
+        }
+
+        .header h2 {
+            margin: 0;
+        }
+
+        .actions {
+            margin-bottom: 1rem;
+        }
+
+        .groups-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .groupCard {
-            display: grid;
-            grid-template-columns: auto 1fr auto;
+            display: flex;
             align-items: center;
-            min-height: 30px;
+            min-height: 44px;
             border: 1px solid teal;
             border-radius: 8px;
-            margin: 3px;
-            width: fit-content;
-            min-width: 120px;
+            padding: 0 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .group-label {
+            flex: 1;
+            margin-left: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .group-actions {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .icon-decline {
+            color: red;
+        }
+
+        .icon-accept {
+            color: green;
+        }
+
+        @media (max-width: 768px) {
+            :host {
+                padding: 0.5rem;
+            }
+
+            .header {
+                gap: 12px;
+            }
+
+            .groupCard {
+                min-height: 48px;
+            }
         }
     `;
 
@@ -85,7 +140,7 @@ export class GroupsView extends ConnectedLitElement {
 
     protected render() {
         return html`
-            <div>
+            <div class="page-container">
                 <div class="header">
                     <sl-button
                             @click="${() => {
@@ -96,7 +151,7 @@ export class GroupsView extends ConnectedLitElement {
                     </sl-button>
                     <h2>Groups</h2>
                 </div>
-                <div>
+                <div class="actions">
                     <sl-button
                             @click="${() => this.openGroupDialog = true}"
                             variant="primary"
@@ -104,23 +159,22 @@ export class GroupsView extends ConnectedLitElement {
                         Create Group
                     </sl-button>
                 </div>
-                <div>
+                <div class="groups-list">
                     ${this.groups.map(group => group.isInvited ?
                             html`
                                 <div class="groupCard">
-                                    <div style="margin-left: 4px">Invited to group: ${group.groupName}</div>
-                                    <div></div>
-                                    <div>
+                                    <div class="group-label">Invited to group: ${group.groupName}</div>
+                                    <div class="group-actions">
                                         <sl-icon-button
+                                                class="icon-decline"
                                                 name="x-lg"
-                                                style="color: red"
                                                 @click="${() => {
                                                     store.dispatch(deleteGroupOnUser(group.groupName));
                                                 }}">
                                         </sl-icon-button>
                                         <sl-icon-button
+                                                class="icon-accept"
                                                 name="check-lg"
-                                                style="color: green"
                                                 @click="${() => {
                                                     store.dispatch(acceptGroupToUser(group.groupName))
                                                 }}">
@@ -130,22 +184,21 @@ export class GroupsView extends ConnectedLitElement {
                             ` :
                             html`
                                 <div class="groupCard">
-                                    <div style="margin-left: 4px">${group.groupName}</div>
-                                    <div></div>
-                                    <div>
+                                    <div class="group-label">${group.groupName}</div>
+                                    <div class="group-actions">
                                         <sl-icon-button
                                                 name="plus-lg"
                                                 @click="${() => {
                                                     this.inviteToGroup = group.groupName;
                                                     this.openInviteDialog = true;
-                                                }}">delete
+                                                }}">
                                         </sl-icon-button>
                                         <sl-icon-button
                                                 name="trash"
                                                 @click="${() => {
                                                     this.groupToDelete = group.groupName;
                                                     this.openWarningDialog = true;
-                                                }}">delete
+                                                }}">
                                         </sl-icon-button>
                                     </div>
                                 </div>
