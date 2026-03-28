@@ -88,7 +88,8 @@ jobs:
           git config user.email "claude-bot@noreply"
 
           # Only push if there are actual changes
-          if git diff --quiet HEAD && git diff --cached --quiet; then
+          COMMITS_AHEAD=$(git rev-list --count main..HEAD)
+          if [ "$COMMITS_AHEAD" -eq 0 ]; then
             echo "No changes made by Claude."
             gh issue comment "$ISSUE_NUMBER" \
               --body "🤖 Claude analyzed this issue but made no code changes. Check the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."
