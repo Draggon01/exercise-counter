@@ -29,6 +29,8 @@ public record ExerciseDto(
         @JsonProperty("visibility")
         Visibiltiy visibility,
         @JsonProperty("groups")
-        List<String> groups
+        List<String> groups,
+        @JsonProperty("timeLeftSeconds")
+        Long timeLeftSeconds
 ) {
 }

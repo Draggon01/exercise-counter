@@ -20,4 +20,5 @@ Full-stack exercise tracking app with:
 - Inline styles (`style="color: red"`) should be moved to CSS classes for consistency
 - `groupCard` elements should use `width: 100%; box-sizing: border-box` (not `width: fit-content`) to fill containers properly on desktop
 - The `.header` class in groups/statistics views uses `display: flex` — the `grid-template-columns` property in the original groups-view was dead code (flex ignores it)
-- `exercise-card.ts` shows time left until next reset using `startTime` (HH:MM:SS, user's timezone) and `daysRepeat`; if today's reset time has already passed, the next reset is `daysRepeat` days later. Display ">= 1 day" as "X Days left", otherwise "X Hours left". Urgent (< 6h) is highlighted in orange.
+- `exercise-card.ts` shows time left until next reset using `timeLeftSeconds` from the backend DTO (calculated server-side). Display ">= 1 day" as "X Days left", otherwise "X Hours left". Urgent (< 6h) is highlighted in orange.
+- `utcOffset` in Exercise is in hours (not minutes). The backend calculates `startTimeUtc = startTime.minusHours(utcOffset)` to convert the user's local reset time to UTC. `calculateTimeLeftSeconds()` in `ExerciseController` uses this to compute `timeLeftSeconds` returned in `ExerciseDto`.
