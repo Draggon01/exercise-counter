@@ -69,7 +69,7 @@ jobs:
 
           # Run Claude Code headless, max 15 turns to limit cost
           claude -p "$PROMPT" \
-            --max-turns 15 \
+            --max-turns 25 \
             --allowedTools "Edit,MultiEdit,Write,Read,Bash,Grep,Glob" \
             --output-format text \
             > /tmp/claude-output.txt 2>&1
