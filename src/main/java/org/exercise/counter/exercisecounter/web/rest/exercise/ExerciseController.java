@@ -22,12 +22,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -155,17 +151,7 @@ public class ExerciseController {
     }
 
     private long calculateTimeLeftSeconds(Exercise exercise) {
-        ZoneId utc = ZoneId.of("UTC");
-        ZonedDateTime now = ZonedDateTime.now(utc);
-        LocalDate today = now.toLocalDate();
-        int offsetHours = exercise.getUtcOffset() != null ? exercise.getUtcOffset() : 0;
-        int daysRepeat = exercise.getDaysRepeat() != null ? exercise.getDaysRepeat() : 1;
-        LocalTime startTimeUtc = exercise.getStartTime().minusHours(offsetHours);
-        ZonedDateTime nextReset = ZonedDateTime.of(today, startTimeUtc, utc);
-        if (!nextReset.isAfter(now)) {
-            nextReset = nextReset.plusDays(daysRepeat);
-        }
-        return ChronoUnit.SECONDS.between(now, nextReset);
+        return schedulerService.getTimeLeftSeconds(exercise.getExerciseId());
     }
 
     private List<String> GroupsForExercise(UUID exerciseId) {
