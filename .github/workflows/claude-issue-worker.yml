@@ -59,6 +59,7 @@ jobs:
           3. Add or update tests if applicable.
           4. Commit your changes with a descriptive commit message referencing #${ISSUE_NUMBER}.
           5. Do NOT push or create a PR yourself — the workflow handles that.
+          6. If you discover anything useful about the project structure, conventions, or gotchas that would help future runs, append it to CLAUDE.md under a '## Learned' section and commit that too.
 
           Work only within this repository. Do not modify unrelated files."
 
@@ -71,7 +72,9 @@ jobs:
 
           echo "=== Claude output ==="
           cat /tmp/claude-output.json
-
+      - name: Show Claude output
+        if: always()
+        run: cat /tmp/claude-output.json || echo "No output file found"
       - name: Push branch and open PR
         env:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
