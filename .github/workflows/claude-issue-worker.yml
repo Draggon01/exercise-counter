@@ -43,8 +43,12 @@ jobs:
           git checkout -b "$BRANCH"
 
           # Build prompt
-          PROMPT="You are working on the GitHub repository '${REPO}'.
+          PROMPT="You are working on the GitHub repository '${REPO}'
+          and are required to track your work with 'git add -A && git commit -m \"fix: description (#${ISSUE_NUMBER})\"' 
+          even before your final response to prevent workloss after running into limits, priotice commits over perfection everyting at first.
 
+          IMPORTANT: Read CLAUDE.md in the repo root first before doing anything else. It contains essential project information that will save you time.
+          
           Issue #${ISSUE_NUMBER}: ${ISSUE_TITLE}
 
           Issue description:
@@ -67,14 +71,11 @@ jobs:
           claude -p "$PROMPT" \
             --max-turns 15 \
             --allowedTools "Edit,MultiEdit,Write,Read,Bash,Grep,Glob" \
-            --output-format json \
-            > /tmp/claude-output.json 2>&1
+            --output-format text \
+            > /tmp/claude-output.txt 2>&1
 
           echo "=== Claude output ==="
           cat /tmp/claude-output.json
-      - name: Show Claude output
-        if: always()
-        run: cat /tmp/claude-output.json || echo "No output file found"
       - name: Push branch and open PR
         env:
           ISSUE_NUMBER: ${{ github.event.issue.number }}

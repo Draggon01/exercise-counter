@@ -60,6 +60,9 @@ npm run build           # build for production
 ## Git
 - Always run: `git add -A && git commit -m "fix: description (#ISSUE_NUMBER)"`
 - Commit before finishing — do not leave changes uncommitted
+- Do not make a pr, there is a workflow for that
+
+
 
 ## Do Not Touch
 nothing distinct for now
