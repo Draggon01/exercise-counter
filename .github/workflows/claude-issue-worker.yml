@@ -76,6 +76,17 @@ jobs:
 
           echo "=== Claude output ==="
           cat /tmp/claude-output.txt
+      - name: Commit any uncommitted Claude changes
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          cd $GITHUB_WORKSPACE
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+          else
+            git commit -m "fix: Claude changes for issue #${ISSUE_NUMBER}"
+          fi
       - name: Push branch and open PR
         env:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -112,5 +123,5 @@ jobs:
           **Please review carefully before merging.**
 
           Closes #${ISSUE_NUMBER}" \
-            --base main \
+            --base "$DEFAULT_BRANCH" \
             --head "$BRANCH"
