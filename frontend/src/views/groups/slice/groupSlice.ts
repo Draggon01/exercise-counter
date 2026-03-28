@@ -220,6 +220,7 @@ export const groupSlice = createSlice({
             })
             .addCase(createGroupOnUser.fulfilled, (state, action) => {
                 state.exerciseMappings.status = 'idle';
+                console.log(action.payload);
                 userMappingsAdapter.upsertOne(state.userMappings, action.payload);
             })
             .addCase(deleteGroupOnUser.pending, state => {
