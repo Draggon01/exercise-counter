@@ -100,13 +100,15 @@ export class ExerciseCard extends ConnectedLitElement {
                 <div class="options">
                     <div></div>
                     ${this.user && this.user.username === this.item.creator ? html`
-                        <sl-icon-button name="layer-backward" style="color: lightblue" @click="${this._hideClick}"></sl-icon-button>
+                        <sl-icon-button name="layer-backward" style="color: lightblue"
+                                        @click="${this._hideClick}"></sl-icon-button>
                         <sl-icon-button name="pencil" @click="${this._editClick}"></sl-icon-button>
                         <sl-icon-button name="trash" style="color:red" @click="${this._trashClick}"></sl-icon-button>
                     ` : html`
                         <div></div>
                         <div></div>
-                        <sl-icon-button name="layer-backward" style="color: lightblue" @click="${this._hideClick}"></sl-icon-button>
+                        <sl-icon-button name="layer-backward" style="color: lightblue"
+                                        @click="${this._hideClick}"></sl-icon-button>
                     `}
                 </div>
                 <div class="element-box">
@@ -143,12 +145,16 @@ export class ExerciseCard extends ConnectedLitElement {
 
         const totalHours = secs / 3600;
         const days = Math.floor(totalHours / 24);
+        const hours = Math.floor(totalHours - days * 24);
+        const minutes = (secs - days * 24 * 3600 - hours * 3600) / 60;
 
         if (days >= 1) {
-            return `${days} ${days === 1 ? 'Day' : 'Days'} left`;
+            return `${days} ${days === 1 ? 'Day' : 'Days'} and ${hours} ${hours === 1 ? 'Hour' : 'Hours'} left`;
         }
-        const hours = Math.floor(totalHours);
-        return `${hours} ${hours === 1 ? 'Hour' : 'Hours'} left`;
+        if (hours >= 1) {
+            return `${hours} ${hours === 1 ? 'Hour' : 'Hours'} left`;
+        }
+        return `${minutes} ${minutes === 1 ? 'Minute' : 'Minutes'} left`;
     }
 
     private _isUrgent(): boolean {
