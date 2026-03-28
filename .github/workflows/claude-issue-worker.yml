@@ -23,9 +23,6 @@ jobs:
     steps:
       - name: Checkout repo to external drive
         uses: actions/checkout@v4
-        with:
-          path: /mnt/external/repos/${{ github.event.repository.name }}
-          fetch-depth: 0
 
       - name: Run Claude Code on issue
         env:
