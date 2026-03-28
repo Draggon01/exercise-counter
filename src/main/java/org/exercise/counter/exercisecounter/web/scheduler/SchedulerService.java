@@ -62,6 +62,12 @@ public class SchedulerService {
         }
     }
 
+    public long getTimeLeftSeconds(UUID exerciseId) {
+        ScheduledFuture<?> future = scheduledExerciseUpdates.get(exerciseId);
+        if (future == null) return 0;
+        return future.getDelay(java.util.concurrent.TimeUnit.SECONDS);
+    }
+
     @Transactional
     public void restartSchedulerFor(Exercise exercise) {
         if (this.scheduledExerciseUpdates.containsKey(exercise.getExerciseId())) {
