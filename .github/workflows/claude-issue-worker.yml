@@ -24,7 +24,7 @@ jobs:
       - name: Checkout repo to external drive
         uses: actions/checkout@v4
         with:
-          fetch-depth: '0'
+          fetch-depth: 0
 
       - name: Run Claude Code on issue
         env:
@@ -75,7 +75,7 @@ jobs:
             > /tmp/claude-output.txt 2>&1
 
           echo "=== Claude output ==="
-          cat /tmp/claude-output.json
+          cat /tmp/claude-output.txt
       - name: Push branch and open PR
         env:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
