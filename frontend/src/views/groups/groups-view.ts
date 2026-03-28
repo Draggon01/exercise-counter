@@ -388,7 +388,6 @@ export class GroupsView extends ConnectedLitElement {
 
     private renderJoinDialog() {
         return html`
-            <p>Search for public groups to join:</p>
             <sl-input
                     label="Group Name"
                     placeholder="Type to search..."

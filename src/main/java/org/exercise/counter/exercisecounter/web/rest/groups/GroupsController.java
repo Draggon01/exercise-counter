@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.transaction.Transactional;
 import org.exercise.counter.exercisecounter.web.data.groups.*;
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
@@ -35,6 +36,7 @@ public class GroupsController {
     }
 
     @GetMapping("/exercises/list")
+    @Transactional
     public List<ExerciseGroupMappingDto> listExerciseGroups() {
         return exerciseGroupMappingRepository.findAll().stream()
                 .collect(Collectors.groupingBy(
@@ -46,6 +48,7 @@ public class GroupsController {
     }
 
     @GetMapping("/user/list")
+    @Transactional
     public List<UserGroupMappingDto> listUserGroups() {
         return userGroupMappingRepository.findAll().stream()
                 .collect(Collectors.groupingBy(
@@ -60,6 +63,7 @@ public class GroupsController {
     }
 
     @GetMapping("/public/search")
+    @Transactional
     public List<String> searchPublicGroups(@RequestParam String query) {
         return groupRepository.findByGroupNameContainingIgnoreCaseAndVisibility(query, GroupVisibility.PUBLIC)
                 .stream()
@@ -68,6 +72,7 @@ public class GroupsController {
     }
 
     @PostMapping("/user/create")
+    @Transactional
     public UserGroupMappingDto createGroupOnUser(@RequestBody CreateGroupRequestDto request, Authentication authentication) {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         String username = user.getUsername();
@@ -76,12 +81,15 @@ public class GroupsController {
         group.setGroupName(request.groupName());
         group.setVisibility(request.visibility() != null ? request.visibility() : GroupVisibility.INVITE_ONLY);
         Group save = groupRepository.save(group);
-        userGroupMappingRepository.save(new UserGroupMapping(username, save.getGroupId()));
+        UserGroupMapping userGroupMapping = new UserGroupMapping(username, save.getGroupId());
+        userGroupMapping.setGroup(save);
+        userGroupMappingRepository.save(userGroupMapping);
 
         return buildUserMappingDto(username);
     }
 
     @PostMapping("/user/join")
+    @Transactional
     public UserGroupMappingDto joinPublicGroup(@RequestBody String groupName, Authentication authentication) {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         String username = user.getUsername();
@@ -106,6 +114,7 @@ public class GroupsController {
     }
 
     @PostMapping("/user/delete")
+    @Transactional
     public UserGroupMappingDto deleteGroupOnUser(@RequestBody String groupName, Authentication authentication) {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         String username = user.getUsername();
@@ -126,6 +135,7 @@ public class GroupsController {
     }
 
     @PostMapping("/user/accept")
+    @Transactional
     public UserGroupMappingDto acceptUserToGroup(@RequestBody String groupName, Authentication authentication) {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         String username = user.getUsername();
@@ -143,6 +153,7 @@ public class GroupsController {
     }
 
     @PostMapping("/user/invite")
+    @Transactional
     public Boolean inviteUserToGroup(@RequestBody Map<String, String> request) {
         String username = request.get("username");
         String groupName = request.get("groupName");
