@@ -72,7 +72,6 @@ jobs:
 
       - name: Push branch and open PR
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
         run: |
