@@ -87,8 +87,13 @@ jobs:
           git config user.name "Claude Bot"
           git config user.email "claude-bot@noreply"
 
+          DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | awk '{print $NF}')
+          echo "Default branch: $DEFAULT_BRANCH"
+          
+          COMMITS_AHEAD=$(git rev-list --count origin/${DEFAULT_BRANCH}..HEAD)
+          echo "Commits ahead: $COMMITS_AHEAD"
+
           # Only push if there are actual changes
-          COMMITS_AHEAD=$(git rev-list --count main..HEAD)
           if [ "$COMMITS_AHEAD" -eq 0 ]; then
             echo "No changes made by Claude."
             gh issue comment "$ISSUE_NUMBER" \
