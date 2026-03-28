@@ -20,3 +20,4 @@ Full-stack exercise tracking app with:
 - Inline styles (`style="color: red"`) should be moved to CSS classes for consistency
 - `groupCard` elements should use `width: 100%; box-sizing: border-box` (not `width: fit-content`) to fill containers properly on desktop
 - The `.header` class in groups/statistics views uses `display: flex` — the `grid-template-columns` property in the original groups-view was dead code (flex ignores it)
+- `exercise-card.ts` shows time left until next reset using `startTime` (HH:MM:SS, user's timezone) and `daysRepeat`; if today's reset time has already passed, the next reset is `daysRepeat` days later. Display ">= 1 day" as "X Days left", otherwise "X Hours left". Urgent (< 6h) is highlighted in orange.

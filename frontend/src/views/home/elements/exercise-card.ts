@@ -57,7 +57,16 @@ export class ExerciseCard extends ConnectedLitElement {
             grid-template-columns: max-content auto;
             gap: 8px;
         }
-        
+
+        .time-left {
+            font-size: 0.85em;
+            color: #888;
+        }
+
+        .time-left.urgent {
+            color: #e06c1a;
+        }
+
     `;
 
     @property()
@@ -105,9 +114,11 @@ export class ExerciseCard extends ConnectedLitElement {
                     <div style="font-weight: bold"> ${this.item.exerciseValue ?? "not Set"}</div>
                     <div>Finished By:</div>
                     <div>
-                        ${this.finishedUser.map((check, idx) => 
+                        ${this.finishedUser.map((check, idx) =>
                                 check.user + "{" + check.streak + "}" + ((idx < this.finishedUser.length - 1) ? ", " : ""))}
                     </div>
+                    <div>Time Left:</div>
+                    <div class="${this._isUrgent() ? 'time-left urgent' : 'time-left'}">${this._getTimeLeft()}</div>
                 </div>
                 <div class="buttonBar">
                     <div>
@@ -124,6 +135,44 @@ export class ExerciseCard extends ConnectedLitElement {
                 </div>
             </div>
         `;
+    }
+
+    private _getNextReset(): Date | null {
+        if (!this.item.startTime) return null;
+        const parts = this.item.startTime.split(':').map(Number);
+        if (parts.length < 3 || parts.some(isNaN)) return null;
+        const [hours, minutes, seconds] = parts;
+
+        const now = new Date();
+        const next = new Date();
+        next.setHours(hours, minutes, seconds, 0);
+
+        if (next <= now) {
+            next.setDate(next.getDate() + (this.item.daysRepeat || 1));
+        }
+        return next;
+    }
+
+    private _getTimeLeft(): string {
+        const next = this._getNextReset();
+        if (!next) return '—';
+
+        const diffMs = next.getTime() - Date.now();
+        const diffHours = diffMs / (1000 * 60 * 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffDays >= 1) {
+            return `${diffDays} ${diffDays === 1 ? 'Day' : 'Days'} left`;
+        }
+        const hours = Math.floor(diffHours);
+        return `${hours} ${hours === 1 ? 'Hour' : 'Hours'} left`;
+    }
+
+    private _isUrgent(): boolean {
+        const next = this._getNextReset();
+        if (!next) return false;
+        const diffMs = next.getTime() - Date.now();
+        return diffMs < 6 * 60 * 60 * 1000;
     }
 
     private _hideClick = () => {
