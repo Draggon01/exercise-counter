@@ -10,4 +10,5 @@ export interface ExerciseDto {
     exerciseIncrease: string;
     visibility: string;
     groups?: string[];
+    timeLeftSeconds?: number;
 }

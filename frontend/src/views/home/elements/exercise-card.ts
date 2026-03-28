@@ -137,42 +137,24 @@ export class ExerciseCard extends ConnectedLitElement {
         `;
     }
 
-    private _getNextReset(): Date | null {
-        if (!this.item.startTime) return null;
-        const parts = this.item.startTime.split(':').map(Number);
-        if (parts.length < 3 || parts.some(isNaN)) return null;
-        const [hours, minutes, seconds] = parts;
-
-        const now = new Date();
-        const next = new Date();
-        next.setHours(hours, minutes, seconds, 0);
-
-        if (next <= now) {
-            next.setDate(next.getDate() + (this.item.daysRepeat || 1));
-        }
-        return next;
-    }
-
     private _getTimeLeft(): string {
-        const next = this._getNextReset();
-        if (!next) return '—';
+        const secs = this.item.timeLeftSeconds;
+        if (secs == null) return '—';
 
-        const diffMs = next.getTime() - Date.now();
-        const diffHours = diffMs / (1000 * 60 * 60);
-        const diffDays = Math.floor(diffHours / 24);
+        const totalHours = secs / 3600;
+        const days = Math.floor(totalHours / 24);
 
-        if (diffDays >= 1) {
-            return `${diffDays} ${diffDays === 1 ? 'Day' : 'Days'} left`;
+        if (days >= 1) {
+            return `${days} ${days === 1 ? 'Day' : 'Days'} left`;
         }
-        const hours = Math.floor(diffHours);
+        const hours = Math.floor(totalHours);
         return `${hours} ${hours === 1 ? 'Hour' : 'Hours'} left`;
     }
 
     private _isUrgent(): boolean {
-        const next = this._getNextReset();
-        if (!next) return false;
-        const diffMs = next.getTime() - Date.now();
-        return diffMs < 6 * 60 * 60 * 1000;
+        const secs = this.item.timeLeftSeconds;
+        if (secs == null) return false;
+        return secs < 6 * 60 * 60;
     }
 
     private _hideClick = () => {
