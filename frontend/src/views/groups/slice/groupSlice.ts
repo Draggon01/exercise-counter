@@ -2,6 +2,7 @@ import {AsyncStoreState} from "../../../commons";
 import {createAsyncThunk, createEntityAdapter, createSlice, EntityState, Reducer} from "@reduxjs/toolkit";
 import {ExerciseGroupMappingDto} from "../models/ExerciseGroupMappingDto";
 import {UserGroupMappingDto} from "../models/UserGroupMappingDto";
+import {GroupVisibility} from "../models/GroupVisibility";
 
 type SliceState = {
     exerciseMappings: {
@@ -9,7 +10,11 @@ type SliceState = {
     } & EntityState<ExerciseGroupMappingDto, string>,
     userMappings: {
         status: AsyncStoreState;
-    } & EntityState<UserGroupMappingDto, string>
+    } & EntityState<UserGroupMappingDto, string>,
+    publicGroupSearch: {
+        status: AsyncStoreState;
+        results: string[];
+    }
 }
 
 type SliceProjection = {
@@ -26,6 +31,10 @@ const initialState: SliceState = {
         status: "initial",
         ids: [],
         entities: {}
+    },
+    publicGroupSearch: {
+        status: "initial",
+        results: []
     }
 }
 
@@ -59,9 +68,43 @@ export const listUserMappings = createAsyncThunk<UserGroupMappingDto[], void, { 
     }
 )
 
-export const createGroupOnUser = createAsyncThunk<UserGroupMappingDto, string, { rejectValue: any }>(
-    'userMappings/create', async (groupName, {rejectWithValue}) => {
+export const createGroupOnUser = createAsyncThunk<UserGroupMappingDto, { groupName: string, visibility: GroupVisibility }, { rejectValue: any }>(
+    'userMappings/create', async ({groupName, visibility}, {rejectWithValue}) => {
         const res = await fetch("/api/groups/user/create", {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({groupName, visibility}),
+            credentials: "include"
+        });
+        if (res.ok) {
+            return (await res.json());
+        } else {
+            let errorResponse = await res.json();
+            return rejectWithValue(errorResponse);
+        }
+    }
+)
+
+export const searchPublicGroups = createAsyncThunk<string[], string, { rejectValue: any }>(
+    'group/searchPublic', async (query, {rejectWithValue}) => {
+        const res = await fetch(`/api/groups/public/search?query=${encodeURIComponent(query)}`, {
+            method: 'GET',
+            credentials: "include"
+        });
+        if (res.ok) {
+            return (await res.json());
+        } else {
+            let errorResponse = await res.json();
+            return rejectWithValue(errorResponse);
+        }
+    }
+)
+
+export const joinPublicGroup = createAsyncThunk<UserGroupMappingDto, string, { rejectValue: any }>(
+    'group/joinPublic', async (groupName, {rejectWithValue}) => {
+        const res = await fetch("/api/groups/user/join", {
             method: 'POST',
             headers: {
                 "Content-Type": "application/json",
@@ -77,7 +120,6 @@ export const createGroupOnUser = createAsyncThunk<UserGroupMappingDto, string, {
         }
     }
 )
-
 
 export const deleteGroupOnUser = createAsyncThunk<UserGroupMappingDto, string, { rejectValue: any }>(
     'userMappings/delete', async (groupName, {rejectWithValue}) => {
@@ -142,7 +184,12 @@ export const acceptGroupToUser = createAsyncThunk<UserGroupMappingDto, string, {
 export const groupSlice = createSlice({
     name: 'group',
     initialState: initialState,
-    reducers: {},
+    reducers: {
+        clearPublicGroupSearch(state) {
+            state.publicGroupSearch.results = [];
+            state.publicGroupSearch.status = 'initial';
+        }
+    },
     extraReducers: builder => {
         builder
             .addCase(listExerciseMappings.pending, state => {
@@ -195,8 +242,24 @@ export const groupSlice = createSlice({
                 state.exerciseMappings.status = 'idle';
                 userMappingsAdapter.upsertOne(state.userMappings, action.payload);
             })
+            .addCase(searchPublicGroups.pending, state => {
+                state.publicGroupSearch.status = 'initial';
+            })
+            .addCase(searchPublicGroups.rejected, state => {
+                state.publicGroupSearch.status = 'error';
+            })
+            .addCase(searchPublicGroups.fulfilled, (state, action) => {
+                state.publicGroupSearch.status = 'idle';
+                state.publicGroupSearch.results = action.payload;
+            })
+            .addCase(joinPublicGroup.fulfilled, (state, action) => {
+                state.publicGroupSearch.results = [];
+                userMappingsAdapter.upsertOne(state.userMappings, action.payload);
+            })
     }
 });
+
+export const { clearPublicGroupSearch } = groupSlice.actions;
 
 export const groupReducer = groupSlice.reducer as Reducer<SliceState>;
 
@@ -216,3 +279,5 @@ export const {
     selectAll: selectAllUserMappings,
     selectById: selectUserMappingByUser,
 } = userMappingsAdapter.getSelectors((state: SliceProjection) => state.group.userMappings);
+
+export const selectPublicGroupSearchResults = (state: SliceProjection) => state.group.publicGroupSearch.results;

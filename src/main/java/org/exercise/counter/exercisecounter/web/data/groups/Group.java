@@ -19,4 +19,8 @@ public class Group {
 
     @Column
     String groupName;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    GroupVisibility visibility = GroupVisibility.INVITE_ONLY;
 }
