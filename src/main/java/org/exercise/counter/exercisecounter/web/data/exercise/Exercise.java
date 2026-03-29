@@ -5,10 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.sql.Time;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.OffsetTime;
 import java.util.UUID;
 
 @Entity
@@ -49,5 +47,8 @@ public class Exercise {
     @Enumerated(EnumType.STRING)
     @Column
     private Visibiltiy visibility;
+
+    @Column
+    private LocalDateTime lastSchedulerRun;
 
 }
