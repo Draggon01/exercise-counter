@@ -24,3 +24,7 @@ Full-stack exercise tracking app with:
 - `utcOffset` in Exercise is in hours (not minutes). The backend calculates `startTimeUtc = startTime.minusHours(utcOffset)` to convert the user's local reset time to UTC.
 - `timeLeftSeconds` in `ExerciseDto` is computed via `SchedulerService.getTimeLeftSeconds()` which calls `ScheduledFuture.getDelay()` — this correctly reflects the actual next-reset time for multi-day exercises (`daysRepeat > 1`). Do NOT recalculate it in `ExerciseController` using date arithmetic; the scheduler is the authoritative source.
 - `daysRepeat` controls how often the scheduler fires (every N days), not how many days the exercise runs per cycle. `startTime` is the daily clock time of the reset, but the reset only happens every `daysRepeat` days.
+- `exerciseValue` for time exercises (TIMEREPEAT, TIMEINCREASE) is stored as seconds (integer string). Format with `formatTime(secs)` → `M:SS` or `H:MM:SS`.
+- `ExerciseLog` entity (composite key: exerciseId + username) stores one "current period" progress per user per exercise. `value` is seconds-completed for time exercises, or reps-completed for rep exercises. Endpoints: `GET /api/log/{exerciseId}` and `POST /api/log/save`.
+- Timer in `exercise-card.ts` uses `setInterval` (stored as class property, not `@state`) and Web Audio API for finish sound. Clear the interval in `disconnectedCallback`. Load saved log in `updated()` when `item.exerciseId` first becomes valid.
+- Rep counter in `exercise-card.ts` uses a debounced save (500ms) to avoid excessive API calls on rapid +/- clicks.
