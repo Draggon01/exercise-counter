@@ -78,13 +78,14 @@ public class SchedulerService {
         if (this.scheduledExerciseUpdates.containsKey(exercise.getExerciseId())) {
             this.removeScheduledExerciseUpdate(exercise.getExerciseId());
         }
+        Instant nextRun = calculateNextRunInstant(exercise);
         switch (exercise.getExerciseType()) {
             case ExerciseType.NUMBERREPEAT:
             case ExerciseType.TIMEREPEAT:
                 this.addScheduledExerciseUpdate(
                         exercise.getExerciseId(),
                         () -> numberRepeatFunction(exercise),
-                        this.generateStartTime(exercise.getStartTime(), exercise.getUtcOffset()),
+                        nextRun,
                         Duration.ofDays(exercise.getDaysRepeat()));
                 break;
             case ExerciseType.NUMBERINCREASE:
@@ -92,12 +93,42 @@ public class SchedulerService {
                 this.addScheduledExerciseUpdate(
                         exercise.getExerciseId(),
                         () -> numberIncreaseFunction(exercise),
-                        this.generateStartTime(exercise.getStartTime(), exercise.getUtcOffset()),
+                        nextRun,
                         Duration.ofDays(exercise.getDaysRepeat()));
                 break;
             default:
                 break;
         }
+    }
+
+    /**
+     * Calculates when the next scheduler run should start.
+     * If lastSchedulerRun is known, computes the next run as lastSchedulerRun + daysRepeat days
+     * (at the configured reset time). If that time is already past, schedules immediately.
+     * Falls back to the default start-time calculation for new exercises with no run history.
+     */
+    Instant calculateNextRunInstant(Exercise exercise) {
+        LocalDateTime lastRun = exercise.getLastSchedulerRun();
+        if (lastRun == null) {
+            return generateStartTime(exercise.getStartTime(), exercise.getUtcOffset());
+        }
+
+        ZoneId utcZone = ZoneId.of("UTC");
+        LocalTime resetTimeUtc = exercise.getStartTime().minusHours(exercise.getUtcOffset());
+        LocalDateTime nextExpected = lastRun.toLocalDate()
+                .plusDays(exercise.getDaysRepeat())
+                .atTime(resetTimeUtc);
+
+        ZonedDateTime nextRunZdt = ZonedDateTime.of(nextExpected, utcZone);
+        ZonedDateTime now = ZonedDateTime.now(utcZone);
+
+        if (nextRunZdt.isAfter(now)) {
+            return nextRunZdt.toInstant();
+        }
+        // Missed the scheduled run; execute as soon as possible
+        log.warn("Exercise {} missed its scheduled run (expected {}), running immediately",
+                exercise.getExerciseId(), nextExpected);
+        return Instant.now().plusSeconds(1);
     }
 
     @Transactional
@@ -136,6 +167,8 @@ public class SchedulerService {
     @Transactional
     protected void numberRepeatFunction(Exercise exercise) {
         log.info("executed NumberRepeat function");
+        exercise.setLastSchedulerRun(LocalDateTime.now(ZoneId.of("UTC")));
+        exerciseRepository.save(exercise);
         List<String> users = getCheckedUsers(exercise);
         updateStatistc(exercise, users);
     }
@@ -143,12 +176,13 @@ public class SchedulerService {
     @Transactional
     protected void numberIncreaseFunction(Exercise exercise) {
         log.info("executed NumberIncrease function");
-        List<String> users = getCheckedUsers(exercise);
-        updateStatistc(exercise, users);
+        exercise.setLastSchedulerRun(LocalDateTime.now(ZoneId.of("UTC")));
         int exerciseValue = Integer.parseInt(exercise.getExerciseValue());
         int exerciseIncrease = Integer.parseInt(exercise.getExerciseIncrease());
         exercise.setExerciseValue(String.valueOf(exerciseValue + exerciseIncrease));
         exerciseRepository.save(exercise);
+        List<String> users = getCheckedUsers(exercise);
+        updateStatistc(exercise, users);
     }
 
     private @NonNull List<String> getCheckedUsers(Exercise exercise) {
