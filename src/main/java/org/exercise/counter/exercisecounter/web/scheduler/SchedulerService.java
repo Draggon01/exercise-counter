@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.exercise.counter.exercisecounter.web.data.checks.Check;
 import org.exercise.counter.exercisecounter.web.data.checks.CheckRepository;
 import org.exercise.counter.exercisecounter.web.data.exercise.Exercise;
+import org.exercise.counter.exercisecounter.web.data.log.ExerciseLog;
+import org.exercise.counter.exercisecounter.web.data.log.ExerciseLogRepository;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseRepository;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseType;
 import org.exercise.counter.exercisecounter.web.data.statistic.*;
@@ -26,6 +28,7 @@ import java.util.concurrent.ScheduledFuture;
 public class SchedulerService {
     private final ExerciseRepository exerciseRepository;
     private final CheckRepository checkRepository;
+    private final ExerciseLogRepository exerciseLogRepository;
     private final PeriodRepository periodRepository;
     private final FinishedUserRepository finishedUserRepository;
     private final UserRepository userRepository;
@@ -37,12 +40,14 @@ public class SchedulerService {
             ThreadPoolTaskScheduler taskScheduler,
             ExerciseRepository exerciseRepository,
             CheckRepository checkRepository,
+            ExerciseLogRepository exerciseLogRepository,
             PeriodRepository periodRepository,
             FinishedUserRepository finishedUserRepository,
             UserRepository userRepository) {
         this.taskScheduler = taskScheduler;
         this.exerciseRepository = exerciseRepository;
         this.checkRepository = checkRepository;
+        this.exerciseLogRepository = exerciseLogRepository;
         this.periodRepository = periodRepository;
         this.finishedUserRepository = finishedUserRepository;
         this.userRepository = userRepository;
@@ -153,6 +158,8 @@ public class SchedulerService {
         List<String> users = new ArrayList<>();
         checkByExerciseId.forEach(check -> users.add(check.getCheckId().getUsername()));
         checkRepository.deleteAll(checkByExerciseId);
+        List<ExerciseLog> logs = exerciseLogRepository.findByLogIdExerciseId(exerciseId);
+        exerciseLogRepository.deleteAll(logs);
         return users;
     }
 
