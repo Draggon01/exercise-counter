@@ -15,47 +15,67 @@ export class ExerciseCard extends ConnectedLitElement {
         }
 
         .card {
-            position: relative;
-            padding: 2px;
+            padding: 12px 14px;
             width: 50%;
-            min-height: 80px;
-            margin: 2px auto;
-            border-radius: 8px;
-            display: grid;
-            border: 1px solid teal;
-            grid-template-rows: 0.5fr 1fr;
+            margin: 6px auto;
+            border-radius: 12px;
+            border: 1px solid #c8e0e0;
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
             min-width: 340px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
         }
 
         .headline {
-            position: absolute;
-            top: 0;
-            left: 5px;
-            max-width: 60%;
-            padding: 8px;
-            margin-top: 0;
+            font-size: 1.05em;
+            font-weight: 600;
+            margin: 0;
+            padding: 0;
+            white-space: nowrap;
             overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            color: #1a2e2e;
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+
+        .card-body {
+            display: grid;
+            grid-template-columns: max-content 1fr;
+            gap: 4px 12px;
+            align-items: center;
+            font-size: 0.9em;
+        }
+
+        .label {
+            color: #666;
             white-space: nowrap;
         }
 
-        .options {
-            width: 100%;
-            display: grid;
-            height: 100%;
-            grid-template-columns: 1fr auto auto auto;
-            min-height: 32px;
+        .value {
+            font-weight: 600;
         }
 
-        .buttonBar {
-            display: grid;
-            grid-template-columns: 1fr auto;
-        }
-
-        .element-box {
-            margin: 12px;
-            display: grid;
-            grid-template-columns: max-content auto;
-            gap: 8px;
+        .divider {
+            grid-column: 1 / -1;
+            border: none;
+            border-top: 1px solid #f0f0f0;
+            margin: 2px 0;
         }
 
         .time-left {
@@ -65,19 +85,22 @@ export class ExerciseCard extends ConnectedLitElement {
 
         .time-left.urgent {
             color: #e06c1a;
+            font-weight: 600;
         }
 
-        .timer-section {
+        .timer-row {
             display: flex;
-            flex-direction: column;
-            gap: 6px;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
         .timer-display {
-            font-size: 1.4em;
+            font-size: 1.15em;
             font-weight: bold;
             font-family: monospace;
             color: #333;
+            min-width: 52px;
         }
 
         .timer-display.completed {
@@ -86,24 +109,45 @@ export class ExerciseCard extends ConnectedLitElement {
 
         .timer-controls {
             display: flex;
-            gap: 6px;
+            gap: 4px;
         }
 
         .rep-section {
             display: flex;
             align-items: center;
-            gap: 8px;
-        }
-
-        .rep-count {
-            font-size: 1.1em;
-            font-weight: bold;
-            min-width: 60px;
-            text-align: center;
+            gap: 6px;
         }
 
         .rep-input {
             width: 70px;
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 6px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .finished-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .hide-icon {
+            color: #5bb8d4;
+        }
+
+        .trash-icon {
+            color: #c0392b;
+        }
+
+        .stats-btn {
+            padding: 0 4px;
         }
     `;
 
@@ -297,7 +341,7 @@ export class ExerciseCard extends ConnectedLitElement {
         const target = this._getTargetSeconds();
         const isAtStart = this._timerSecondsLeft === target && !this._timerCompleted;
         return html`
-            <div class="timer-section">
+            <div class="timer-row">
                 <div class="timer-display ${this._timerCompleted ? 'completed' : ''}">
                     ${this._timerCompleted ? '✓ Done!' : this._formatTime(this._timerSecondsLeft)}
                 </div>
@@ -348,50 +392,51 @@ export class ExerciseCard extends ConnectedLitElement {
     render() {
         return html`
             <div class="card">
-                <h2 class="headline">${this.item.exerciseTitle}</h2>
-                <div class="options">
-                    <div></div>
-                    ${this.user && this.user.username === this.item.creator ? html`
-                        <sl-icon-button name="layer-backward" style="color: lightblue"
-                                        @click="${this._hideClick}"></sl-icon-button>
-                        <sl-icon-button name="pencil" @click="${this._editClick}"></sl-icon-button>
-                        <sl-icon-button name="trash" style="color:red" @click="${this._trashClick}"></sl-icon-button>
-                    ` : html`
-                        <div></div>
-                        <div></div>
-                        <sl-icon-button name="layer-backward" style="color: lightblue"
-                                        @click="${this._hideClick}"></sl-icon-button>
-                    `}
+                <div class="card-header">
+                    <h2 class="headline">${this.item.exerciseTitle}</h2>
+                    <div class="actions">
+                        ${this.user && this.user.username === this.item.creator ? html`
+                            <sl-icon-button name="layer-backward" class="hide-icon"
+                                            @click="${this._hideClick}"></sl-icon-button>
+                            <sl-icon-button name="pencil" @click="${this._editClick}"></sl-icon-button>
+                            <sl-icon-button name="trash" class="trash-icon"
+                                            @click="${this._trashClick}"></sl-icon-button>
+                        ` : html`
+                            <sl-icon-button name="layer-backward" class="hide-icon"
+                                            @click="${this._hideClick}"></sl-icon-button>
+                        `}
+                    </div>
                 </div>
-                <div class="element-box">
-                    <div>Today's Value:</div>
-                    <div style="font-weight: bold">${this._formatTodayValue()}</div>
+                <div class="card-body">
+                    <span class="label">Today's Goal:</span>
+                    <span class="value">${this._formatTodayValue()}</span>
                     ${this._isTimeExercise() ? html`
-                        <div>Timer:</div>
+                        <span class="label">Timer:</span>
                         <div>${this._renderTimerSection()}</div>
                     ` : this._isRepExercise() ? html`
-                        <div>Progress:</div>
+                        <span class="label">Progress:</span>
                         <div>${this._renderRepSection()}</div>
                     ` : ''}
-                    <div>Finished By:</div>
-                    <div>
-                        ${this.finishedUser.map((check, idx) =>
-                                check.user + "{" + check.streak + "}" + ((idx < this.finishedUser.length - 1) ? ", " : ""))}
-                    </div>
-                    <div>Time Left:</div>
-                    <div class="${this._isUrgent() ? 'time-left urgent' : 'time-left'}">${this._getTimeLeft()}</div>
+                    <hr class="divider">
+                    <span class="label">Finished by:</span>
+                    <span>
+                        ${this.finishedUser.length === 0
+                            ? html`<span style="color:#aaa">—</span>`
+                            : this.finishedUser.map((check, idx) =>
+                                check.user + " {" + check.streak + "}" + (idx < this.finishedUser.length - 1 ? ", " : ""))}
+                    </span>
+                    <span class="label">Time left:</span>
+                    <span class="${this._isUrgent() ? 'time-left urgent' : 'time-left'}">${this._getTimeLeft()}</span>
                 </div>
-                <div class="buttonBar">
-                    <div>
-                        <sl-button @click="${() => {
-                            void CustomRouter.goto(`/statistics/` + this.item.exerciseId)
-                        }}" style="padding:5px" variant="primary">Statistics
-                        </sl-button>
-                    </div>
-                    <div style="align-content: center">
+                <div class="card-footer">
+                    <sl-button class="stats-btn" variant="primary" size="small"
+                               @click="${() => void CustomRouter.goto('/statistics/' + this.item.exerciseId)}">
+                        Statistics
+                    </sl-button>
+                    <div class="finished-label">
                         Finished
                         <sl-checkbox @sl-change="${this._checkChange}" ?checked=${this.checked}
-                                     size="large"></sl-checkbox>
+                                     size="medium"></sl-checkbox>
                     </div>
                 </div>
             </div>
