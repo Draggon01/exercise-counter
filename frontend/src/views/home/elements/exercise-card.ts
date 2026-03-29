@@ -146,7 +146,7 @@ export class ExerciseCard extends ConnectedLitElement {
         const totalHours = secs / 3600;
         const days = Math.floor(totalHours / 24);
         const hours = Math.floor(totalHours - days * 24);
-        const minutes = (secs - days * 24 * 3600 - hours * 3600) / 60;
+        const minutes = Math.floor((secs - days * 24 * 3600 - hours * 3600) / 60);
 
         if (days >= 1) {
             return `${days} ${days === 1 ? 'Day' : 'Days'} and ${hours} ${hours === 1 ? 'Hour' : 'Hours'} left`;
