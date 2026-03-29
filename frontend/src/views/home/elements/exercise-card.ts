@@ -101,6 +101,10 @@ export class ExerciseCard extends ConnectedLitElement {
             min-width: 60px;
             text-align: center;
         }
+
+        .rep-input {
+            width: 70px;
+        }
     `;
 
     @property()
@@ -258,6 +262,15 @@ export class ExerciseCard extends ConnectedLitElement {
 
     private _changeReps(delta: number) {
         this._repsCompleted = Math.max(0, this._repsCompleted + delta);
+        this._scheduleSave();
+    }
+
+    private _setReps(value: number) {
+        this._repsCompleted = Math.max(0, isNaN(value) ? 0 : value);
+        this._scheduleSave();
+    }
+
+    private _scheduleSave() {
         if (this._saveDebounce) clearTimeout(this._saveDebounce);
         this._saveDebounce = setTimeout(() => void this._saveLog(this._repsCompleted), 500);
     }
@@ -314,7 +327,17 @@ export class ExerciseCard extends ConnectedLitElement {
                 <sl-button size="small" variant="neutral"
                            @click="${() => this._changeReps(-1)}">−
                 </sl-button>
-                <span class="rep-count">${this._repsCompleted} / ${target}</span>
+                <sl-input
+                    class="rep-input"
+                    type="number"
+                    size="small"
+                    min="0"
+                    max="${target}"
+                    no-spin-buttons
+                    .value="${String(this._repsCompleted)}"
+                    @sl-change="${(e: any) => this._setReps(parseInt(e.target.value, 10))}"
+                ></sl-input>
+                <span>/ ${target}</span>
                 <sl-button size="small" variant="neutral"
                            @click="${() => this._changeReps(1)}">+
                 </sl-button>
