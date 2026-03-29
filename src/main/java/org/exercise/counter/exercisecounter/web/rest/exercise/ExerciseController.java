@@ -177,7 +177,8 @@ public class ExerciseController {
                         exercise.exerciseType(),
                         exercise.exerciseValue(),
                         exercise.exerciseIncrease(),
-                        exercise.visibility()));
+                        exercise.visibility(),
+                        null));
 
         exerciseGroupMappingRepository.deleteAll(exerciseGroupMappingRepository.findByExerciseGroupMappingId_ExerciseId(save.getExerciseId()));
         List<UserGroupMapping> byUserGroupMappingIdUsername =

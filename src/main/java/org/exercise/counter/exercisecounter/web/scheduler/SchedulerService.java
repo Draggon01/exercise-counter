@@ -107,7 +107,7 @@ public class SchedulerService {
      * (at the configured reset time). If that time is already past, schedules immediately.
      * Falls back to the default start-time calculation for new exercises with no run history.
      */
-    Instant calculateNextRunInstant(Exercise exercise) {
+    public Instant calculateNextRunInstant(Exercise exercise) {
         LocalDateTime lastRun = exercise.getLastSchedulerRun();
         if (lastRun == null) {
             return generateStartTime(exercise.getStartTime(), exercise.getUtcOffset());
