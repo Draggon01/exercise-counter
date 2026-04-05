@@ -6,8 +6,6 @@ import {selectCurrentUser} from "../../login/slice/userSlice";
 import {UserDto} from "../../login/models/userDto";
 import {CustomRouter} from "../../../index";
 import {CheckDto} from "../models/checkDto";
-import {store} from "../../../store";
-import {loadExerciseLog, saveExerciseLog} from "../slice/exerciseSlice";
 
 @customElement("exercise-card")
 export class ExerciseCard extends ConnectedLitElement {
@@ -185,6 +183,10 @@ export class ExerciseCard extends ConnectedLitElement {
     private _timerInterval?: ReturnType<typeof setInterval>;
     private _saveDebounce?: ReturnType<typeof setTimeout>;
 
+    connectedCallback() {
+        super.connectedCallback();
+    }
+
     disconnectedCallback() {
         super.disconnectedCallback();
         if (this._timerInterval) clearInterval(this._timerInterval);
@@ -205,8 +207,6 @@ export class ExerciseCard extends ConnectedLitElement {
         this.user = selectCurrentUser(state);
     }
 
-    // --- Exercise type helpers ---
-
     private _isTimeExercise(): boolean {
         const t = this.item.exerciseType as string;
         return t === 'TIMEREPEAT' || t === 'TIMEINCREASE';
@@ -220,8 +220,6 @@ export class ExerciseCard extends ConnectedLitElement {
     private _getTargetSeconds(): number {
         return parseInt(this.item.exerciseValue ?? '0', 10) || 0;
     }
-
-    // --- Formatting helpers ---
 
     private _formatTime(totalSeconds: number): string {
         const h = Math.floor(totalSeconds / 3600);
@@ -245,53 +243,36 @@ export class ExerciseCard extends ConnectedLitElement {
         return this.item.exerciseValue;
     }
 
-    private _getTimeLeft(): string {
-        const secs = this.item.timeLeftSeconds;
-        if (secs == null) return '—';
-
-        const totalHours = secs / 3600;
-        const days = Math.floor(totalHours / 24);
-        const hours = Math.floor(totalHours - days * 24) + 1;
-        const minutes = Math.floor((secs - days * 24 * 3600 - hours * 3600) / 60);
-
-        if (days >= 1) {
-            return `${days} ${days === 1 ? 'Day' : 'Days'} and ${hours} ${hours === 1 ? 'Hour' : 'Hours'} left`;
-        }
-        if (hours >= 1) {
-            return `${hours} ${hours === 1 ? 'Hour' : 'Hours'} left`;
-        }
-        return `${minutes} ${minutes === 1 ? 'Minute' : 'Minutes'} left`;
-    }
-
-    private _isUrgent(): boolean {
-        const secs = this.item.timeLeftSeconds;
-        if (secs == null) return false;
-        return secs < 6 * 60 * 60;
-    }
-
-    // --- Log API (via Redux thunks) ---
-
     private async _loadLog() {
         if (!this.item.exerciseId) return;
         try {
-            const log = await store.dispatch(loadExerciseLog(this.item.exerciseId)).unwrap();
-            if (log.value != null) {
-                if (this._isTimeExercise()) {
-                    this._timerSecondsLeft = Math.max(0, this._getTargetSeconds() - log.value);
-                    if (this._timerSecondsLeft === 0) this._timerCompleted = true;
-                } else if (this._isRepExercise()) {
-                    this._repsCompleted = log.value;
+            const res = await fetch(`/api/log/${this.item.exerciseId}`, {credentials: 'include'});
+            if (res.ok) {
+                const data = await res.json();
+                if (data.value != null) {
+                    if (this._isTimeExercise()) {
+                        const completed = Number(data.value);
+                        this._timerSecondsLeft = Math.max(0, this._getTargetSeconds() - completed);
+                        if (this._timerSecondsLeft === 0) this._timerCompleted = true;
+                    } else if (this._isRepExercise()) {
+                        this._repsCompleted = Number(data.value);
+                    }
                 }
             }
         } catch (_) { /* ignore */ }
     }
 
-    private _saveLog(value: number) {
+    private async _saveLog(value: number) {
         if (!this.item.exerciseId) return;
-        store.dispatch(saveExerciseLog({exerciseId: this.item.exerciseId, value}));
+        try {
+            await fetch('/api/log/save', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify({exerciseId: this.item.exerciseId, value})
+            });
+        } catch (_) { /* ignore */ }
     }
-
-    // --- Timer controls ---
 
     private _startTimer = () => {
         if (this._timerCompleted || this._timerRunning) return;
@@ -304,7 +285,7 @@ export class ExerciseCard extends ConnectedLitElement {
                 this._timerCompleted = true;
                 clearInterval(this._timerInterval);
                 this._playFinishSound();
-                this._saveLog(this._getTargetSeconds());
+                void this._saveLog(this._getTargetSeconds());
             }
         }, 1000);
     }
@@ -312,7 +293,7 @@ export class ExerciseCard extends ConnectedLitElement {
     private _pauseTimer = () => {
         this._timerRunning = false;
         clearInterval(this._timerInterval);
-        this._saveLog(this._getTargetSeconds() - this._timerSecondsLeft);
+        void this._saveLog(this._getTargetSeconds() - this._timerSecondsLeft);
     }
 
     private _resetTimer = () => {
@@ -320,10 +301,8 @@ export class ExerciseCard extends ConnectedLitElement {
         this._timerCompleted = false;
         clearInterval(this._timerInterval);
         this._timerSecondsLeft = this._getTargetSeconds();
-        this._saveLog(0);
+        void this._saveLog(0);
     }
-
-    // --- Rep counter ---
 
     private _setReps(value: number) {
         this._repsCompleted = Math.max(0, isNaN(value) ? 0 : value);
@@ -332,10 +311,8 @@ export class ExerciseCard extends ConnectedLitElement {
 
     private _scheduleSave() {
         if (this._saveDebounce) clearTimeout(this._saveDebounce);
-        this._saveDebounce = setTimeout(() => this._saveLog(this._repsCompleted), 500);
+        this._saveDebounce = setTimeout(() => void this._saveLog(this._repsCompleted), 500);
     }
-
-    // --- Audio feedback ---
 
     private _playFinishSound() {
         const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -354,26 +331,6 @@ export class ExerciseCard extends ConnectedLitElement {
             osc.stop(ctx.currentTime + offset + 0.35);
         });
     }
-
-    // --- Event handlers ---
-
-    private _hideClick = () => {
-        this.dispatchEvent(new CustomEvent("hideExercise", {detail: this.item}))
-    }
-
-    private _trashClick = () => {
-        this.dispatchEvent(new CustomEvent("deleteExercise", {detail: this.item}))
-    }
-
-    private _editClick = () => {
-        this.dispatchEvent(new CustomEvent("editExercise", {detail: this.item}))
-    }
-
-    private _checkChange = (e: any) => {
-        this.dispatchEvent(new CustomEvent("checkChanged", {detail: e.target.checked}))
-    }
-
-    // --- Render helpers ---
 
     private _renderTimerSection() {
         const target = this._getTargetSeconds();
@@ -473,5 +430,45 @@ export class ExerciseCard extends ConnectedLitElement {
                 </div>
             </div>
         `;
+    }
+
+    private _getTimeLeft(): string {
+        const secs = this.item.timeLeftSeconds;
+        if (secs == null) return '—';
+
+        const totalHours = secs / 3600;
+        const days = Math.floor(totalHours / 24);
+        const hours = Math.floor(totalHours - days * 24) + 1;
+        const minutes = Math.floor((secs - days * 24 * 3600 - hours * 3600) / 60);
+
+        if (days >= 1) {
+            return `${days} ${days === 1 ? 'Day' : 'Days'} and ${hours} ${hours === 1 ? 'Hour' : 'Hours'} left`;
+        }
+        if (hours >= 1) {
+            return `${hours} ${hours === 1 ? 'Hour' : 'Hours'} left`;
+        }
+        return `${minutes} ${minutes === 1 ? 'Minute' : 'Minutes'} left`;
+    }
+
+    private _isUrgent(): boolean {
+        const secs = this.item.timeLeftSeconds;
+        if (secs == null) return false;
+        return secs < 6 * 60 * 60;
+    }
+
+    private _hideClick = () => {
+        this.dispatchEvent(new CustomEvent("hideExercise", {detail: this.item}))
+    }
+
+    private _trashClick = () => {
+        this.dispatchEvent(new CustomEvent("deleteExercise", {detail: this.item}))
+    }
+
+    private _editClick = () => {
+        this.dispatchEvent(new CustomEvent("editExercise", {detail: this.item}))
+    }
+
+    private _checkChange = (e: any) => {
+        this.dispatchEvent(new CustomEvent("checkChanged", {detail: e.target.checked}))
     }
 }

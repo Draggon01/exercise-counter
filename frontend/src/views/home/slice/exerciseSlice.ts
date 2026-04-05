@@ -1,6 +1,5 @@
 import {AsyncStoreState} from "../../../commons";
 import {ExerciseDto} from "../models/exerciseDto";
-import {ExerciseLogDto} from "../models/exerciseLogDto";
 import {createAsyncThunk, createEntityAdapter, createSlice, EntityState, Reducer} from "@reduxjs/toolkit";
 import {CheckDto} from "../models/checkDto";
 
@@ -141,29 +140,6 @@ export const unselectExercise = createAsyncThunk<string, string, { rejectValue: 
 
 
 
-
-export const loadExerciseLog = createAsyncThunk<ExerciseLogDto, string, { rejectValue: any }>(
-    'exercise/log/load', async (exerciseId, {rejectWithValue}) => {
-        const res = await fetch(`/api/log/${exerciseId}`, {credentials: 'include'});
-        if (res.ok) {
-            return await res.json();
-        } else {
-            return rejectWithValue(await res.json());
-        }
-    });
-
-export const saveExerciseLog = createAsyncThunk<void, ExerciseLogDto, { rejectValue: any }>(
-    'exercise/log/save', async (log, {rejectWithValue}) => {
-        const res = await fetch('/api/log/save', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            credentials: 'include',
-            body: JSON.stringify(log)
-        });
-        if (!res.ok) {
-            return rejectWithValue(await res.json());
-        }
-    });
 
 export const exerciseSlice = createSlice({
     name: 'exercise',
