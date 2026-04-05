@@ -63,6 +63,7 @@ npm run build           # build for production
 - Styles use Lit's `css` tagged template literal (Shadow DOM scoped) or create a `styles.css` file for shared styles
 - Shoelace components (`sl-button`, `sl-input`, `sl-dialog`, etc.) are used throughout the UI
 - State management via Redux slices in each view's `slice/` subfolder
+- Always execute api calls etc. in the redux slice, dont diretly fetch data from the backend
 - Routing via `CustomRouter` from `../../index`
 
 ## Git
