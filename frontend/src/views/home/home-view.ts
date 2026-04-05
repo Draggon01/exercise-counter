@@ -115,16 +115,17 @@ export class HomeView extends ConnectedLitElement {
     }
 
     stateChanged(state: RootState) {
-        if(state.checks.checks.status === "idle"){
+        if (state.checks.checks.status === "idle") {
             this.listChecks = selectAllChecks(state);
+            console.log(this.listChecks)
         }
-        if(state.exercise.exercises.status === "idle"){
+        if (state.exercise.exercises.status === "idle") {
             this.listExercises = selectAllExercises(state);
         }
-        if(state.user.status === "idle"){
+        if (state.user.status === "idle") {
             this.user = selectCurrentUser(state);
         }
-        if(state.checks.checksPerExercise.status === "idle"){
+        if (state.checks.checksPerExercise.status === "idle") {
             this.checksSelected = true;
             this.checks = selectChecksPerExercise(state);
         }
@@ -263,16 +264,11 @@ export class HomeView extends ConnectedLitElement {
     }
 
     private renderItems() {
-        if(!this.checksSelected){
+        if (!this.checksSelected) {
             return html``
         }
         let exerciseDtos = this.listExercises.sort((a, b) => {
             return a.exerciseTitle.localeCompare(b.exerciseTitle)
-        }).sort((a, b) => {
-            if (this.checks[a.exerciseId] && this.checks[b.exerciseId]) {
-                return +(this.checks[a.exerciseId].length > 0 && !(this.checks[b.exerciseId].length > 0));
-            }
-            return 0;
         });
         return html`
             ${exerciseDtos.map((element) => {
