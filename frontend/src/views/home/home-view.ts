@@ -253,57 +253,64 @@ export class HomeView extends ConnectedLitElement {
 
     private renderItems() {
         return html`
-            ${this.listExercises.sort((a, b) =>
-                    a.exerciseTitle.localeCompare(b.exerciseTitle))
-                    .map((element) => {
-                        return html`
-                            <exercise-card
-                                    .item="${element}"
-                                    .checked="${this.getChecked(element)}"
-                                    .finishedUser="${this.checks[element.exerciseId] ?? []}"
-                                    @deleteExercise="${(e: any) => {
-                                        this.exerciseToDelete = e.detail;
-                                        this.openWarningDialog = true;
-                                    }}"
-                                    @editExercise="${(e: any) => {
-                                        this.exerciseDto = {
-                                            exerciseId: e.detail.exerciseId,
-                                            exerciseTitle: e.detail.exerciseTitle,
-                                            creator: e.detail.creator,
-                                            startTime: e.detail.startTime,
-                                            daysRepeat: e.detail.daysRepeat,
-                                            exerciseType: e.detail.exerciseType,
-                                            exerciseValue: e.detail.exerciseValue,
-                                            exerciseIncrease: e.detail.exerciseIncrease,
-                                            visibility: e.detail.visibility,
-                                            groups: e.detail.groups,
-                                        } as ExerciseDto;
-                                        this.currentType = e.detail.exerciseType;
-                                        this.currentVisibility = e.detail.visibility;
-                                        this.openDialog = true;
-                                    }}"
-                                    @checkChanged="${async (e: any) => {
-                                        let check = e.detail;
-                                        if (check) {
-                                            await store.dispatch(saveCheck({
-                                                exerciseId: element.exerciseId,
-                                                user: "checked by Backend"
-                                            }))
-                                        } else {
-                                            await store.dispatch(deleteCheck({
-                                                exerciseId: element.exerciseId,
-                                                user: "checked by Backend"
-                                            }))
-                                        }
-                                        store.dispatch(listChecksPerExercise());
-                                    }}"
-                                    @hideExercise="${() => {
-                                        if(element.exerciseId){
-                                            store.dispatch(unselectExercise(element.exerciseId))
-                                        }
-                                    }}"
-                            ></exercise-card>`;
-                    })}
+            ${this.listExercises.sort((a, b) => {
+                return a.exerciseTitle.localeCompare(b.exerciseTitle)
+            }).sort((a, b) => {
+                if (this.checks[a.exerciseId] && this.checks[b.exerciseId]) {
+                    return +(this.checks[a.exerciseId].length > 0 && !(this.checks[b.exerciseId].length > 0));
+                }
+                return 0;
+            }).map((element) => {
+                return html`
+                    <exercise-card
+                            .item="${element}"
+                            .checked="${this.getChecked(element)}"
+                            .finishedUser="${this.checks[element.exerciseId] ?? []}"
+                            @deleteExercise="${(e: any) => {
+                                this.exerciseToDelete = e.detail;
+                                this.openWarningDialog = true;
+                            }}"
+                            @editExercise="${(e: any) => {
+                                this.exerciseDto = {
+                                    exerciseId: e.detail.exerciseId,
+                                    exerciseTitle: e.detail.exerciseTitle,
+                                    creator: e.detail.creator,
+                                    startTime: e.detail.startTime,
+                                    daysRepeat: e.detail.daysRepeat,
+                                    exerciseType: e.detail.exerciseType,
+                                    exerciseValue: e.detail.exerciseValue,
+                                    exerciseIncrease: e.detail.exerciseIncrease,
+                                    visibility: e.detail.visibility,
+                                    groups: e.detail.groups,
+                                } as ExerciseDto;
+                                this.currentType = e.detail.exerciseType;
+                                this.currentVisibility = e.detail.visibility;
+                                this.openDialog = true;
+                            }}"
+                            @checkChanged="${async (e: any) => {
+                                let check = e.detail;
+                                if (check) {
+                                    await store.dispatch(saveCheck({
+                                        exerciseId: element.exerciseId,
+                                        user: "checked by Backend",
+                                        streak: check.streak
+                                    }))
+                                } else {
+                                    await store.dispatch(deleteCheck({
+                                        exerciseId: element.exerciseId,
+                                        user: "checked by Backend",
+                                        streak: check.streak
+                                    }))
+                                }
+                                store.dispatch(listChecksPerExercise());
+                            }}"
+                            @hideExercise="${() => {
+                                if (element.exerciseId) {
+                                    store.dispatch(unselectExercise(element.exerciseId))
+                                }
+                            }}"
+                    ></exercise-card>`;
+            })}
         `;
     }
 

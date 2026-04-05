@@ -304,11 +304,6 @@ export class ExerciseCard extends ConnectedLitElement {
         void this._saveLog(0);
     }
 
-    private _changeReps(delta: number) {
-        this._repsCompleted = Math.max(0, this._repsCompleted + delta);
-        this._scheduleSave();
-    }
-
     private _setReps(value: number) {
         this._repsCompleted = Math.max(0, isNaN(value) ? 0 : value);
         this._scheduleSave();
@@ -368,9 +363,6 @@ export class ExerciseCard extends ConnectedLitElement {
         const target = parseInt(this.item.exerciseValue ?? '0', 10);
         return html`
             <div class="rep-section">
-                <sl-button size="small" variant="neutral"
-                           @click="${() => this._changeReps(-1)}">−
-                </sl-button>
                 <sl-input
                     class="rep-input"
                     type="number"
@@ -382,9 +374,6 @@ export class ExerciseCard extends ConnectedLitElement {
                     @sl-change="${(e: any) => this._setReps(parseInt(e.target.value, 10))}"
                 ></sl-input>
                 <span>/ ${target}</span>
-                <sl-button size="small" variant="neutral"
-                           @click="${() => this._changeReps(1)}">+
-                </sl-button>
             </div>
         `;
     }
@@ -449,7 +438,7 @@ export class ExerciseCard extends ConnectedLitElement {
 
         const totalHours = secs / 3600;
         const days = Math.floor(totalHours / 24);
-        const hours = Math.floor(totalHours - days * 24);
+        const hours = Math.floor(totalHours - days * 24) + 1;
         const minutes = Math.floor((secs - days * 24 * 3600 - hours * 3600) / 60);
 
         if (days >= 1) {
