@@ -6,6 +6,8 @@ import {selectCurrentUser} from "../../login/slice/userSlice";
 import {UserDto} from "../../login/models/userDto";
 import {CustomRouter} from "../../../index";
 import {CheckDto} from "../models/checkDto";
+import {RootState, store} from "../../../store";
+import {loadExerciseLog, saveExerciseLog} from "../slice/exerciseSlice";
 
 @customElement("exercise-card")
 export class ExerciseCard extends ConnectedLitElement {
@@ -183,8 +185,11 @@ export class ExerciseCard extends ConnectedLitElement {
     private _timerInterval?: ReturnType<typeof setInterval>;
     private _saveDebounce?: ReturnType<typeof setTimeout>;
 
-    connectedCallback() {
+    async connectedCallback() {
         super.connectedCallback();
+        if (this.item) {
+            await this._loadLog();
+        }
     }
 
     disconnectedCallback() {
@@ -193,18 +198,10 @@ export class ExerciseCard extends ConnectedLitElement {
         if (this._saveDebounce) clearTimeout(this._saveDebounce);
     }
 
-    updated(changedProperties: Map<string, unknown>) {
-        if (changedProperties.has('item') && this.item.exerciseId && !this._logLoaded) {
-            this._logLoaded = true;
-            if (this._isTimeExercise()) {
-                this._timerSecondsLeft = this._getTargetSeconds();
-            }
-            void this._loadLog();
+    stateChanged(state: RootState) {
+        if (state.user.status === "idle") {
+            this.user = selectCurrentUser(state);
         }
-    }
-
-    stateChanged(state: any) {
-        this.user = selectCurrentUser(state);
     }
 
     private _isTimeExercise(): boolean {
@@ -246,32 +243,22 @@ export class ExerciseCard extends ConnectedLitElement {
     private async _loadLog() {
         if (!this.item.exerciseId) return;
         try {
-            const res = await fetch(`/api/log/${this.item.exerciseId}`, {credentials: 'include'});
-            if (res.ok) {
-                const data = await res.json();
-                if (data.value != null) {
-                    if (this._isTimeExercise()) {
-                        const completed = Number(data.value);
-                        this._timerSecondsLeft = Math.max(0, this._getTargetSeconds() - completed);
-                        if (this._timerSecondsLeft === 0) this._timerCompleted = true;
-                    } else if (this._isRepExercise()) {
-                        this._repsCompleted = Number(data.value);
-                    }
+            const log = await store.dispatch(loadExerciseLog(this.item.exerciseId)).unwrap();
+            if (log.value != null) {
+                if (this._isTimeExercise()) {
+                    this._timerSecondsLeft = Math.max(0, this._getTargetSeconds() - log.value);
+                    if (this._timerSecondsLeft === 0) this._timerCompleted = true;
+                } else if (this._isRepExercise()) {
+                    this._repsCompleted = log.value;
                 }
             }
-        } catch (_) { /* ignore */ }
+        } catch (_) { /* ignore */
+        }
     }
 
-    private async _saveLog(value: number) {
+    private _saveLog(value: number) {
         if (!this.item.exerciseId) return;
-        try {
-            await fetch('/api/log/save', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                credentials: 'include',
-                body: JSON.stringify({exerciseId: this.item.exerciseId, value})
-            });
-        } catch (_) { /* ignore */ }
+        store.dispatch(saveExerciseLog({exerciseId: this.item.exerciseId, value}));
     }
 
     private _startTimer = () => {
@@ -351,7 +338,8 @@ export class ExerciseCard extends ConnectedLitElement {
                         </sl-button>
                         ${!isAtStart ? html`
                             <sl-button size="small" variant="neutral"
-                                       @click="${this._resetTimer}">Reset</sl-button>
+                                       @click="${this._resetTimer}">Reset
+                            </sl-button>
                         ` : ''}
                     `}
                 </div>
@@ -364,14 +352,14 @@ export class ExerciseCard extends ConnectedLitElement {
         return html`
             <div class="rep-section">
                 <sl-input
-                    class="rep-input"
-                    type="number"
-                    size="small"
-                    min="0"
-                    max="${target}"
-                    no-spin-buttons
-                    .value="${String(this._repsCompleted)}"
-                    @sl-change="${(e: any) => this._setReps(parseInt(e.target.value, 10))}"
+                        class="rep-input"
+                        type="number"
+                        size="small"
+                        min="0"
+                        max="${target}"
+                        no-spin-buttons
+                        .value="${String(this._repsCompleted)}"
+                        @sl-change="${(e: any) => this._setReps(parseInt(e.target.value, 10))}"
                 ></sl-input>
                 <span>/ ${target}</span>
             </div>
@@ -410,9 +398,9 @@ export class ExerciseCard extends ConnectedLitElement {
                     <span class="label">Finished by:</span>
                     <span>
                         ${this.finishedUser.length === 0
-                            ? html`<span style="color:#aaa">—</span>`
-                            : this.finishedUser.map((check, idx) =>
-                                check.user + " {" + check.streak + "}" + (idx < this.finishedUser.length - 1 ? ", " : ""))}
+                                ? html`<span style="color:#aaa">—</span>`
+                                : this.finishedUser.map((check, idx) =>
+                                        check.user + " {" + check.streak + "}" + (idx < this.finishedUser.length - 1 ? ", " : ""))}
                     </span>
                     <span class="label">Time left:</span>
                     <span class="${this._isUrgent() ? 'time-left urgent' : 'time-left'}">${this._getTimeLeft()}</span>

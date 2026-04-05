@@ -91,6 +91,9 @@ export class HomeView extends ConnectedLitElement {
         }
     `
 
+    @state()
+    private checksSelected: boolean = false;
+
     connectedCallback() {
         super.connectedCallback();
         store.dispatch(listExercisesSelected());
@@ -112,13 +115,21 @@ export class HomeView extends ConnectedLitElement {
     }
 
     stateChanged(state: RootState) {
-        this.listExercises = selectAllExercises(state);
-        this.listChecks = selectAllChecks(state);
-        this.user = selectCurrentUser(state);
-        this.checks = selectChecksPerExercise(state);
-        let user = selectCurrentUser(state);
-        if (user) {
-            let groups = selectUserMappingByUser(state, user.username)
+        if(state.checks.checks.status === "idle"){
+            this.listChecks = selectAllChecks(state);
+        }
+        if(state.exercise.exercises.status === "idle"){
+            this.listExercises = selectAllExercises(state);
+        }
+        if(state.user.status === "idle"){
+            this.user = selectCurrentUser(state);
+        }
+        if(state.checks.checksPerExercise.status === "idle"){
+            this.checksSelected = true;
+            this.checks = selectChecksPerExercise(state);
+        }
+        if (this.user && state.group.userMappings.status === "idle") {
+            let groups = selectUserMappingByUser(state, this.user.username)
             this.groups = groups ? groups.groupInformation.map(group => group.groupName) : [];
         }
     }
@@ -252,15 +263,19 @@ export class HomeView extends ConnectedLitElement {
     }
 
     private renderItems() {
+        if(!this.checksSelected){
+            return html``
+        }
+        let exerciseDtos = this.listExercises.sort((a, b) => {
+            return a.exerciseTitle.localeCompare(b.exerciseTitle)
+        }).sort((a, b) => {
+            if (this.checks[a.exerciseId] && this.checks[b.exerciseId]) {
+                return +(this.checks[a.exerciseId].length > 0 && !(this.checks[b.exerciseId].length > 0));
+            }
+            return 0;
+        });
         return html`
-            ${this.listExercises.sort((a, b) => {
-                return a.exerciseTitle.localeCompare(b.exerciseTitle)
-            }).sort((a, b) => {
-                if (this.checks[a.exerciseId] && this.checks[b.exerciseId]) {
-                    return +(this.checks[a.exerciseId].length > 0 && !(this.checks[b.exerciseId].length > 0));
-                }
-                return 0;
-            }).map((element) => {
+            ${exerciseDtos.map((element) => {
                 return html`
                     <exercise-card
                             .item="${element}"
