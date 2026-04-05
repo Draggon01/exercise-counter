@@ -1,5 +1,6 @@
 package org.exercise.counter.exercisecounter.web.data.userselection;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -21,7 +22,16 @@ public class UserSelection {
     @JoinColumn(name = "exercise_id", insertable = false, updatable = false)
     Exercise exercise;
 
+    @Column(name = "sort_order")
+    Integer sortOrder;
+
     public UserSelection(UserSelectionId userSelectionId) {
         this.userSelectionId = userSelectionId;
+        this.sortOrder = 0;
+    }
+
+    public UserSelection(UserSelectionId userSelectionId, Integer sortOrder) {
+        this.userSelectionId = userSelectionId;
+        this.sortOrder = sortOrder;
     }
 }
