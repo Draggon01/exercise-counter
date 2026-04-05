@@ -76,7 +76,8 @@ public class ExerciseController {
                         exercise.getExerciseIncrease(),
                         exercise.getVisibility(),
                         this.GroupsForExercise(exercise.getExerciseId()),
-                        this.calculateTimeLeftSeconds(exercise)
+                        this.calculateTimeLeftSeconds(exercise),
+                        null
                 ))
                 .toList();
     }
@@ -87,7 +88,7 @@ public class ExerciseController {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         String username = user.getUsername();
 
-        return userSelectionRepository.findByUserSelectionId_Username(username)
+        return userSelectionRepository.findByUserSelectionId_UsernameOrderBySortOrderAsc(username)
                 .stream()
                 .map(selection -> new ExerciseDto(
                         selection.getExercise().getExerciseId(),
@@ -101,7 +102,8 @@ public class ExerciseController {
                         selection.getExercise().getExerciseIncrease(),
                         selection.getExercise().getVisibility(),
                         this.GroupsForExercise(selection.getExercise().getExerciseId()),
-                        this.calculateTimeLeftSeconds(selection.getExercise())
+                        this.calculateTimeLeftSeconds(selection.getExercise()),
+                        selection.getSortOrder()
                 )).toList();
     }
 
