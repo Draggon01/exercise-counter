@@ -22,16 +22,16 @@ public class UserSelection {
     @JoinColumn(name = "exercise_id", insertable = false, updatable = false)
     Exercise exercise;
 
-    @Column(name = "sort_order")
-    Integer sortOrder;
+    @Column(name = "position")
+    Integer position;
 
     public UserSelection(UserSelectionId userSelectionId) {
         this.userSelectionId = userSelectionId;
-        this.sortOrder = 0;
+        this.position = 0;
     }
 
-    public UserSelection(UserSelectionId userSelectionId, Integer sortOrder) {
+    public UserSelection(UserSelectionId userSelectionId, Integer position) {
         this.userSelectionId = userSelectionId;
-        this.sortOrder = sortOrder;
+        this.position = position;
     }
 }

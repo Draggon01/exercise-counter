@@ -32,7 +32,7 @@ public record ExerciseDto(
         List<String> groups,
         @JsonProperty("timeLeftSeconds")
         Long timeLeftSeconds,
-        @JsonProperty("sortOrder")
-        Integer sortOrder
+        @JsonProperty("position")
+        Integer position
 ) {
 }

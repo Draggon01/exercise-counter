@@ -127,7 +127,6 @@ export class HomeView extends ConnectedLitElement {
     stateChanged(state: RootState) {
         if (state.checks.checks.status === "idle") {
             this.listChecks = selectAllChecks(state);
-            console.log(this.listChecks)
         }
         if (state.exercise.exercises.status === "idle") {
             this.listExercises = selectAllExercises(state);
@@ -316,8 +315,8 @@ export class HomeView extends ConnectedLitElement {
             return html``
         }
         let exerciseDtos = [...this.listExercises].sort((a, b) => {
-            const aOrder = a.sortOrder ?? 0;
-            const bOrder = b.sortOrder ?? 0;
+            const aOrder = a.position ?? 0;
+            const bOrder = b.position ?? 0;
             return aOrder - bOrder;
         });
         return html`

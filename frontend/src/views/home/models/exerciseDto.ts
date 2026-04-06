@@ -11,5 +11,5 @@ export interface ExerciseDto {
     visibility: string;
     groups?: string[];
     timeLeftSeconds?: number;
-    sortOrder?: number;
+    position?: number;
 }
