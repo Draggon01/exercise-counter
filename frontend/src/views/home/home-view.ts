@@ -6,6 +6,7 @@ import {ConnectedLitElement} from "../../connectedLitElement";
 import {
     deleteExercise,
     listExercisesSelected,
+    reorderExercises,
     saveExercise,
     selectAllExercises,
     unselectExercise
@@ -61,6 +62,15 @@ export class HomeView extends ConnectedLitElement {
 
     @state()
     private exerciseToDelete?: ExerciseDto;
+
+    @state()
+    private openHideDialog = false;
+
+    @state()
+    private exerciseToHide?: ExerciseDto;
+
+    @state()
+    private editMode = false;
 
     @state()
     private checks: Record<string, CheckDto[]> = {}
@@ -152,6 +162,12 @@ export class HomeView extends ConnectedLitElement {
                 }}">
                     Browse Exercises
                 </sl-button>
+
+                <sl-button class="addButton" variant="${this.editMode ? 'success' : 'neutral'}" @click="${() => {
+                    this.editMode = !this.editMode;
+                }}">
+                    ${this.editMode ? 'Done' : 'Edit Order'}
+                </sl-button>
             </div>
 
             ${this.renderItems()}
@@ -168,8 +184,40 @@ export class HomeView extends ConnectedLitElement {
                        label="Warning">
                 ${this.renderWarningDialog()}
             </sl-dialog>
+            <sl-dialog .open="${this.openHideDialog}"
+                       @sl-hide="${() => {
+                           this.openHideDialog = false;
+                           this.exerciseToHide = undefined;
+                       }}"
+                       label="Hide Exercise">
+                ${this.renderHideDialog()}
+            </sl-dialog>
 
         `;
+    }
+
+    private renderHideDialog() {
+        return html`
+            <p>
+                You are about to hide this exercise from your list.
+                You can add it back at any time from the Browse view.
+                Are you sure you want to proceed?
+            </p>
+            <sl-button slot="footer" variant="primary" @click="${() => {
+                this.openHideDialog = false;
+                this.exerciseToHide = undefined;
+            }}">Cancel
+            </sl-button>
+            <sl-button slot="footer" variant="warning" @click="${() => {
+                this.openHideDialog = false;
+                if (this.exerciseToHide?.exerciseId) {
+                    store.dispatch(unselectExercise(this.exerciseToHide.exerciseId));
+                }
+                this.exerciseToHide = undefined;
+            }}">
+                Hide Exercise
+            </sl-button>
+        `
     }
 
     private renderWarningDialog() {
@@ -267,16 +315,35 @@ export class HomeView extends ConnectedLitElement {
         if (!this.checksSelected) {
             return html``
         }
-        let exerciseDtos = this.listExercises.sort((a, b) => {
-            return a.exerciseTitle.localeCompare(b.exerciseTitle)
+        let exerciseDtos = [...this.listExercises].sort((a, b) => {
+            const aOrder = a.sortOrder ?? 0;
+            const bOrder = b.sortOrder ?? 0;
+            return aOrder - bOrder;
         });
         return html`
-            ${exerciseDtos.map((element) => {
+            ${exerciseDtos.map((element, index) => {
                 return html`
                     <exercise-card
                             .item="${element}"
                             .checked="${this.getChecked(element)}"
                             .finishedUser="${this.checks[element.exerciseId] ?? []}"
+                            .editMode="${this.editMode}"
+                            @moveUp="${() => {
+                                if (index > 0) {
+                                    const newOrder = [...exerciseDtos];
+                                    [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
+                                    store.dispatch(reorderExercises(newOrder.map(e => e.exerciseId)));
+                                    store.dispatch(listExercisesSelected());
+                                }
+                            }}"
+                            @moveDown="${() => {
+                                if (index < exerciseDtos.length - 1) {
+                                    const newOrder = [...exerciseDtos];
+                                    [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
+                                    store.dispatch(reorderExercises(newOrder.map(e => e.exerciseId)));
+                                    store.dispatch(listExercisesSelected());
+                                }
+                            }}"
                             @deleteExercise="${(e: any) => {
                                 this.exerciseToDelete = e.detail;
                                 this.openWarningDialog = true;
@@ -315,10 +382,9 @@ export class HomeView extends ConnectedLitElement {
                                 }
                                 store.dispatch(listChecksPerExercise());
                             }}"
-                            @hideExercise="${() => {
-                                if (element.exerciseId) {
-                                    store.dispatch(unselectExercise(element.exerciseId))
-                                }
+                            @hideExercise="${(e: any) => {
+                                this.exerciseToHide = e.detail;
+                                this.openHideDialog = true;
                             }}"
                     ></exercise-card>`;
             })}

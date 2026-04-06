@@ -151,7 +151,17 @@ export class ExerciseCard extends ConnectedLitElement {
         .stats-btn {
             padding: 0 4px;
         }
+
+        .sort-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex-shrink: 0;
+        }
     `;
+
+    @property({type: Boolean})
+    editMode: boolean = false;
 
     @property()
     item: ExerciseDto = {
@@ -371,18 +381,25 @@ export class ExerciseCard extends ConnectedLitElement {
             <div class="card">
                 <div class="card-header">
                     <h2 class="headline">${this.item.exerciseTitle}</h2>
-                    <div class="actions">
-                        ${this.user && this.user.username === this.item.creator ? html`
-                            <sl-icon-button name="layer-backward" class="hide-icon"
-                                            @click="${this._hideClick}"></sl-icon-button>
-                            <sl-icon-button name="pencil" @click="${this._editClick}"></sl-icon-button>
-                            <sl-icon-button name="trash" class="trash-icon"
-                                            @click="${this._trashClick}"></sl-icon-button>
-                        ` : html`
-                            <sl-icon-button name="layer-backward" class="hide-icon"
-                                            @click="${this._hideClick}"></sl-icon-button>
-                        `}
-                    </div>
+                    ${this.editMode ? html`
+                        <div class="sort-controls">
+                            <sl-icon-button name="chevron-up" @click="${this._moveUpClick}"></sl-icon-button>
+                            <sl-icon-button name="chevron-down" @click="${this._moveDownClick}"></sl-icon-button>
+                        </div>
+                    ` : html`
+                        <div class="actions">
+                            ${this.user && this.user.username === this.item.creator ? html`
+                                <sl-icon-button name="layer-backward" class="hide-icon"
+                                                @click="${this._hideClick}"></sl-icon-button>
+                                <sl-icon-button name="pencil" @click="${this._editClick}"></sl-icon-button>
+                                <sl-icon-button name="trash" class="trash-icon"
+                                                @click="${this._trashClick}"></sl-icon-button>
+                            ` : html`
+                                <sl-icon-button name="layer-backward" class="hide-icon"
+                                                @click="${this._hideClick}"></sl-icon-button>
+                            `}
+                        </div>
+                    `}
                 </div>
                 <div class="card-body">
                     <span class="label">Today's Goal:</span>
@@ -442,6 +459,14 @@ export class ExerciseCard extends ConnectedLitElement {
         const secs = this.item.timeLeftSeconds;
         if (secs == null) return false;
         return secs < 6 * 60 * 60;
+    }
+
+    private _moveUpClick = () => {
+        this.dispatchEvent(new CustomEvent("moveUp", {detail: this.item, bubbles: true, composed: true}))
+    }
+
+    private _moveDownClick = () => {
+        this.dispatchEvent(new CustomEvent("moveDown", {detail: this.item, bubbles: true, composed: true}))
     }
 
     private _hideClick = () => {
