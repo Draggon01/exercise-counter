@@ -449,7 +449,7 @@ export class ExerciseCard extends ConnectedLitElement {
         if (days >= 1) {
             return `${days} ${days === 1 ? 'Day' : 'Days'} and ${hours} ${hours === 1 ? 'Hour' : 'Hours'} left`;
         }
-        if (hours >= 1) {
+        if (hours > 1) {
             return `${hours} ${hours === 1 ? 'Hour' : 'Hours'} left`;
         }
         return `${minutes} ${minutes === 1 ? 'Minute' : 'Minutes'} left`;

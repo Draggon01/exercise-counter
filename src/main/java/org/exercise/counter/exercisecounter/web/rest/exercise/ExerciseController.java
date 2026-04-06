@@ -85,7 +85,7 @@ public class ExerciseController {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         String username = user.getUsername();
 
-        return userSelectionRepository.findByUserSelectionId_UsernameOrderBySortOrderAsc(username)
+        return userSelectionRepository.findByUserSelectionId_UsernameOrderByPositionAsc(username)
                 .stream()
                 .map(selection -> new ExerciseDto(
                         selection.getExercise().getExerciseId(),
@@ -100,7 +100,7 @@ public class ExerciseController {
                         selection.getExercise().getVisibility(),
                         this.GroupsForExercise(selection.getExercise().getExerciseId()),
                         this.calculateTimeLeftSeconds(selection.getExercise()),
-                        selection.getSortOrder()
+                        selection.getPosition()
                 )).toList();
     }
 
@@ -153,7 +153,7 @@ public class ExerciseController {
     private Integer getSorting(Exercise exercise, String username) {
         Optional<UserSelection> byId = userSelectionRepository
                 .findById(new UserSelectionId(username, exercise.getExerciseId()));
-        return byId.map(UserSelection::getSortOrder).orElse(null);
+        return byId.map(UserSelection::getPosition).orElse(null);
     }
 
     private long calculateTimeLeftSeconds(Exercise exercise) {

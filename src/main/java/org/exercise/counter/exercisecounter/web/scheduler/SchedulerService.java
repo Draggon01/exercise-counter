@@ -170,7 +170,7 @@ public class SchedulerService {
         exercise.setLastSchedulerRun(LocalDateTime.now(ZoneId.of("UTC")));
         exerciseRepository.save(exercise);
         List<String> users = getCheckedUsers(exercise);
-        updateStatistc(exercise, users);
+        updateStatistic(exercise, users);
     }
 
     @Transactional
@@ -182,7 +182,7 @@ public class SchedulerService {
         exercise.setExerciseValue(String.valueOf(exerciseValue + exerciseIncrease));
         exerciseRepository.save(exercise);
         List<String> users = getCheckedUsers(exercise);
-        updateStatistc(exercise, users);
+        updateStatistic(exercise, users);
     }
 
     private @NonNull List<String> getCheckedUsers(Exercise exercise) {
@@ -197,7 +197,7 @@ public class SchedulerService {
         return users;
     }
 
-    private void updateStatistc(Exercise exercise, List<String> users) {
+    private void updateStatistic(Exercise exercise, List<String> users) {
         Period period = new Period();
         period.setTimeRange(getRangeForOffset(exercise.getUtcOffset()));
         period.setExercise(exercise);

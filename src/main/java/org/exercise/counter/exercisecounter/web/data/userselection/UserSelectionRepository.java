@@ -10,8 +10,8 @@ import java.util.Optional;
 public interface UserSelectionRepository extends JpaRepository<UserSelection, UserSelectionId> {
     List<UserSelection> findByUserSelectionId_Username(String username);
 
-    List<UserSelection> findByUserSelectionId_UsernameOrderBySortOrderAsc(String username);
+    List<UserSelection> findByUserSelectionId_UsernameOrderByPositionAsc(String username);
 
-    @Query("SELECT MAX(u.sortOrder) FROM show_exercise_for_user u WHERE u.userSelectionId.username = :username")
-    Optional<Integer> findMaxSortOrderByUsername(@Param("username") String username);
+    @Query("SELECT MAX(u.position) FROM show_exercise_for_user u WHERE u.userSelectionId.username = :username")
+    Optional<Integer> findMaxPositionByUsername(@Param("username") String username);
 }
