@@ -114,6 +114,19 @@ export class HomeView extends ConnectedLitElement {
                 box-sizing: border-box;
             }
         }
+
+        @media (max-width: 400px) {
+            .action-bar {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 0 8px;
+                gap: 6px;
+            }
+
+            .addButton {
+                width: 100%;
+            }
+        }
     `
 
     @state()
