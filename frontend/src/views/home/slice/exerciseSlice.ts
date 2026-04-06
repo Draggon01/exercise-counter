@@ -149,7 +149,7 @@ export const loadExerciseLog = createAsyncThunk<ExerciseLogDto, string, { reject
         }
     });
 
-export const reorderExercises = createAsyncThunk<ExerciseDto[], ExerciseDto[], { rejectValue: any }>(
+export const reorderExercises = createAsyncThunk<ExerciseDto[], string[], { rejectValue: any }>(
     'selection/reorder', async ( exerciseIds, {rejectWithValue}) => {
         const res = await fetch("/api/selection/reorder", {
             method: 'POST',
