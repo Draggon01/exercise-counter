@@ -149,8 +149,8 @@ export const loadExerciseLog = createAsyncThunk<ExerciseLogDto, string, { reject
         }
     });
 
-export const reorderExercises = createAsyncThunk<void, string[], { rejectValue: any }>(
-    'selection/reorder', async (exerciseIds, {rejectWithValue}) => {
+export const reorderExercises = createAsyncThunk<ExerciseDto[], ExerciseDto[], { rejectValue: any }>(
+    'selection/reorder', async ( exerciseIds, {rejectWithValue}) => {
         const res = await fetch("/api/selection/reorder", {
             method: 'POST',
             headers: {
@@ -162,6 +162,7 @@ export const reorderExercises = createAsyncThunk<void, string[], { rejectValue: 
         if (!res.ok) {
             return rejectWithValue(await res.json());
         }
+        return await res.json();
     }
 )
 
@@ -255,6 +256,17 @@ export const exerciseSlice = createSlice({
                 state.exercises.status = 'idle';
                 exerciseAdapter.removeOne(state.exercises, action.payload);
             })
+            .addCase(reorderExercises.pending, state => {
+                state.exercises.status = 'initial';
+            })
+            .addCase(reorderExercises.rejected, state => {
+                state.exercises.status = 'error';
+            })
+            .addCase(reorderExercises.fulfilled, (state, action) => {
+                state.exercises.status = 'idle';
+                exerciseAdapter.setAll(state.exercises, action.payload);
+            })
+
     }
 });
 
