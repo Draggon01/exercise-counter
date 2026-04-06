@@ -43,25 +43,10 @@ export class OverlayView extends ConnectedLitElement {
             overflow: scroll;
             display: block;
         }
-        
-        .linkField{
-            display: flex; 
-            align-items: end
-        }
-        
-        .linkField sl-input{
-            width: 70%;
-        }
     `;
 
     @state()
     private user?: UserDto;
-
-    @state()
-    private openLinkDialog?: boolean = false;
-
-    @state()
-    private inviteLink?: string;
 
     connectedCallback() {
         super.connectedCallback();
@@ -91,17 +76,9 @@ export class OverlayView extends ConnectedLitElement {
                                 void CustomRouter.goto("/groups");
                             }}"> Groups
                             </sl-menu-item>
-                            <sl-menu-item @click="${async () => {
-                                await fetch("/api/user/getInviteLink", {
-                                    method: 'POST',
-                                    headers: {
-                                        "Content-Type": "application/json",
-                                    },
-                                    body: window.location.host,
-                                    credentials: "include"
-                                }).then(res => res.text()).then(res => this.inviteLink = res);
-                                this.openLinkDialog = true;
-                            }}"> Get invite link
+                            <sl-menu-item @click="${() => {
+                                void CustomRouter.goto("/options");
+                            }}"> Options
                             </sl-menu-item>
                             <sl-menu-item @click=${this.handleLogout}> Logout
                                 <sl-icon-button slot="suffix" style="margin-right: 0" name="box-arrow-right"
@@ -115,27 +92,6 @@ export class OverlayView extends ConnectedLitElement {
             <main class="scroller">
                 <slot name="main"></slot>
             </main>
-            <sl-dialog .open=${this.openLinkDialog}
-                       @sl-hide=${() => {
-                           this.openLinkDialog = false;
-                       }}
-                       label="Your invite link is:"
-            >
-                <div class="linkField">
-                    <sl-input readonly
-                              .value=${this.inviteLink}>
-                    </sl-input>
-                    <sl-button slot="suffix" variant="neutral" size="medium" @click=${async () => {
-                        if (this.inviteLink) {
-                            await navigator.clipboard.writeText(this.inviteLink);
-                        }
-                    }}>
-                        <sl-icon name="clipboard"></sl-icon>
-                    </sl-button>
-                </div>
-
-                <p>it works for one invite and is valid for an uncertain time</p>
-            </sl-dialog>
         `;
     }
 }

@@ -6,6 +6,7 @@ import {statisticReducer} from "./views/statistics/slice/statisticSlice";
 import {groupReducer} from "./views/groups/slice/groupSlice";
 import {authReducer} from "./othrSlices/auth/authSlice";
 import {authMiddleware} from "./othrSlices/auth/authMiddleware";
+import {optionsReducer} from "./views/options/slice/optionsSlice";
 
 const rootReducer = combineReducers({
     user: userReducer,
@@ -13,7 +14,8 @@ const rootReducer = combineReducers({
     checks: checkReducer,
     statistic: statisticReducer,
     group: groupReducer,
-    auth: authReducer
+    auth: authReducer,
+    options: optionsReducer
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
