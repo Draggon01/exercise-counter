@@ -152,6 +152,14 @@ export class ExerciseCard extends ConnectedLitElement {
             padding: 0 4px;
         }
 
+        .collapse-icon {
+            color: #888;
+        }
+
+        .card.collapsed {
+            gap: 0;
+        }
+
         .sort-controls {
             display: flex;
             flex-direction: column;
@@ -251,6 +259,9 @@ export class ExerciseCard extends ConnectedLitElement {
     user?: UserDto;
 
     @state()
+    private _collapsed = false;
+
+    @state()
     private _timerRunning = false;
 
     @state()
@@ -270,6 +281,13 @@ export class ExerciseCard extends ConnectedLitElement {
         super.connectedCallback();
         if (this.item) {
             await this._loadLog();
+        }
+    }
+
+    updated(changedProps: Map<string, unknown>) {
+        super.updated(changedProps);
+        if (changedProps.has('checked')) {
+            this._collapsed = this.checked;
         }
     }
 
@@ -449,7 +467,7 @@ export class ExerciseCard extends ConnectedLitElement {
 
     render() {
         return html`
-            <div class="card">
+            <div class="card ${this._collapsed ? 'collapsed' : ''}">
                 <div class="card-header">
                     <h2 class="headline">${this.item.exerciseTitle}</h2>
                     ${this.editMode ? html`
@@ -469,41 +487,48 @@ export class ExerciseCard extends ConnectedLitElement {
                                 <sl-icon-button name="layer-backward" class="hide-icon"
                                                 @click="${this._hideClick}"></sl-icon-button>
                             `}
+                            <sl-icon-button
+                                    class="collapse-icon"
+                                    name="${this._collapsed ? 'chevron-down' : 'chevron-up'}"
+                                    @click="${this._toggleCollapse}">
+                            </sl-icon-button>
                         </div>
                     `}
                 </div>
-                <div class="card-body">
-                    <span class="label">Today's Goal:</span>
-                    <span class="value">${this._formatTodayValue()}</span>
-                    ${this._isTimeExercise() ? html`
-                        <span class="label">Timer:</span>
-                        <div>${this._renderTimerSection()}</div>
-                    ` : this._isRepExercise() ? html`
-                        <span class="label">Progress:</span>
-                        <div>${this._renderRepSection()}</div>
-                    ` : ''}
-                    <hr class="divider">
-                    <span class="label">Finished by:</span>
-                    <span>
-                        ${this.finishedUser.length === 0
-                                ? html`<span style="color:#aaa">—</span>`
-                                : this.finishedUser.map((check, idx) =>
-                                        check.user + " {" + check.streak + "}" + (idx < this.finishedUser.length - 1 ? ", " : ""))}
-                    </span>
-                    <span class="label">Time left:</span>
-                    <span class="${this._isUrgent() ? 'time-left urgent' : 'time-left'}">${this._getTimeLeft()}</span>
-                </div>
-                <div class="card-footer">
-                    <sl-button class="stats-btn" variant="primary" size="small"
-                               @click="${() => void CustomRouter.goto('/statistics/' + this.item.exerciseId)}">
-                        Statistics
-                    </sl-button>
-                    <div class="finished-label">
-                        Finished
-                        <sl-checkbox @sl-change="${this._checkChange}" ?checked=${this.checked}
-                                     size="medium"></sl-checkbox>
+                ${!this._collapsed ? html`
+                    <div class="card-body">
+                        <span class="label">Today's Goal:</span>
+                        <span class="value">${this._formatTodayValue()}</span>
+                        ${this._isTimeExercise() ? html`
+                            <span class="label">Timer:</span>
+                            <div>${this._renderTimerSection()}</div>
+                        ` : this._isRepExercise() ? html`
+                            <span class="label">Progress:</span>
+                            <div>${this._renderRepSection()}</div>
+                        ` : ''}
+                        <hr class="divider">
+                        <span class="label">Finished by:</span>
+                        <span>
+                            ${this.finishedUser.length === 0
+                                    ? html`<span style="color:#aaa">—</span>`
+                                    : this.finishedUser.map((check, idx) =>
+                                            check.user + " {" + check.streak + "}" + (idx < this.finishedUser.length - 1 ? ", " : ""))}
+                        </span>
+                        <span class="label">Time left:</span>
+                        <span class="${this._isUrgent() ? 'time-left urgent' : 'time-left'}">${this._getTimeLeft()}</span>
                     </div>
-                </div>
+                    <div class="card-footer">
+                        <sl-button class="stats-btn" variant="primary" size="small"
+                                   @click="${() => void CustomRouter.goto('/statistics/' + this.item.exerciseId)}">
+                            Statistics
+                        </sl-button>
+                        <div class="finished-label">
+                            Finished
+                            <sl-checkbox @sl-change="${this._checkChange}" ?checked=${this.checked}
+                                         size="medium"></sl-checkbox>
+                        </div>
+                    </div>
+                ` : ''}
             </div>
         `;
     }
@@ -530,6 +555,10 @@ export class ExerciseCard extends ConnectedLitElement {
         const secs = this.item.timeLeftSeconds;
         if (secs == null) return false;
         return secs < 6 * 60 * 60;
+    }
+
+    private _toggleCollapse = () => {
+        this._collapsed = !this._collapsed;
     }
 
     private _moveUpClick = () => {
