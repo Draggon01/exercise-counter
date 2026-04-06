@@ -333,7 +333,6 @@ export class HomeView extends ConnectedLitElement {
                                     const newOrder = [...exerciseDtos];
                                     [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
                                     store.dispatch(reorderExercises(newOrder.map(e => e.exerciseId)));
-                                    store.dispatch(listExercisesSelected());
                                 }
                             }}"
                             @moveDown="${() => {
@@ -341,7 +340,6 @@ export class HomeView extends ConnectedLitElement {
                                     const newOrder = [...exerciseDtos];
                                     [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
                                     store.dispatch(reorderExercises(newOrder.map(e => e.exerciseId)));
-                                    store.dispatch(listExercisesSelected());
                                 }
                             }}"
                             @deleteExercise="${(e: any) => {
