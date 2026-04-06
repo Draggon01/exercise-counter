@@ -277,7 +277,6 @@ export class ExerciseCard extends ConnectedLitElement {
     @state()
     private _repsCompleted = 0;
 
-    private _logLoaded = false;
     private _timerInterval?: ReturnType<typeof setInterval>;
     private _saveDebounce?: ReturnType<typeof setTimeout>;
 
@@ -301,6 +300,7 @@ export class ExerciseCard extends ConnectedLitElement {
         }
         const prev = this._autoCollapse;
         this._autoCollapse = selectAutoCollapse(state);
+        console.log(this._autoCollapse)
         if (prev && !this._autoCollapse) {
             this._collapsed = false;
         }
