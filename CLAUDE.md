@@ -65,6 +65,7 @@ npm run build           # build for production
 - State management via Redux slices in each view's `slice/` subfolder
 - Always execute api calls etc. in the redux slice, dont diretly fetch data from the backend
 - Routing via `CustomRouter` from `../../index`
+- Dont use the updated method in Lit elements if not completely necessary.
 
 ## Git
 - Always run: `git add -A && git commit -m "fix: description (#ISSUE_NUMBER)"`
