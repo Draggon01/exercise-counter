@@ -5,6 +5,7 @@ import "./views/home/home-view"
 import "./views/statistics/statistics-view"
 import "./views/groups/groups-view"
 import "./views/home/browse-view"
+import "./views/options/options-view"
 import {navigate} from "./lit-router";
 
 export const routes: RouteConfig[] = [
@@ -26,6 +27,10 @@ export const routes: RouteConfig[] = [
     {
       path: '/browse', render: () => html`
             <browse-view></browse-view>`
+    },
+    {
+      path: '/options', render: () => html`
+            <options-view></options-view>`
     },
     {
         path: '*',
