@@ -277,6 +277,7 @@ jobs:
 
       # ── Push and open PR ─────────────────────────────────────────────────────
       - name: Push branch and open PR
+        if: always()
         env:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
