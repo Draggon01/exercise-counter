@@ -5,6 +5,7 @@ import {store} from "../../store";
 import {registerUser} from "../login/slice/userSlice";
 import {RegisterDto} from "./model/registerDto";
 import {navigate} from "../../lit-router";
+import {validateRegisterId} from "./slice/registerSlice";
 
 @customElement('register-view')
 export class RegisterView extends LitElement {
@@ -14,6 +15,22 @@ export class RegisterView extends LitElement {
 
     @state()
     private errorMessage = "";
+
+    @state()
+    private validating = true;
+
+    protected async firstUpdated() {
+        if (!this.registerId) {
+            navigate("/login");
+            return;
+        }
+        const result = await store.dispatch(validateRegisterId(this.registerId));
+        if (!validateRegisterId.fulfilled.match(result) || result.payload !== true) {
+            navigate("/login");
+            return;
+        }
+        this.validating = false;
+    }
 
     private async userExists(username: string | undefined): Promise<boolean> {
         if(!username || username === ""){
@@ -153,6 +170,9 @@ export class RegisterView extends LitElement {
     `;
 
     render() {
+        if (this.validating) {
+            return html`<div class="register-container"><div class="register-form"><p>Validating invite link...</p></div></div>`;
+        }
         return html`
             <div class="register-container">
                 <div class="register-form">
