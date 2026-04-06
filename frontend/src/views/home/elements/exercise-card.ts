@@ -298,10 +298,8 @@ export class ExerciseCard extends ConnectedLitElement {
         if (state.user.status === "idle") {
             this.user = selectCurrentUser(state);
         }
-        const prev = this._autoCollapse;
         this._autoCollapse = selectAutoCollapse(state);
-        console.log(this._autoCollapse)
-        if (prev && !this._autoCollapse) {
+        if (!this._autoCollapse) {
             this._collapsed = false;
         }
     }
