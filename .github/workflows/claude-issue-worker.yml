@@ -194,7 +194,7 @@ jobs:
 
       # ── Step 3: Resume if hit turn limit ────────────────────────────────────
       - name: Claude — Resume (if needed)
-        if: env.STOP_REASON == 'max_turns'
+        if: env.STOP_REASON == 'max_turns' || env.STOP_REASON == 'tool_use'
         env:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
@@ -251,7 +251,7 @@ jobs:
           EXEC_TURNS=${EXEC_TURNS:-0}
           RESUME_TURNS=${RESUME_TURNS:-0}
 
-          TOTAL_COST=$(echo "$PLAN_COST + $EXEC_COST + $RESUME_COST" | bc)
+          TOTAL_COST=$(awk "BEGIN {printf \"%.7f\", $PLAN_COST + $EXEC_COST + $RESUME_COST}")
           TOTAL_TURNS=$(( ${PLAN_TURNS:-0} + ${EXEC_TURNS:-0} + ${RESUME_TURNS:-0} ))
 
           echo "CLAUDE_COST=$TOTAL_COST" >> $GITHUB_ENV
@@ -263,6 +263,7 @@ jobs:
 
       # ── Commit any leftover unstaged changes ─────────────────────────────────
       - name: Commit any uncommitted Claude changes
+        if: always()
         env:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
