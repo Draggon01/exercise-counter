@@ -187,6 +187,48 @@ export class ExerciseCard extends ConnectedLitElement {
                 flex-wrap: wrap;
             }
         }
+
+        @media (max-width: 400px) {
+            .card {
+                padding: 8px 10px;
+                margin: 4px auto;
+                gap: 6px;
+            }
+
+            .headline {
+                font-size: 0.95em;
+            }
+
+            .card-body {
+                font-size: 0.82em;
+                gap: 3px 8px;
+            }
+
+            .timer-row {
+                gap: 6px;
+            }
+
+            .timer-display {
+                font-size: 1em;
+                min-width: 44px;
+            }
+
+            .rep-section {
+                gap: 4px;
+            }
+
+            .rep-input {
+                width: 56px;
+            }
+
+            .card-footer {
+                padding-top: 4px;
+            }
+
+            .finished-label {
+                font-size: 0.82em;
+            }
+        }
     `;
 
     @property({type: Boolean})
