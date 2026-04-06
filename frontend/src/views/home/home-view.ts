@@ -99,6 +99,21 @@ export class HomeView extends ConnectedLitElement {
         .addButton {
             margin-top: 1rem;
         }
+
+        .action-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .action-bar {
+                width: 100%;
+                padding: 0 8px;
+                box-sizing: border-box;
+            }
+        }
     `
 
     @state()
@@ -146,7 +161,7 @@ export class HomeView extends ConnectedLitElement {
 
     render() {
         return html`
-            <div style="display: flex; gap: 8px">
+            <div class="action-bar">
                 <sl-button class="addButton" variant="primary" @click="${() => {
                     this.openDialog = true;
                     this.exerciseDto = {
