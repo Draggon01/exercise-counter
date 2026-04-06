@@ -149,6 +149,22 @@ export const loadExerciseLog = createAsyncThunk<ExerciseLogDto, string, { reject
         }
     });
 
+export const reorderExercises = createAsyncThunk<void, string[], { rejectValue: any }>(
+    'selection/reorder', async (exerciseIds, {rejectWithValue}) => {
+        const res = await fetch("/api/selection/reorder", {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(exerciseIds),
+            credentials: "include"
+        });
+        if (!res.ok) {
+            return rejectWithValue(await res.json());
+        }
+    }
+)
+
 export const saveExerciseLog = createAsyncThunk<void, ExerciseLogDto, { rejectValue: any }>(
     'exercise/log/save', async (log, {rejectWithValue}) => {
         const res = await fetch('/api/log/save', {
