@@ -4,6 +4,8 @@ import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseRepository
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelection;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionId;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
+import org.exercise.counter.exercisecounter.web.rest.exercise.ExerciseController;
+import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,11 +21,12 @@ import java.util.UUID;
 @RequestMapping("/api/selection/")
 public class UserSelectionController {
     private final UserSelectionRepository userSelectionRepository;
-    private final ExerciseRepository exerciseRepository;
+    private final ExerciseController exerciseController;
 
-    public UserSelectionController(UserSelectionRepository userSelectionRepository, ExerciseRepository exerciseRepository) {
+    public UserSelectionController(UserSelectionRepository userSelectionRepository,
+                                   ExerciseController exerciseController) {
         this.userSelectionRepository = userSelectionRepository;
-        this.exerciseRepository = exerciseRepository;
+        this.exerciseController = exerciseController;
     }
 
     @PostMapping("/select")
@@ -49,7 +53,7 @@ public class UserSelectionController {
     }
 
     @PostMapping("/reorder")
-    public void reorder(@RequestBody List<String> exerciseIds, Authentication authentication) {
+    public List<ExerciseDto> reorder(@RequestBody List<String> exerciseIds, Authentication authentication) {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         String username = user.getUsername();
 
@@ -62,6 +66,7 @@ public class UserSelectionController {
                 userSelectionRepository.save(sel);
             });
         }
+        return exerciseController.getAllExercisesForUser(authentication);
     }
 
     private void recompactSortOrder(String username) {

@@ -24,10 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -148,8 +145,15 @@ public class ExerciseController {
                         exercise.getExerciseIncrease(),
                         exercise.getVisibility(),
                         this.GroupsForExercise(exercise.getExerciseId()),
-                        this.calculateTimeLeftSeconds(exercise)
+                        this.calculateTimeLeftSeconds(exercise),
+                        this.getSorting(exercise, username)
                 )).toList();
+    }
+
+    private Integer getSorting(Exercise exercise, String username) {
+        Optional<UserSelection> byId = userSelectionRepository
+                .findById(new UserSelectionId(username, exercise.getExerciseId()));
+        return byId.map(UserSelection::getSortOrder).orElse(null);
     }
 
     private long calculateTimeLeftSeconds(Exercise exercise) {
@@ -216,7 +220,9 @@ public class ExerciseController {
                 save.getExerciseIncrease(),
                 save.getVisibility(),
                 this.GroupsForExercise(save.getExerciseId()),
-                this.calculateTimeLeftSeconds(save));
+                this.calculateTimeLeftSeconds(save),
+                null
+        );
     }
 
     @PostMapping("/exercises/delete")
