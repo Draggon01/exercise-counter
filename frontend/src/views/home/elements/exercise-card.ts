@@ -282,13 +282,7 @@ export class ExerciseCard extends ConnectedLitElement {
         if (this.item) {
             await this._loadLog();
         }
-    }
-
-    updated(changedProps: Map<string, unknown>) {
-        super.updated(changedProps);
-        if (changedProps.has('checked')) {
-            this._collapsed = this.checked;
-        }
+        this._collapsed = this.checked;
     }
 
     disconnectedCallback() {
@@ -582,6 +576,7 @@ export class ExerciseCard extends ConnectedLitElement {
     }
 
     private _checkChange = (e: any) => {
+        this._collapsed = !this.checked;
         this.dispatchEvent(new CustomEvent("checkChanged", {detail: e.target.checked}))
     }
 }
