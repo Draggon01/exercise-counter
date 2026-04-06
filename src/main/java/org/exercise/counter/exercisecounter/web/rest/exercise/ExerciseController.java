@@ -256,9 +256,16 @@ public class ExerciseController {
     }
 
     @GetMapping("/check/list/per/exercise")
-    public Map<UUID, List<CheckDto>> getAllChecksPerExercise() {
-        return exerciseRepository.findAll().stream().collect(Collectors.toMap(Exercise::getExerciseId,
-                ex -> checkRepository.findCheckByCheckIdExerciseId(ex.getExerciseId())
+    public Map<UUID, List<CheckDto>> getAllChecksPerExercise(Authentication authentication) {
+        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+        List<UUID> selectedExerciseIds = userSelectionRepository
+                .findByUserSelectionId_UsernameOrderByPositionAsc(username)
+                .stream()
+                .map(sel -> sel.getUserSelectionId().getExerciseId())
+                .toList();
+        return selectedExerciseIds.stream().collect(Collectors.toMap(
+                exerciseId -> exerciseId,
+                exerciseId -> checkRepository.findCheckByCheckIdExerciseId(exerciseId)
                         .stream()
                         .map(check ->
                                 new CheckDto(check.getCheckId().getExerciseId(),
