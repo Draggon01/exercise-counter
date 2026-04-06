@@ -158,6 +158,35 @@ export class ExerciseCard extends ConnectedLitElement {
             gap: 2px;
             flex-shrink: 0;
         }
+
+        @media (max-width: 768px) {
+            .card {
+                width: 95%;
+                min-width: unset;
+            }
+
+            .card-body {
+                grid-template-columns: 1fr;
+            }
+
+            .label {
+                color: #888;
+                font-size: 0.8em;
+                margin-bottom: 0;
+            }
+
+            .value {
+                margin-bottom: 4px;
+            }
+
+            .divider {
+                grid-column: 1;
+            }
+
+            .card-header {
+                flex-wrap: wrap;
+            }
+        }
     `;
 
     @property({type: Boolean})
