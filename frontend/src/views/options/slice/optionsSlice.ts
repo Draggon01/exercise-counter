@@ -2,9 +2,9 @@ import {AsyncStoreState} from "../../../commons";
 import {createAsyncThunk, createSlice, Reducer} from "@reduxjs/toolkit";
 
 type SliceState = {
-    inviteLink: {
+    inviteLinks: {
         status: AsyncStoreState;
-        value: string;
+        values: string[];
     }
     autoCollapse: boolean;
     optionsStatus: AsyncStoreState;
@@ -15,9 +15,9 @@ type SliceProjection = {
 }
 
 const initialState: SliceState = {
-    inviteLink: {
+    inviteLinks: {
         status: "initial",
-        value: ""
+        values: []
     },
     autoCollapse: true,
     optionsStatus: "initial"
@@ -71,18 +71,23 @@ export const setAutoCollapse = createAsyncThunk<boolean, boolean, { rejectValue:
 const optionsSlice = createSlice({
     name: 'options',
     initialState,
-    reducers: {},
+    reducers: {
+        clearInviteLinks(state) {
+            state.inviteLinks.values = [];
+            state.inviteLinks.status = "initial";
+        }
+    },
     extraReducers: (builder) => {
         builder
             .addCase(generateInviteLink.pending, (state) => {
-                state.inviteLink.status = "loading";
+                state.inviteLinks.status = "loading";
             })
             .addCase(generateInviteLink.fulfilled, (state, action) => {
-                state.inviteLink.status = "idle";
-                state.inviteLink.value = action.payload;
+                state.inviteLinks.status = "idle";
+                state.inviteLinks.values = [...state.inviteLinks.values, action.payload];
             })
             .addCase(generateInviteLink.rejected, (state) => {
-                state.inviteLink.status = "error";
+                state.inviteLinks.status = "error";
             })
             .addCase(loadOptions.pending, (state) => {
                 state.optionsStatus = "loading";
@@ -101,7 +106,8 @@ const optionsSlice = createSlice({
 });
 
 export const optionsReducer: Reducer<SliceState> = optionsSlice.reducer;
+export const {clearInviteLinks} = optionsSlice.actions;
 
-export const selectInviteLink = (state: SliceProjection) => state.options.inviteLink.value;
-export const selectInviteLinkStatus = (state: SliceProjection) => state.options.inviteLink.status;
+export const selectInviteLinks = (state: SliceProjection) => state.options.inviteLinks.values;
+export const selectInviteLinkStatus = (state: SliceProjection) => state.options.inviteLinks.status;
 export const selectAutoCollapse = (state: SliceProjection) => state.options.autoCollapse;

@@ -3,7 +3,7 @@ import {customElement, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from '../../store';
 import {CustomRouter} from "../../index";
-import {generateInviteLink, loadOptions, selectAutoCollapse, selectInviteLink, selectInviteLinkStatus, setAutoCollapse} from "./slice/optionsSlice";
+import {clearInviteLinks, generateInviteLink, loadOptions, selectAutoCollapse, selectInviteLinks, selectInviteLinkStatus, setAutoCollapse} from "./slice/optionsSlice";
 import {listExercises, selectAllExercises} from "../home/slice/exerciseSlice";
 import {ExerciseDto} from "../home/models/exerciseDto";
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -61,6 +61,38 @@ export class OptionsView extends ConnectedLitElement {
             font-size: 0.8rem;
             color: var(--sl-color-neutral-500);
             margin-top: 0.5rem;
+        }
+
+        .invite-links-list {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .invite-links-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--sl-color-neutral-600);
+            font-weight: 600;
+        }
+
+        .invite-link-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .invite-link-item sl-input {
+            flex: 1;
+        }
+
+        .invite-error {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--sl-color-danger-600);
         }
 
         .wip-notice {
@@ -168,7 +200,7 @@ export class OptionsView extends ConnectedLitElement {
     `;
 
     @state()
-    private inviteLink: string = "";
+    private inviteLinks: string[] = [];
 
     @state()
     private inviteLinkStatus: string = "initial";
@@ -186,7 +218,7 @@ export class OptionsView extends ConnectedLitElement {
     }
 
     stateChanged(state: RootState) {
-        this.inviteLink = selectInviteLink(state);
+        this.inviteLinks = selectInviteLinks(state);
         this.inviteLinkStatus = selectInviteLinkStatus(state);
         this.exercises = selectAllExercises(state);
         this.autoCollapse = selectAutoCollapse(state);
@@ -196,10 +228,12 @@ export class OptionsView extends ConnectedLitElement {
         await store.dispatch(generateInviteLink());
     }
 
-    private async handleCopyLink() {
-        if (this.inviteLink) {
-            await navigator.clipboard.writeText(this.inviteLink);
-        }
+    private async handleCopyLink(link: string) {
+        await navigator.clipboard.writeText(link);
+    }
+
+    private handleClearLinks() {
+        store.dispatch(clearInviteLinks());
     }
 
     protected render() {
@@ -244,27 +278,37 @@ export class OptionsView extends ConnectedLitElement {
                     <sl-tab-panel name="invite">
                         <div class="tab-content">
                             <p>Generate a link to invite someone to join the app. Each link can only be used once.</p>
-                            <div class="invite-row">
-                                <sl-input
-                                        readonly
-                                        placeholder="Click 'Generate' to create a link"
-                                        .value="${this.inviteLink}"
-                                ></sl-input>
-                                <sl-button
-                                        variant="neutral"
-                                        @click="${this.handleCopyLink}"
-                                        ?disabled="${!this.inviteLink}"
-                                >
-                                    <sl-icon name="clipboard"></sl-icon>
-                                </sl-button>
-                                <sl-button
-                                        variant="primary"
-                                        ?loading="${this.inviteLinkStatus === 'loading'}"
-                                        @click="${this.handleGenerateLink}"
-                                >
-                                    Generate
-                                </sl-button>
-                            </div>
+                            <sl-button
+                                    variant="primary"
+                                    ?loading="${this.inviteLinkStatus === 'loading'}"
+                                    @click="${this.handleGenerateLink}"
+                            >
+                                Generate Link
+                            </sl-button>
+                            ${this.inviteLinkStatus === 'error' ? html`
+                                <p class="invite-error">Failed to generate link. Please try again.</p>
+                            ` : ''}
+                            ${this.inviteLinks.length > 0 ? html`
+                                <div class="invite-links-list">
+                                    <div class="invite-links-header">
+                                        <span>Generated links (${this.inviteLinks.length})</span>
+                                        <sl-button size="small" variant="text" @click="${this.handleClearLinks}">
+                                            Clear all
+                                        </sl-button>
+                                    </div>
+                                    ${this.inviteLinks.map(link => html`
+                                        <div class="invite-link-item">
+                                            <sl-input readonly .value="${link}"></sl-input>
+                                            <sl-button
+                                                    variant="neutral"
+                                                    @click="${() => this.handleCopyLink(link)}"
+                                            >
+                                                <sl-icon name="clipboard"></sl-icon>
+                                            </sl-button>
+                                        </div>
+                                    `)}
+                                </div>
+                            ` : ''}
                             <p class="invite-hint">Links are valid for a limited time and expire after one use.</p>
                         </div>
                     </sl-tab-panel>
