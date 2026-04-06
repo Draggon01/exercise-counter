@@ -299,7 +299,11 @@ export class ExerciseCard extends ConnectedLitElement {
         if (state.user.status === "idle") {
             this.user = selectCurrentUser(state);
         }
+        const prev = this._autoCollapse;
         this._autoCollapse = selectAutoCollapse(state);
+        if (prev && !this._autoCollapse) {
+            this._collapsed = false;
+        }
     }
 
     private _isTimeExercise(): boolean {
@@ -486,11 +490,13 @@ export class ExerciseCard extends ConnectedLitElement {
                                 <sl-icon-button name="layer-backward" class="hide-icon"
                                                 @click="${this._hideClick}"></sl-icon-button>
                             `}
-                            <sl-icon-button
-                                    class="collapse-icon"
-                                    name="${this._collapsed ? 'chevron-down' : 'chevron-up'}"
-                                    @click="${this._toggleCollapse}">
-                            </sl-icon-button>
+                            ${this._autoCollapse ? html`
+                                <sl-icon-button
+                                        class="collapse-icon"
+                                        name="${this._collapsed ? 'chevron-down' : 'chevron-up'}"
+                                        @click="${this._toggleCollapse}">
+                                </sl-icon-button>
+                            ` : ''}
                         </div>
                     `}
                 </div>
@@ -557,6 +563,7 @@ export class ExerciseCard extends ConnectedLitElement {
     }
 
     private _toggleCollapse = () => {
+        if (!this._autoCollapse) return;
         this._collapsed = !this._collapsed;
     }
 
