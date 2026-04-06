@@ -8,6 +8,7 @@ import {CustomRouter} from "../../../index";
 import {CheckDto} from "../models/checkDto";
 import {RootState, store} from "../../../store";
 import {loadExerciseLog, saveExerciseLog} from "../slice/exerciseSlice";
+import {selectAutoCollapse} from "../../options/slice/optionsSlice";
 
 @customElement("exercise-card")
 export class ExerciseCard extends ConnectedLitElement {
@@ -262,6 +263,9 @@ export class ExerciseCard extends ConnectedLitElement {
     private _collapsed = false;
 
     @state()
+    private _autoCollapse = true;
+
+    @state()
     private _timerRunning = false;
 
     @state()
@@ -282,7 +286,7 @@ export class ExerciseCard extends ConnectedLitElement {
         if (this.item) {
             await this._loadLog();
         }
-        this._collapsed = this.checked;
+        this._collapsed = this._autoCollapse && this.checked;
     }
 
     disconnectedCallback() {
@@ -295,6 +299,7 @@ export class ExerciseCard extends ConnectedLitElement {
         if (state.user.status === "idle") {
             this.user = selectCurrentUser(state);
         }
+        this._autoCollapse = selectAutoCollapse(state);
     }
 
     private _isTimeExercise(): boolean {
@@ -576,7 +581,9 @@ export class ExerciseCard extends ConnectedLitElement {
     }
 
     private _checkChange = (e: any) => {
-        this._collapsed = !this.checked;
+        if (this._autoCollapse) {
+            this._collapsed = !this.checked;
+        }
         this.dispatchEvent(new CustomEvent("checkChanged", {detail: e.target.checked}))
     }
 }

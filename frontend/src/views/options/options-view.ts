@@ -3,7 +3,7 @@ import {customElement, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from '../../store';
 import {CustomRouter} from "../../index";
-import {generateInviteLink, selectInviteLink, selectInviteLinkStatus} from "./slice/optionsSlice";
+import {generateInviteLink, selectAutoCollapse, selectInviteLink, selectInviteLinkStatus, setAutoCollapse} from "./slice/optionsSlice";
 import {listExercises, selectAllExercises} from "../home/slice/exerciseSlice";
 import {ExerciseDto} from "../home/models/exerciseDto";
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -16,6 +16,7 @@ import '@shoelace-style/shoelace/dist/components/tab/tab.js';
 import '@shoelace-style/shoelace/dist/components/tab-panel/tab-panel.js';
 import '@shoelace-style/shoelace/dist/components/select/select.js';
 import '@shoelace-style/shoelace/dist/components/option/option.js';
+import '@shoelace-style/shoelace/dist/components/switch/switch.js';
 
 @customElement('options-view')
 export class OptionsView extends ConnectedLitElement {
@@ -94,6 +95,30 @@ export class OptionsView extends ConnectedLitElement {
             width: 100%;
         }
 
+        .general-form {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .setting-label {
+            font-size: 0.9rem;
+        }
+
+        .setting-description {
+            font-size: 0.8rem;
+            color: var(--sl-color-neutral-500);
+            margin-top: 2px;
+        }
+
         .timer-sound-form {
             margin-top: 1rem;
             display: flex;
@@ -151,6 +176,9 @@ export class OptionsView extends ConnectedLitElement {
     @state()
     private exercises: ExerciseDto[] = [];
 
+    @state()
+    private autoCollapse: boolean = true;
+
     connectedCallback() {
         super.connectedCallback();
         store.dispatch(listExercises());
@@ -160,6 +188,7 @@ export class OptionsView extends ConnectedLitElement {
         this.inviteLink = selectInviteLink(state);
         this.inviteLinkStatus = selectInviteLinkStatus(state);
         this.exercises = selectAllExercises(state);
+        this.autoCollapse = selectAutoCollapse(state);
     }
 
     private async handleGenerateLink() {
@@ -185,11 +214,31 @@ export class OptionsView extends ConnectedLitElement {
                 </div>
 
                 <sl-tab-group placement="top">
-                    <!-- Invite Links Tab -->
+                    <!-- Tabs -->
+                    <sl-tab slot="nav" panel="general">General</sl-tab>
                     <sl-tab slot="nav" panel="invite">Invite Link</sl-tab>
                     <sl-tab slot="nav" panel="missed-entry">Missed Entry</sl-tab>
                     <sl-tab slot="nav" panel="timer-sound">Timer Sound</sl-tab>
                     <sl-tab slot="nav" panel="changelog">Changelog</sl-tab>
+
+                    <sl-tab-panel name="general">
+                        <div class="tab-content">
+                            <div class="general-form">
+                                <div class="setting-row">
+                                    <div>
+                                        <div class="setting-label">Auto-collapse on check</div>
+                                        <div class="setting-description">
+                                            Collapse exercise cards automatically when marked as finished.
+                                        </div>
+                                    </div>
+                                    <sl-switch
+                                            ?checked="${this.autoCollapse}"
+                                            @sl-change="${(e: any) => store.dispatch(setAutoCollapse(e.target.checked))}"
+                                    ></sl-switch>
+                                </div>
+                            </div>
+                        </div>
+                    </sl-tab-panel>
 
                     <sl-tab-panel name="invite">
                         <div class="tab-content">

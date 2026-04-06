@@ -1,11 +1,23 @@
 import {AsyncStoreState} from "../../../commons";
-import {createAsyncThunk, createSlice, Reducer} from "@reduxjs/toolkit";
+import {createAsyncThunk, createSlice, PayloadAction, Reducer} from "@reduxjs/toolkit";
+
+const STORAGE_KEY_AUTO_COLLAPSE = 'options.autoCollapse';
+
+function loadAutoCollapse(): boolean {
+    try {
+        const val = localStorage.getItem(STORAGE_KEY_AUTO_COLLAPSE);
+        return val === null ? true : val === 'true';
+    } catch {
+        return true;
+    }
+}
 
 type SliceState = {
     inviteLink: {
         status: AsyncStoreState;
         value: string;
     }
+    autoCollapse: boolean;
 }
 
 type SliceProjection = {
@@ -16,7 +28,8 @@ const initialState: SliceState = {
     inviteLink: {
         status: "initial",
         value: ""
-    }
+    },
+    autoCollapse: loadAutoCollapse()
 }
 
 export const generateInviteLink = createAsyncThunk<string, void, { rejectValue: any }>(
@@ -39,7 +52,14 @@ export const generateInviteLink = createAsyncThunk<string, void, { rejectValue: 
 const optionsSlice = createSlice({
     name: 'options',
     initialState,
-    reducers: {},
+    reducers: {
+        setAutoCollapse(state, action: PayloadAction<boolean>) {
+            state.autoCollapse = action.payload;
+            try {
+                localStorage.setItem(STORAGE_KEY_AUTO_COLLAPSE, String(action.payload));
+            } catch { /* ignore */ }
+        }
+    },
     extraReducers: (builder) => {
         builder
             .addCase(generateInviteLink.pending, (state) => {
@@ -55,7 +75,9 @@ const optionsSlice = createSlice({
     }
 });
 
+export const {setAutoCollapse} = optionsSlice.actions;
 export const optionsReducer: Reducer<SliceState> = optionsSlice.reducer;
 
 export const selectInviteLink = (state: SliceProjection) => state.options.inviteLink.value;
 export const selectInviteLinkStatus = (state: SliceProjection) => state.options.inviteLink.status;
+export const selectAutoCollapse = (state: SliceProjection) => state.options.autoCollapse;
