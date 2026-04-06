@@ -3,7 +3,7 @@ import {customElement, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from '../../store';
 import {CustomRouter} from "../../index";
-import {generateInviteLink, selectAutoCollapse, selectInviteLink, selectInviteLinkStatus, setAutoCollapse} from "./slice/optionsSlice";
+import {generateInviteLink, loadOptions, selectAutoCollapse, selectInviteLink, selectInviteLinkStatus, setAutoCollapse} from "./slice/optionsSlice";
 import {listExercises, selectAllExercises} from "../home/slice/exerciseSlice";
 import {ExerciseDto} from "../home/models/exerciseDto";
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -182,6 +182,7 @@ export class OptionsView extends ConnectedLitElement {
     connectedCallback() {
         super.connectedCallback();
         store.dispatch(listExercises());
+        store.dispatch(loadOptions());
     }
 
     stateChanged(state: RootState) {

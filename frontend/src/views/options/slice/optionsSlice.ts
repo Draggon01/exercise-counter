@@ -1,16 +1,5 @@
 import {AsyncStoreState} from "../../../commons";
-import {createAsyncThunk, createSlice, PayloadAction, Reducer} from "@reduxjs/toolkit";
-
-const STORAGE_KEY_AUTO_COLLAPSE = 'options.autoCollapse';
-
-function loadAutoCollapse(): boolean {
-    try {
-        const val = localStorage.getItem(STORAGE_KEY_AUTO_COLLAPSE);
-        return val === null ? true : val === 'true';
-    } catch {
-        return true;
-    }
-}
+import {createAsyncThunk, createSlice, Reducer} from "@reduxjs/toolkit";
 
 type SliceState = {
     inviteLink: {
@@ -18,6 +7,7 @@ type SliceState = {
         value: string;
     }
     autoCollapse: boolean;
+    optionsStatus: AsyncStoreState;
 }
 
 type SliceProjection = {
@@ -29,7 +19,8 @@ const initialState: SliceState = {
         status: "initial",
         value: ""
     },
-    autoCollapse: loadAutoCollapse()
+    autoCollapse: true,
+    optionsStatus: "initial"
 }
 
 export const generateInviteLink = createAsyncThunk<string, void, { rejectValue: any }>(
@@ -49,17 +40,38 @@ export const generateInviteLink = createAsyncThunk<string, void, { rejectValue: 
         }
     });
 
+export const loadOptions = createAsyncThunk<{ autoCollapse: boolean }, void, { rejectValue: any }>(
+    'options/loadOptions', async (_, {rejectWithValue}) => {
+        const res = await fetch("/api/options", {
+            credentials: "include"
+        });
+        if (res.ok) {
+            return await res.json();
+        } else {
+            return rejectWithValue("Failed to load options");
+        }
+    });
+
+export const setAutoCollapse = createAsyncThunk<boolean, boolean, { rejectValue: any }>(
+    'options/setAutoCollapse', async (autoCollapse, {rejectWithValue}) => {
+        const res = await fetch("/api/options", {
+            method: 'PUT',
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({autoCollapse}),
+            credentials: "include"
+        });
+        if (res.ok) {
+            const data = await res.json();
+            return data.autoCollapse as boolean;
+        } else {
+            return rejectWithValue("Failed to save options");
+        }
+    });
+
 const optionsSlice = createSlice({
     name: 'options',
     initialState,
-    reducers: {
-        setAutoCollapse(state, action: PayloadAction<boolean>) {
-            state.autoCollapse = action.payload;
-            try {
-                localStorage.setItem(STORAGE_KEY_AUTO_COLLAPSE, String(action.payload));
-            } catch { /* ignore */ }
-        }
-    },
+    reducers: {},
     extraReducers: (builder) => {
         builder
             .addCase(generateInviteLink.pending, (state) => {
@@ -71,11 +83,23 @@ const optionsSlice = createSlice({
             })
             .addCase(generateInviteLink.rejected, (state) => {
                 state.inviteLink.status = "error";
+            })
+            .addCase(loadOptions.pending, (state) => {
+                state.optionsStatus = "loading";
+            })
+            .addCase(loadOptions.fulfilled, (state, action) => {
+                state.optionsStatus = "idle";
+                state.autoCollapse = action.payload.autoCollapse;
+            })
+            .addCase(loadOptions.rejected, (state) => {
+                state.optionsStatus = "error";
+            })
+            .addCase(setAutoCollapse.fulfilled, (state, action) => {
+                state.autoCollapse = action.payload;
             });
     }
 });
 
-export const {setAutoCollapse} = optionsSlice.actions;
 export const optionsReducer: Reducer<SliceState> = optionsSlice.reducer;
 
 export const selectInviteLink = (state: SliceProjection) => state.options.inviteLink.value;
