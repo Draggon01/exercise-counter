@@ -203,13 +203,13 @@ export const groupSlice = createSlice({
                 exerciseMappingsAdapter.setAll(state.exerciseMappings, action.payload)
             })
             .addCase(listUserMappings.pending, state => {
-                state.exerciseMappings.status = 'initial';
+                state.userMappings.status = 'initial';
             })
             .addCase(listUserMappings.rejected, state => {
-                state.exerciseMappings.status = 'error';
+                state.userMappings.status = 'error';
             })
             .addCase(listUserMappings.fulfilled, (state, action) => {
-                state.exerciseMappings.status = 'idle';
+                state.userMappings.status = 'idle';
                 userMappingsAdapter.setAll(state.userMappings, action.payload);
             })
             .addCase(createGroupOnUser.pending, state => {
