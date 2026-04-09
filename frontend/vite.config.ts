@@ -33,9 +33,6 @@ export default defineConfig({
             },
         }
     },
-    esbuild: {
-        target: 'esnext', // Ensures modern JavaScript syntax is used
-    },
     plugins: [
         viteStaticCopy({
             targets: [
