@@ -417,6 +417,14 @@ export class OptionsView extends ConnectedLitElement {
                     <sl-tab-panel name="changelog">
                         <div class="tab-content">
                             <div class="changelog-entry">
+                                <span class="changelog-version">v0.6</span>
+                                <span class="changelog-date">2026-05-07</span>
+                                <ul class="changelog-items">
+                                    <li>implemented missed entry option entry</li>
+                                    <li>fix bug in edit exercises where groups were not shown correctly</li>
+                                </ul>
+                            </div>
+                            <div class="changelog-entry">
                                 <span class="changelog-version">v0.5</span>
                                 <span class="changelog-date">2026-04-06</span>
                                 <ul class="changelog-items">
