@@ -387,12 +387,11 @@ export class HomeView extends ConnectedLitElement {
                                     exerciseIncrease: e.detail.exerciseIncrease,
                                     visibility: e.detail.visibility,
                                     groups: e.detail.groups,
+                                    position: e.detail.position,
                                 } as ExerciseDto;
                                 this.currentType = e.detail.exerciseType;
                                 this.currentVisibility = e.detail.visibility;
                                 this.openDialog = true;
-                                console.log(this.exerciseDto);
-                                this.requestUpdate();
                             }}"
                             @checkChanged="${async (e: any) => {
                                 let check = e.detail;
@@ -442,7 +441,6 @@ export class HomeView extends ConnectedLitElement {
             }
             this.exerciseDto.visibility = formData.get("visibility")!.toString();
             this.exerciseDto.groups = formData.has("groups") ? formData.getAll("groups") as string[] : [];
-
             store.dispatch(saveExercise(this.exerciseDto!));
             this.exerciseDto = {} as ExerciseDto
             this.openDialog = false;
