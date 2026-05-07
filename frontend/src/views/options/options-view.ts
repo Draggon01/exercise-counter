@@ -3,7 +3,7 @@ import {customElement, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from '../../store';
 import {CustomRouter} from "../../index";
-import {clearInviteLinks, generateInviteLink, loadOptions, selectAutoCollapse, selectInviteLinks, selectInviteLinkStatus, setAutoCollapse} from "./slice/optionsSlice";
+import {clearInviteLinks, clearUnfinishedPeriods, generateInviteLink, loadOptions, loadUnfinishedPeriods, PeriodDto, selectAutoCollapse, selectInviteLinks, selectInviteLinkStatus, selectMissedEntryStatus, selectUnfinishedPeriods, selectUnfinishedPeriodsStatus, setAutoCollapse, submitMissedEntry} from "./slice/optionsSlice";
 import {listExercises, selectAllExercises} from "../home/slice/exerciseSlice";
 import {ExerciseDto} from "../home/models/exerciseDto";
 import '@shoelace-style/shoelace/dist/components/button/button.js';
@@ -118,13 +118,15 @@ export class OptionsView extends ConnectedLitElement {
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
-            opacity: 0.5;
-            pointer-events: none;
         }
 
-        .missed-entry-form sl-select,
-        .missed-entry-form sl-input {
+        .missed-entry-form sl-select {
             width: 100%;
+        }
+
+        .missed-entry-error {
+            font-size: 0.85rem;
+            color: var(--sl-color-danger-600);
         }
 
         .general-form {
@@ -211,6 +213,21 @@ export class OptionsView extends ConnectedLitElement {
     @state()
     private autoCollapse: boolean = true;
 
+    @state()
+    private selectedExerciseId: string = "";
+
+    @state()
+    private selectedPeriodId: string = "";
+
+    @state()
+    private unfinishedPeriods: PeriodDto[] = [];
+
+    @state()
+    private unfinishedPeriodsStatus: string = "initial";
+
+    @state()
+    private missedEntryStatus: string = "initial";
+
     connectedCallback() {
         super.connectedCallback();
         store.dispatch(listExercises());
@@ -222,6 +239,9 @@ export class OptionsView extends ConnectedLitElement {
         this.inviteLinkStatus = selectInviteLinkStatus(state);
         this.exercises = selectAllExercises(state);
         this.autoCollapse = selectAutoCollapse(state);
+        this.unfinishedPeriods = selectUnfinishedPeriods(state);
+        this.unfinishedPeriodsStatus = selectUnfinishedPeriodsStatus(state);
+        this.missedEntryStatus = selectMissedEntryStatus(state);
     }
 
     private async handleGenerateLink() {
@@ -234,6 +254,26 @@ export class OptionsView extends ConnectedLitElement {
 
     private handleClearLinks() {
         store.dispatch(clearInviteLinks());
+    }
+
+    private handleExerciseSelect(e: any) {
+        this.selectedExerciseId = e.target.value;
+        this.selectedPeriodId = "";
+        if (this.selectedExerciseId) {
+            store.dispatch(loadUnfinishedPeriods(this.selectedExerciseId));
+        } else {
+            store.dispatch(clearUnfinishedPeriods());
+        }
+    }
+
+    private async handleSubmitMissedEntry() {
+        if (!this.selectedExerciseId || !this.selectedPeriodId) return;
+        await store.dispatch(submitMissedEntry({
+            exerciseId: this.selectedExerciseId,
+            periodId: this.selectedPeriodId
+        }));
+        store.dispatch(loadUnfinishedPeriods(this.selectedExerciseId));
+        this.selectedPeriodId = "";
     }
 
     protected render() {
@@ -315,23 +355,37 @@ export class OptionsView extends ConnectedLitElement {
 
                     <sl-tab-panel name="missed-entry">
                         <div class="tab-content">
-                            <div class="wip-notice">
-                                <sl-icon name="tools"></sl-icon>
-                                Work in progress — this feature is not yet available.
-                            </div>
-                            <p class="wip-description">
-                                In a future release you will be able to request backdated log entries for exercises
-                                you completed but forgot to track.
-                            </p>
+                            <p>Add a missed entry for an exercise period you completed but forgot to track.</p>
                             <div class="missed-entry-form">
-                                <sl-select label="Exercise" placeholder="Select an exercise">
+                                <sl-select
+                                        label="Exercise"
+                                        placeholder="Select an exercise"
+                                        @sl-change="${this.handleExerciseSelect}"
+                                >
                                     ${this.exercises.map(ex => html`
                                         <sl-option value="${ex.exerciseId}">${ex.exerciseTitle}</sl-option>
                                     `)}
                                 </sl-select>
-                                <sl-input label="From date" type="date"></sl-input>
-                                <sl-input label="To date" type="date"></sl-input>
-                                <sl-button variant="primary" disabled>Submit Request</sl-button>
+                                <sl-select
+                                        label="Period"
+                                        placeholder="${this.selectedExerciseId ? (this.unfinishedPeriodsStatus === 'loading' ? 'Loading…' : (this.unfinishedPeriods.length === 0 ? 'No unfinished periods' : 'Select a period')) : 'Select an exercise first'}"
+                                        ?disabled="${!this.selectedExerciseId || this.unfinishedPeriods.length === 0}"
+                                        @sl-change="${(e: any) => { this.selectedPeriodId = e.target.value; }}"
+                                        .value="${this.selectedPeriodId}"
+                                >
+                                    ${this.unfinishedPeriods.map(p => html`
+                                        <sl-option value="${p.periodId}">${p.label}</sl-option>
+                                    `)}
+                                </sl-select>
+                                ${this.missedEntryStatus === 'error' ? html`
+                                    <p class="missed-entry-error">Failed to submit entry. Please try again.</p>
+                                ` : ''}
+                                <sl-button
+                                        variant="primary"
+                                        ?disabled="${!this.selectedExerciseId || !this.selectedPeriodId}"
+                                        ?loading="${this.missedEntryStatus === 'loading'}"
+                                        @click="${this.handleSubmitMissedEntry}"
+                                >Submit Entry</sl-button>
                             </div>
                         </div>
                     </sl-tab-panel>

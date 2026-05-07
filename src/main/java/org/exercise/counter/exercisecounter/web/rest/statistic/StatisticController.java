@@ -1,13 +1,17 @@
 package org.exercise.counter.exercisecounter.web.rest.statistic;
 
-import io.hypersistence.utils.hibernate.type.range.Range;
+import jakarta.transaction.Transactional;
 import org.exercise.counter.exercisecounter.web.data.checks.CheckRepository;
 import org.exercise.counter.exercisecounter.web.data.statistic.*;
+import org.exercise.counter.exercisecounter.web.data.user.User;
+import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
+import org.exercise.counter.exercisecounter.web.rest.statistic.dto.MissedEntryRequestDto;
+import org.exercise.counter.exercisecounter.web.rest.statistic.dto.PeriodDto;
 import org.exercise.counter.exercisecounter.web.rest.statistic.dto.StatisticDto;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
@@ -16,17 +20,19 @@ import java.util.*;
 public class StatisticController {
 
     private final CheckRepository checkRepository;
-
     private final PeriodRepository periodRepository;
     private final FinishedUserRepository finishedUserRepository;
+    private final UserRepository userRepository;
 
     public StatisticController(
             CheckRepository checkRepository,
             PeriodRepository periodRepository,
-            FinishedUserRepository finishedUserRepository) {
+            FinishedUserRepository finishedUserRepository,
+            UserRepository userRepository) {
         this.checkRepository = checkRepository;
         this.periodRepository = periodRepository;
         this.finishedUserRepository = finishedUserRepository;
+        this.userRepository = userRepository;
     }
 
     @GetMapping("/statistic/load")
@@ -44,6 +50,35 @@ public class StatisticController {
         Map<String, List<String>> stringListMap = generateToday(exerciseId);
         statistics.putAll(stringListMap);
         return new StatisticDto(statistics);
+    }
+
+    @GetMapping("/statistic/unfinished-periods/{exerciseId}")
+    public List<PeriodDto> getUnfinishedPeriods(@PathVariable String exerciseId, Authentication authentication) {
+        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+        User user = userRepository.findByUsername(username).orElseThrow();
+        List<Period> periods = periodRepository.findByExerciseExerciseId(UUID.fromString(exerciseId));
+        return periods.stream()
+                .filter(period -> !finishedUserRepository.existsByPeriod_PeriodIdAndUsername(period.getPeriodId(), user))
+                .map(period -> new PeriodDto(period.getPeriodId(), period.toKeyString()))
+                .toList();
+    }
+
+    @PostMapping("/statistic/add-missed-entry")
+    @Transactional
+    public ResponseEntity<Void> addMissedEntry(@RequestBody MissedEntryRequestDto request, Authentication authentication) {
+        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+        User user = userRepository.findByUsername(username).orElseThrow();
+        Period period = periodRepository.findById(request.periodId()).orElseThrow();
+
+        if (finishedUserRepository.existsByPeriod_PeriodIdAndUsername(period.getPeriodId(), user)) {
+            return ResponseEntity.ok().build();
+        }
+
+        FinishedUser finishedUser = new FinishedUser();
+        finishedUser.setPeriod(period);
+        finishedUser.setUsername(user);
+        finishedUserRepository.save(finishedUser);
+        return ResponseEntity.ok().build();
     }
 
     private Map<String, List<String>> generateToday(String exerciseId) {
