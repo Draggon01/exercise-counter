@@ -1,7 +1,7 @@
 import {defineConfig} from 'vite';
 import {viteStaticCopy} from "vite-plugin-static-copy";
 
-const iconsPath = 'node_modules/@shoelace-style/shoelace/dist/assets/icons';
+const iconsPath = 'node_modules/@shoelace-style/shoelace/dist/assets/icons/*';
 
 export default defineConfig({
     root: '.', // Optional, set root to current directory
@@ -34,13 +34,19 @@ export default defineConfig({
         }
     },
     plugins: [
-        viteStaticCopy({
-            targets: [
-                {
-                    src: iconsPath,
-                    dest: 'assets',
-                },
-            ],
-        }),
+       copyShoelaceIcons()
     ]
 });
+
+function copyShoelaceIcons() {
+    return {
+        name: 'copy-shoelace-icons',
+        closeBundle: async () => {
+            const { cpSync, mkdirSync } = await import('fs');
+            const src = 'node_modules/@shoelace-style/shoelace/dist/assets/icons';
+            const dest = 'dist/assets/icons';
+            mkdirSync(dest, { recursive: true });
+            cpSync(src, dest, { recursive: true });
+        },
+    };
+}
