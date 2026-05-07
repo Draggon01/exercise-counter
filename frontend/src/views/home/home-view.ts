@@ -391,6 +391,8 @@ export class HomeView extends ConnectedLitElement {
                                 this.currentType = e.detail.exerciseType;
                                 this.currentVisibility = e.detail.visibility;
                                 this.openDialog = true;
+                                console.log(this.exerciseDto);
+                                this.requestUpdate();
                             }}"
                             @checkChanged="${async (e: any) => {
                                 let check = e.detail;
@@ -502,7 +504,14 @@ export class HomeView extends ConnectedLitElement {
                             label="Select Groups"
                             .value="${this.exerciseDto && this.exerciseDto.groups ? this.exerciseDto.groups?.join(" ") : ""}"
                             multiple
-                            clearable>
+                            clearable
+                            @sl-change="${(e: any) => {
+                                this.exerciseDto = {
+                                    ...this.exerciseDto,
+                                    groups: e.target.value // sl-select returns an array in multiple mode
+                                };
+                            }}"
+                    >
                         ${this.groups.map(group => html`
                             <sl-option value="${group}">${group}</sl-option>
                         `)}
