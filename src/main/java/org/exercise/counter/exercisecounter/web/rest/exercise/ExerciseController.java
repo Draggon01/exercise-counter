@@ -204,7 +204,7 @@ public class ExerciseController {
                 new UserSelection(
                         new UserSelectionId(
                                 ((UserDetails) authentication.getPrincipal()).getUsername(),
-                                save.getExerciseId())
+                                save.getExerciseId()), exercise.position()
                 )
         );
         schedulerService.restartSchedulerFor(save);
