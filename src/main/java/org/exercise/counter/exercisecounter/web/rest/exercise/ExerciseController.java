@@ -221,7 +221,7 @@ public class ExerciseController {
                 save.getVisibility(),
                 this.GroupsForExercise(save.getExerciseId()),
                 this.calculateTimeLeftSeconds(save),
-                null
+                exercise.position()
         );
     }
 
