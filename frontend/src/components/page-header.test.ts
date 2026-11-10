@@ -18,4 +18,13 @@ describe("page-header", () => {
         expect(window.location.pathname).toBe("/somewhere");
         expect(onPopState).toHaveBeenCalledOnce();
     });
+
+    it("has no Back button without backTo", async () => {
+        const header = document.createElement("page-header");
+        header.heading = "Groups";
+        document.body.append(header);
+        await header.updateComplete;
+
+        expect(header.shadowRoot!.querySelector("sl-button")).toBeNull();
+    });
 });

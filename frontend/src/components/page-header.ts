@@ -3,10 +3,10 @@ import {customElement, property} from "lit/decorators.js";
 import {navigate} from "../utils/navigation";
 
 /**
- * Header of a sub page: Back button, title and optional actions on the right.
+ * Header of a page: title, optional Back button (set `backTo`) and actions on the right.
  *
  * @example
- * <page-header heading="Groups">
+ * <page-header heading="Statistics" backTo="/">
  *     <sl-button slot="actions">Create Group</sl-button>
  * </page-header>
  */
@@ -44,13 +44,18 @@ export class PageHeader extends LitElement {
     @property()
     heading = "";
 
-    /** Where the Back button leads. */
+    /** Where the Back button leads; no Back button if empty (main sections are in the navigation). */
     @property()
-    backTo = "/";
+    backTo = "";
 
     render() {
         return html`
-            <sl-button variant="primary" @click="${() => navigate(this.backTo)}">Back</sl-button>
+            ${this.backTo ? html`
+                <sl-button variant="default" @click="${() => navigate(this.backTo)}">
+                    <sl-icon slot="prefix" name="arrow-left"></sl-icon>
+                    Back
+                </sl-button>
+            ` : ""}
             <h2>${this.heading}</h2>
             <div class="actions"><slot name="actions"></slot></div>
         `;

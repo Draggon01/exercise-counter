@@ -1,10 +1,9 @@
 import {css, html, LitElement} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
-import {CustomRouter} from "../../index";
 import {store} from "../../store";
 import {registerUser} from "../login/slice/userSlice";
 import {RegisterDto} from "./model/registerDto";
-import {navigate} from "../../lit-router";
+import {navigate} from "../../utils/navigation";
 import {checkUsernameAvailable, validateRegisterId} from "./slice/registerSlice";
 
 @customElement('register-view')

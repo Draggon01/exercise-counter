@@ -6,7 +6,4 @@ if (!globalThis.URLPattern) {
     await import("urlpattern-polyfill");
 }
 
-const litElement = new LitRouter()
-document.body.append(litElement);
-
-export const CustomRouter = litElement.router;
+document.body.append(new LitRouter());

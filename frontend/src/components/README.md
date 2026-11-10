@@ -11,7 +11,8 @@ Generic UI that is not tied to one feature. Import once (side-effect import) whe
 | Tag | File | Use it for | API | Used in | Status |
 |---|---|---|---|---|---|
 | `<confirm-dialog>` | `confirm-dialog.ts` | Asking before a destructive or irreversible action (delete, hide, leave) | props: `open`, `label`, `confirmLabel`, `cancelLabel`, `variant` (`danger` \| `warning` \| `primary`); default slot: message; events: `confirm`, `cancel` | home (delete / hide exercise), groups (leave group) | ✅ |
-| `<page-header>` | `page-header.ts` | Top of every sub page: Back button + title, optional actions | props: `heading`, `backTo` (default `/`); slot `actions` | browse, groups, statistics, options | ✅ |
+| `<page-header>` | `page-header.ts` | Title of a page, optional Back button (sub pages only), optional actions | props: `heading`, `backTo` (no Back button if empty); slot `actions` | browse, groups, statistics (with Back), options | ✅ |
+| `<overlay-view>` | `views/overlay/overlay-view.ts` | App shell around every logged-in page: header (brand, nav, user menu), bottom nav on mobile, active section highlighted | add main sections to `NAV_ITEMS`; page goes into slot `main` | lit-router | ✅ |
 | `<empty-state>` | `empty-state.ts` | "Nothing here yet" message with optional call to action | – | home, browse, statistics, group search | 🛠 T3.7 |
 | toast (`toast()`) | `toast.ts` | Short feedback / error messages (`sl-alert`) | – | everywhere (via listener on `*/rejected`) | 🛠 T3.7 |
 | `<auth-card>` | `auth-card.ts` | Frame for login / register forms | – | login, register | 🛠 T3.8 |
@@ -35,7 +36,7 @@ Belong to one feature, listed here so they are not built a second time.
 |---|---|---|---|
 | `apiGet` / `apiPost` / `apiPut` / `apiDelete`, `apiThunk`, `ApiError` | `src/api/http.ts` | **Every** backend call (inside a Redux slice) | ✅ |
 | `ConnectedLitElement` | `src/connectedLitElement.ts` | Base class for elements that read the Redux store (`stateChanged`) | ✅ |
-| `navigate(path)` | `src/utils/navigation.ts` | Navigation without importing the app/router (safe in components and tests); `CustomRouter.goto` in `src/index.ts` still works in views | ✅ |
+| `navigate(path)` | `src/utils/navigation.ts` | **All** navigation (updates URL + routers; safe in components and tests) | ✅ |
 | `validateForm(form)` | `src/utils/form.ts` | Show validation messages of all Shoelace fields and return whether the form is valid (exercise form, create group) | ✅ |
 | `formatDuration(seconds)` | `src/utils/format.ts` | `M:SS` / `H:MM:SS` for time exercises | ✅ |
 | `formatTimeLeft(seconds)`, `isUrgent(seconds)` | `src/utils/format.ts` | "2 Days and 3 Hours left" / "45 Minutes left"; < 6h left | ✅ |

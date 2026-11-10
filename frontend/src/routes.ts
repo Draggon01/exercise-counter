@@ -6,7 +6,7 @@ import "./views/statistics/statistics-view"
 import "./views/groups/groups-view"
 import "./views/home/browse-view"
 import "./views/options/options-view"
-import {navigate} from "./lit-router";
+import {navigate} from "./utils/navigation";
 
 export const routes: RouteConfig[] = [
     {

@@ -1,7 +1,6 @@
 import { createListenerMiddleware } from '@reduxjs/toolkit';
 import { checkAuthStatus } from './authSlice';
-import {navigate} from "../../lit-router";
-import {CustomRouter} from "../../index";
+import {navigate} from "../../utils/navigation";
 import {store} from "../../store";
 import {logoutUser, saveUserInfo} from "../../views/login/slice/userSlice";
 
@@ -47,5 +46,6 @@ authMiddleware.startListening({
             healthCheckInterval = null;
         }
         await store.dispatch(logoutUser());
-        await CustomRouter.goto("/");    }
+        navigate("/login");
+    }
 });

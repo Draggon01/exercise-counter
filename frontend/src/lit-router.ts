@@ -8,6 +8,7 @@ import './views/register/register-view'
 import {RootState, store} from "./store";
 import {readUserInfo, selectCurrentUser, selectUserInit} from "./views/login/slice/userSlice";
 import {ConnectedLitElement} from "./connectedLitElement";
+import {navigate} from "./utils/navigation";
 import {UserDto} from "./views/login/models/userDto";
 
 @customElement('lit-router')
@@ -33,7 +34,8 @@ export class LitRouter extends ConnectedLitElement {
         this.user = selectCurrentUser(state);
         this.init = selectUserInit(state);
         if (this.init && this.once) {
-            void this.router.goto("/");
+            // the user info is known now: route the current URL (keeps deep links like /groups)
+            void this.router.goto(window.location.pathname);
             this.once = false;
         }
     }
@@ -59,13 +61,17 @@ export class LitRouter extends ConnectedLitElement {
                 </overlay-view>
             `,
             enter: (_) => {
+                if (!this.init) {
+                    // user info not loaded yet: stateChanged routes the URL again once it is
+                    return false;
+                }
                 if (window.location.pathname.includes("register")) {
                     return false;
                 }
                 if (this.user && !this.user.anonymous) {
                     return true;
                 }
-                void this.router.goto("/login");
+                navigate("/login");
                 return false;
             }
         },
@@ -90,5 +96,4 @@ export class ChildrenRoutes extends LitElement {
     }
 }
 
-/** @deprecated import from "./utils/navigation" – kept so existing imports keep working */
-export {navigate} from "./utils/navigation";
+

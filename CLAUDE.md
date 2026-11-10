@@ -74,7 +74,7 @@ npm test                # frontend unit tests (vitest, *.test.ts next to the cod
 - Shoelace components (`sl-button`, `sl-input`, `sl-dialog`, etc.) are used throughout the UI
 - State management via Redux slices in each view's `slice/` subfolder
 - Always execute api calls etc. in the redux slice, dont diretly fetch data from the backend
-- Routing via `CustomRouter` from `../../index`
+- Navigation via `navigate(path)` from `frontend/src/utils/navigation.ts` (updates the URL + routers). Do NOT use the router's `goto()` for navigation: it does not update the URL (breaks the back button and deep links)
 - Dont use the updated method in Lit elements if not completely necessary.
 - Custom events: kebab-case names exported as constants next to the element (e.g. `ExerciseCardEvents`), `CustomEvent<T>` with a typed `detail`; listeners type the event (`(e: CustomEvent<ExerciseDto>) => ...`, Shoelace targets via `e.target as SlSelect`) — no `any`
 

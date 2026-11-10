@@ -27,7 +27,6 @@ import {
     selectChecksPerExercise
 } from "./slice/checkSlice";
 import {listUserMappings, selectUserMappingByUser} from "../groups/slice/groupSlice";
-import {CustomRouter} from "../../index";
 import {loadOptions} from "../options/slice/optionsSlice";
 import {loadExerciseMeta, selectExerciseTypes, selectVisibilities} from "../../shared-slices/meta/metaSlice";
 
@@ -136,12 +135,6 @@ export class HomeView extends ConnectedLitElement {
             <div class="action-bar">
                 <sl-button variant="primary" @click="${() => this.openForm()}">
                     Add Exercise
-                </sl-button>
-
-                <sl-button variant="primary" @click="${() => {
-                    void CustomRouter.goto(`/browse`);
-                }}">
-                    Browse Exercises
                 </sl-button>
 
                 <sl-button variant="${this.editMode ? 'success' : 'neutral'}" @click="${() => {

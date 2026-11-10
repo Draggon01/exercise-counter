@@ -132,7 +132,7 @@ export class StatisticsView extends ConnectedLitElement {
     render() {
         return html`
             <div class="page-container">
-                <page-header heading="Statistics"></page-header>
+                <page-header heading="Statistics" backTo="/"></page-header>
                 <div>
                     <sl-input label="Show last x entries" min="0"
                               .max="${this.statistic && this.statistic.finishedInformation ? Object.keys(this.statistic.finishedInformation).length : 0}"

@@ -243,7 +243,7 @@ Reusable pieces are tracked in `frontend/src/components/README.md` – update it
 - Use in home, browse, groups, statistics, options.
 - `exercise-card`: remove `width: 50%; min-width: 340px` → `width: 100%` inside the container.
 
-### [ ] T3.4 🟢 New app shell (`overlay-view`)
+### [x] T3.4 🟢 New app shell (`overlay-view`)
 - CSS grid: `header / main / bottom-nav`, `height: 100dvh`; remove `position:absolute` and `calc(100vh - 48px)`.
 - Header: 56px, title left, user dropdown right (fix the clipped `height: 1rem` header).
 - Mobile (< 768px): bottom navigation with icons Home / Browse / Groups / Options; desktop: links in header.

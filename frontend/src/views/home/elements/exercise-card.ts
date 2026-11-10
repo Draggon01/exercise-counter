@@ -4,7 +4,7 @@ import {ExerciseDto} from "../models/exerciseDto";
 import {ConnectedLitElement} from "../../../connectedLitElement";
 import {selectCurrentUser} from "../../login/slice/userSlice";
 import {UserDto} from "../../login/models/userDto";
-import {CustomRouter} from "../../../index";
+import {navigate} from "../../../utils/navigation";
 import {CheckDto} from "../models/checkDto";
 import {RootState, store} from "../../../store";
 import {loadExerciseLog, saveExerciseLog} from "../slice/exerciseSlice";
@@ -353,7 +353,7 @@ export class ExerciseCard extends ConnectedLitElement {
                     </div>
                     <div class="card-footer">
                         <sl-button class="stats-btn" variant="primary" size="small"
-                                   @click="${() => void CustomRouter.goto('/statistics/' + this.item.exerciseId)}">
+                                   @click="${() => navigate('/statistics/' + this.item.exerciseId)}">
                             Statistics
                         </sl-button>
                         <div class="finished-label">
