@@ -1,5 +1,6 @@
 import {css, html} from 'lit';
 import {pageStyles} from "../../styles/page";
+import {toast} from "../../components/toast";
 import type {SlSelect, SlSwitch} from "@shoelace-style/shoelace";
 import {ColorScheme, getColorScheme, setColorScheme} from "../../styles/color-scheme";
 import "../../components/page-header";
@@ -7,7 +8,7 @@ import {customElement, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from '../../store';
 import {clearInviteLinks, clearUnfinishedPeriods, generateInviteLink, loadOptions, loadUnfinishedPeriods, PeriodDto, selectAutoCollapse, selectInviteLinks, selectInviteLinkStatus, selectMissedEntryStatus, selectUnfinishedPeriods, selectUnfinishedPeriodsStatus, setAutoCollapse, submitMissedEntry} from "./slice/optionsSlice";
-import {listExercises, selectAllExercises} from "../home/slice/exerciseSlice";
+import {listExercises, selectVisibleExercises} from "../home/slice/exerciseSlice";
 import {ExerciseDto} from "../home/models/exerciseDto";
 
 @customElement('options-view')
@@ -211,7 +212,7 @@ export class OptionsView extends ConnectedLitElement {
     stateChanged(state: RootState) {
         this.inviteLinks = selectInviteLinks(state);
         this.inviteLinkStatus = selectInviteLinkStatus(state);
-        this.exercises = selectAllExercises(state);
+        this.exercises = selectVisibleExercises(state);
         this.autoCollapse = selectAutoCollapse(state);
         this.unfinishedPeriods = selectUnfinishedPeriods(state);
         this.unfinishedPeriodsStatus = selectUnfinishedPeriodsStatus(state);
@@ -232,7 +233,12 @@ export class OptionsView extends ConnectedLitElement {
     }
 
     private async handleCopyLink(link: string) {
-        await navigator.clipboard.writeText(link);
+        try {
+            await navigator.clipboard.writeText(link);
+            toast("Link copied", "success", 2000);
+        } catch {
+            toast("Could not copy – please copy the link manually", "warning");
+        }
     }
 
     private handleClearLinks() {

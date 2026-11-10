@@ -4,10 +4,20 @@ import {createEntityAdapter, createSlice, EntityState, Reducer} from "@reduxjs/t
 import {ExerciseLogDto} from "../models/exerciseLogDto";
 import {apiDelete, apiGet, apiPost, apiPut, apiThunk} from "../../../api/http";
 
+type ExerciseList = {
+    status: AsyncStoreState;
+    items: ExerciseDto[];
+}
+
 type SliceState = {
+    /** The exercises on the user's home page. */
     exercises: {
         status: AsyncStoreState;
-    } & EntityState<ExerciseDto, string>
+    } & EntityState<ExerciseDto, string>,
+    /** Browse: visible exercises not on the home page yet. */
+    available: ExerciseList,
+    /** All exercises the user may see (options: missed entries). */
+    visible: ExerciseList,
 }
 
 type SliceProjection = {
@@ -19,7 +29,9 @@ const initialState: SliceState = {
         status: "initial",
         ids: [],
         entities: {}
-    }
+    },
+    available: {status: "initial", items: []},
+    visible: {status: "initial", items: []},
 }
 
 /** All exercises the user may see. */
@@ -74,20 +86,11 @@ export const exerciseSlice = createSlice({
     name: 'exercise',
     initialState: initialState,
     reducers: {},
+    // list loads track their status; mutations only change data on success (their errors are shown as toasts)
     extraReducers: builder => {
         builder
-            .addCase(listExercises.pending, state => {
-                state.exercises.status = 'initial';
-            })
-            .addCase(listExercises.rejected, state => {
-                state.exercises.status = 'error';
-            })
-            .addCase(listExercises.fulfilled, (state, action) => {
-                state.exercises.status = 'idle';
-                exerciseAdapter.setAll(state.exercises, action.payload);
-            })
             .addCase(listExercisesSelected.pending, state => {
-                state.exercises.status = 'initial';
+                state.exercises.status = 'loading';
             })
             .addCase(listExercisesSelected.rejected, state => {
                 state.exercises.status = 'error';
@@ -97,66 +100,38 @@ export const exerciseSlice = createSlice({
                 exerciseAdapter.setAll(state.exercises, action.payload);
             })
             .addCase(listExercisesAvailable.pending, state => {
-                state.exercises.status = 'initial';
+                state.available.status = 'loading';
             })
             .addCase(listExercisesAvailable.rejected, state => {
-                state.exercises.status = 'error';
+                state.available.status = 'error';
             })
             .addCase(listExercisesAvailable.fulfilled, (state, action) => {
-                state.exercises.status = 'idle';
-                exerciseAdapter.setAll(state.exercises, action.payload);
+                state.available = {status: 'idle', items: action.payload};
             })
-            .addCase(saveExercise.pending, state => {
-                state.exercises.status = 'initial';
+            .addCase(listExercises.pending, state => {
+                state.visible.status = 'loading';
             })
-            .addCase(saveExercise.rejected, state => {
-                state.exercises.status = 'error';
+            .addCase(listExercises.rejected, state => {
+                state.visible.status = 'error';
+            })
+            .addCase(listExercises.fulfilled, (state, action) => {
+                state.visible = {status: 'idle', items: action.payload};
             })
             .addCase(saveExercise.fulfilled, (state, action) => {
-                state.exercises.status = 'idle';
                 exerciseAdapter.upsertOne(state.exercises, action.payload);
             })
-            .addCase(deleteExercise.pending, state => {
-                state.exercises.status = 'initial';
-            })
-            .addCase(deleteExercise.rejected, state => {
-                state.exercises.status = 'error';
-            })
             .addCase(deleteExercise.fulfilled, (state, action) => {
-                state.exercises.status = 'idle';
                 exerciseAdapter.removeOne(state.exercises, action.payload.exerciseId);
             })
-            .addCase(selectExercise.pending, state => {
-                state.exercises.status = 'initial';
-            })
-            .addCase(selectExercise.rejected, state => {
-                state.exercises.status = 'error';
-            })
             .addCase(selectExercise.fulfilled, (state, action) => {
-                state.exercises.status = 'idle';
-                exerciseAdapter.removeOne(state.exercises, action.payload);
-            })
-            .addCase(unselectExercise.pending, state => {
-                state.exercises.status = 'initial';
-            })
-            .addCase(unselectExercise.rejected, state => {
-                state.exercises.status = 'error';
+                state.available.items = state.available.items.filter(e => e.exerciseId !== action.payload);
             })
             .addCase(unselectExercise.fulfilled, (state, action) => {
-                state.exercises.status = 'idle';
                 exerciseAdapter.removeOne(state.exercises, action.payload);
             })
-            .addCase(reorderExercises.pending, state => {
-                state.exercises.status = 'initial';
-            })
-            .addCase(reorderExercises.rejected, state => {
-                state.exercises.status = 'error';
-            })
             .addCase(reorderExercises.fulfilled, (state, action) => {
-                state.exercises.status = 'idle';
                 exerciseAdapter.setAll(state.exercises, action.payload);
             })
-
     }
 });
 
@@ -168,6 +143,11 @@ export const exerciseAdapter = createEntityAdapter<ExerciseDto, string>({
 export const {
     selectAll: selectAllExercises
 } = exerciseAdapter.getSelectors((state: SliceProjection) => state.exercise.exercises);
+
+export const selectExercisesStatus = (state: SliceProjection) => state.exercise.exercises.status;
+export const selectAvailableExercises = (state: SliceProjection) => state.exercise.available.items;
+export const selectAvailableStatus = (state: SliceProjection) => state.exercise.available.status;
+export const selectVisibleExercises = (state: SliceProjection) => state.exercise.visible.items;
 
 
 

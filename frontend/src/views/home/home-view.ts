@@ -9,12 +9,16 @@ import {
     reorderExercises,
     saveExercise,
     selectAllExercises,
+    selectExercisesStatus,
     unselectExercise
 } from './slice/exerciseSlice';
 import {ExerciseDto} from "./models/exerciseDto";
 import './elements/exercise-card'
 import './elements/exercise-form-dialog'
 import '../../components/confirm-dialog'
+import '../../components/empty-state'
+import {navigate} from "../../utils/navigation";
+import {AsyncStoreState} from "../../commons";
 import {UserDto} from '../login/models/userDto';
 import {selectCurrentUser} from "../login/slice/userSlice";
 import {CheckDto} from "./models/checkDto";
@@ -80,6 +84,11 @@ export class HomeView extends ConnectedLitElement {
             gap: var(--app-space-3);
         }
 
+        .skeleton {
+            --border-radius: var(--app-radius);
+            height: 180px;
+        }
+
         @media (max-width: 768px) {
             .action-bar sl-button {
                 flex: 1;
@@ -89,6 +98,9 @@ export class HomeView extends ConnectedLitElement {
 
     @state()
     private checksSelected: boolean = false;
+
+    @state()
+    private exercisesStatus: AsyncStoreState = "initial";
 
     connectedCallback() {
         super.connectedCallback();
@@ -100,6 +112,7 @@ export class HomeView extends ConnectedLitElement {
     }
 
     stateChanged(state: RootState) {
+        this.exercisesStatus = selectExercisesStatus(state);
         if (state.checks.checks.status === "idle") {
             this.listChecks = selectAllChecks(state);
         }
@@ -176,8 +189,29 @@ export class HomeView extends ConnectedLitElement {
     }
 
     private renderItems() {
-        if (!this.checksSelected) {
-            return html``
+        if (this.exercisesStatus === "error") {
+            return html`
+                <empty-state icon="cloud-slash" heading="Could not load your exercises"
+                             text="Check your connection and try again.">
+                    <sl-button @click="${() => store.dispatch(listExercisesSelected())}">Try again</sl-button>
+                </empty-state>`;
+        }
+        if (this.exercisesStatus !== "idle" || !this.checksSelected) {
+            return [1, 2].map(() => html`<sl-skeleton effect="pulse" class="skeleton"></sl-skeleton>`);
+        }
+        if (this.listExercises.length === 0) {
+            return html`
+                <empty-state icon="trophy" heading="No exercises yet"
+                             text="Create your own exercise or add one that friends and groups share.">
+                    <sl-button variant="primary" @click="${() => this.openForm()}">
+                        <sl-icon slot="prefix" name="plus-lg"></sl-icon>
+                        New exercise
+                    </sl-button>
+                    <sl-button @click="${() => navigate("/browse")}">
+                        <sl-icon slot="prefix" name="search"></sl-icon>
+                        Browse exercises
+                    </sl-button>
+                </empty-state>`;
         }
         let exerciseDtos = [...this.listExercises].sort((a, b) => {
             const aOrder = a.position ?? 0;

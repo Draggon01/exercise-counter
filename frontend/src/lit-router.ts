@@ -1,5 +1,5 @@
 import {customElement, state} from "lit/decorators.js";
-import {html, LitElement} from "lit";
+import {css, html, LitElement} from "lit";
 import {Router} from "@lit-labs/router";
 import {routes} from "./routes";
 import './views/login/login-view'
@@ -13,6 +13,15 @@ import {UserDto} from "./views/login/models/userDto";
 
 @customElement('lit-router')
 export class LitRouter extends ConnectedLitElement {
+
+    static styles = css`
+        .starting {
+            display: grid;
+            place-items: center;
+            height: 100vh;
+            font-size: 2rem;
+        }
+    `;
 
     private user: UserDto = {
         username: "",
@@ -81,7 +90,9 @@ export class LitRouter extends ConnectedLitElement {
     render() {
         if (!this.init) {
             return html`
-                <div style="padding: 5px">Restarting...</div>`;
+                <div class="starting" role="status" aria-label="Loading">
+                    <sl-spinner></sl-spinner>
+                </div>`;
         }
         return this.router.outlet();
     }

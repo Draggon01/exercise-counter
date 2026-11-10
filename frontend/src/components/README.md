@@ -13,8 +13,8 @@ Generic UI that is not tied to one feature. Import once (side-effect import) whe
 | `<confirm-dialog>` | `confirm-dialog.ts` | Asking before a destructive or irreversible action (delete, hide, leave) | props: `open`, `label`, `confirmLabel`, `cancelLabel`, `variant` (`danger` \| `warning` \| `primary`); default slot: message; events: `confirm`, `cancel` | home (delete / hide exercise), groups (leave group) | ✅ |
 | `<page-header>` | `page-header.ts` | Title of a page, optional Back button (sub pages only), optional actions | props: `heading`, `backTo` (no Back button if empty); slot `actions` | browse, groups, statistics (with Back), options | ✅ |
 | `<overlay-view>` | `views/overlay/overlay-view.ts` | App shell around every logged-in page: header (brand, nav, user menu), bottom nav on mobile, active section highlighted | add main sections to `NAV_ITEMS`; page goes into slot `main` | lit-router | ✅ |
-| `<empty-state>` | `empty-state.ts` | "Nothing here yet" message with optional call to action | – | home, browse, statistics, group search | 🛠 T3.7 |
-| toast (`toast()`) | `toast.ts` | Short feedback / error messages (`sl-alert`) | – | everywhere (via listener on `*/rejected`) | 🛠 T3.7 |
+| `<empty-state>` | `empty-state.ts` | "Nothing here yet" / "could not load" with icon and optional actions | props: `icon`, `heading`, `text`; default slot: actions (buttons) | home, browse (groups, statistics: T3.9/T3.10) | ✅ |
+| `toast(message, variant?, duration?)` | `toast.ts` | Short feedback (`sl-alert` toast stack, same message not stacked twice). **API errors are toasted automatically** by `errorToastMiddleware` – do not add own error UI for failed requests | – | browse (added), options (copied), all failed requests | ✅ |
 | `<auth-card>` | `auth-card.ts` | Frame for login / register forms | – | login, register | 🛠 T3.8 |
 | `<changelog-dialog>` | `changelog-dialog.ts` | Shows unseen changelog entries after login | – | overlay | 🛠 T4.1 |
 
@@ -35,6 +35,8 @@ Belong to one feature, listed here so they are not built a second time.
 | What | File | Use it for | Status |
 |---|---|---|---|
 | `apiGet` / `apiPost` / `apiPut` / `apiDelete`, `apiThunk`, `ApiError` | `src/api/http.ts` | **Every** backend call (inside a Redux slice) | ✅ |
+| `errorToastMiddleware` | `src/shared-slices/notifications/errorToastMiddleware.ts` | Error toast for every rejected `apiThunk` (except 401 and expected failures in `SILENT_ACTIONS`) | ✅ |
+| Loading placeholders | `<sl-skeleton effect="pulse">` with `--border-radius: var(--app-radius)` | While a list loads (home, browse) | ✅ |
 | `ConnectedLitElement` | `src/connectedLitElement.ts` | Base class for elements that read the Redux store (`stateChanged`) | ✅ |
 | `navigate(path)` | `src/utils/navigation.ts` | **All** navigation (updates URL + routers; safe in components and tests) | ✅ |
 | `validateForm(form)` | `src/utils/form.ts` | Show validation messages of all Shoelace fields and return whether the form is valid (exercise form, create group) | ✅ |

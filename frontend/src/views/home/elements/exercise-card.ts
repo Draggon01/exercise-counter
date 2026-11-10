@@ -1,4 +1,4 @@
-import {css, html, nothing} from 'lit';
+import {css, html, nothing, PropertyValues} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 import {ExerciseDto} from "../models/exerciseDto";
 import {ConnectedLitElement} from "../../../connectedLitElement";
@@ -209,7 +209,13 @@ export class ExerciseCard extends ConnectedLitElement {
         if (this.item) {
             await this._loadLog();
         }
-        this._collapsed = this._autoCollapse && this.checked;
+    }
+
+    protected willUpdate(changed: PropertyValues<this>) {
+        // collapse follows the real "done" state, so a failed save does not collapse the card
+        if (changed.has("checked") && this._autoCollapse) {
+            this._collapsed = this.checked;
+        }
     }
 
     stateChanged(state: RootState) {
@@ -389,11 +395,7 @@ export class ExerciseCard extends ConnectedLitElement {
     private _moveDownClick = () => this._emit(ExerciseCardEvents.moveDown, this.item);
 
     private _toggleFinished = () => {
-        const finished = !this.checked;
-        if (this._autoCollapse) {
-            this._collapsed = finished;
-        }
-        this._emit(ExerciseCardEvents.checkChanged, finished);
+        this._emit(ExerciseCardEvents.checkChanged, !this.checked);
     }
 }
 

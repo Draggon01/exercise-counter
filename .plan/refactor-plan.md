@@ -260,7 +260,7 @@ Reusable pieces are tracked in `frontend/src/components/README.md` – update it
 - Exercise type as radio cards with short description; show value/increase only when relevant.
 - Visibility as `sl-radio-group`, groups as multi `sl-select`.
 
-### [ ] T3.7 🟢 Loading, empty and error states
+### [x] T3.7 🟢 Loading, empty and error states
 - `sl-skeleton` cards while `status === "loading"`.
 - Empty state on home: "No exercises yet" + Browse / Add buttons.
 - Toast helper `src/components/toast.ts` (`sl-alert` + `toast()`), triggered from a listener middleware on any `*/rejected` action.

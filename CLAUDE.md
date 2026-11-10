@@ -62,6 +62,7 @@ npm test                # frontend unit tests (vitest, *.test.ts next to the cod
 - All endpoints authenticated except `/api/public/**`
 - REST style: resources in the path, HTTP verbs for actions (`GET/POST /api/exercises`, `PUT/DELETE /api/exercises/{id}`); unauthenticated API calls get 401
 - Frontend: every backend call goes through `src/api/http.ts` (`apiGet/apiPost/apiPut/apiDelete`, `apiThunk`) inside a Redux slice — never `fetch` directly
+- Failed backend calls show an error toast automatically (`errorToastMiddleware`). Slices keep a `status` only for list loads (`loading`/`idle`/`error` → skeleton / content / `<empty-state>` with retry); mutations only change data on success
 - Use Records for DTOs, including request bodies — no raw `String` or `Map` request bodies
 - Get the current user with `@AuthenticationPrincipal UserDetails user`, never by casting `authentication.getPrincipal()`
 - Put logic in a service, not in a controller; use Spring's `@Transactional` (`readOnly = true` for reads)
