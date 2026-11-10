@@ -19,6 +19,7 @@ import {GroupInformationDto} from "./models/GroupInformationDto";
 import {GroupVisibility} from "./models/GroupVisibility";
 import {createRef, ref, Ref} from "lit/directives/ref.js";
 import {SlInput} from "@shoelace-style/shoelace";
+import "../../components/confirm-dialog";
 
 
 @customElement('groups-view')
@@ -171,16 +172,13 @@ export class GroupsView extends ConnectedLitElement {
     groupVisibility: GroupVisibility = "INVITE_ONLY";
 
     @state()
-    openWarningDialog: boolean = false;
-
-    @state()
     openInviteDialog: boolean = false;
 
     @state()
     openJoinDialog: boolean = false;
 
     @state()
-    groupToDelete?: string = "";
+    groupToDelete?: string;
 
     @state()
     inviteToGroup?: string = "";
@@ -283,7 +281,6 @@ export class GroupsView extends ConnectedLitElement {
                                                 name="trash"
                                                 @click="${() => {
                                                     this.groupToDelete = group.groupName;
-                                                    this.openWarningDialog = true;
                                                 }}">
                                         </sl-icon-button>
                                     </div>
@@ -310,14 +307,14 @@ export class GroupsView extends ConnectedLitElement {
                 ${this.renderJoinDialog()}
             </sl-dialog>
 
-            <sl-dialog .open="${this.openWarningDialog}"
-                       @sl-hide="${() => {
-                           this.openWarningDialog = false
-                           this.groupToDelete = undefined;
-                       }}"
-                       label="Warning">
-                ${this.renderWarningDialog()}
-            </sl-dialog>
+            <confirm-dialog label="Leave group" confirmLabel="Delete Group" cancelLabel="Close"
+                            .open="${this.groupToDelete !== undefined}"
+                            @confirm="${this.confirmLeaveGroup}"
+                            @cancel="${() => this.groupToDelete = undefined}">
+                You are about to delete this Group. If you are the last user assigned to this group,
+                the group will be completely removed and no exercise will be linked to it anymore.
+                Do you want to proceed?
+            </confirm-dialog>
 
 
             <sl-dialog .open="${this.openInviteDialog}"
@@ -439,29 +436,11 @@ export class GroupsView extends ConnectedLitElement {
         `;
     }
 
-    private renderWarningDialog() {
-        return html`
-            <p>
-                You are about to delete this Group, if you are the
-                last user assigned to this group, the group will be
-                completely removed, and no exercise will be linked to it
-                anymore, do you want to proceed?
-            </p>
-            <sl-button slot="footer" variant="primary" @click="${() => {
-                this.openWarningDialog = false;
-                this.groupToDelete = undefined;
-            }}"> Close
-            </sl-button>
-            <sl-button slot="footer" variant="danger" @click="${() => {
-                this.openWarningDialog = false;
-                if (this.groupToDelete) {
-                    store.dispatch(deleteGroupOnUser(this.groupToDelete))
-                }
-                this.groupToDelete = undefined;
-            }}">
-                Delete Group
-            </sl-button>
-        `
+    private confirmLeaveGroup = () => {
+        if (this.groupToDelete) {
+            store.dispatch(deleteGroupOnUser(this.groupToDelete));
+        }
+        this.groupToDelete = undefined;
     }
 
     private renderInviteDialog() {

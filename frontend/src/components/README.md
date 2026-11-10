@@ -10,7 +10,7 @@ Generic UI that is not tied to one feature. Import once (side-effect import) whe
 
 | Tag | File | Use it for | API | Used in | Status |
 |---|---|---|---|---|---|
-| `<confirm-dialog>` | `confirm-dialog.ts` | Asking before a destructive or irreversible action (delete, hide, leave) | props: `open`, `label`, `confirmLabel`, `cancelLabel`, `variant` (`danger` \| `warning` \| `primary`); default slot: message; events: `confirm`, `cancel` | home (delete / hide exercise), groups (leave group) | 🛠 T2.3 |
+| `<confirm-dialog>` | `confirm-dialog.ts` | Asking before a destructive or irreversible action (delete, hide, leave) | props: `open`, `label`, `confirmLabel`, `cancelLabel`, `variant` (`danger` \| `warning` \| `primary`); default slot: message; events: `confirm`, `cancel` | home (delete / hide exercise), groups (leave group) | ✅ |
 | `<page-header>` | `page-header.ts` | Top of every sub page: Back button + title, optional actions | props: `heading`, `backTo` (default `/`); slot `actions` | browse, groups, statistics, options | 🛠 T2.8 |
 | `<empty-state>` | `empty-state.ts` | "Nothing here yet" message with optional call to action | – | home, browse, statistics, group search | 🛠 T3.7 |
 | toast (`toast()`) | `toast.ts` | Short feedback / error messages (`sl-alert`) | – | everywhere (via listener on `*/rejected`) | 🛠 T3.7 |

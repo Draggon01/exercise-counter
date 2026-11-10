@@ -13,6 +13,7 @@ import {
 } from './slice/exerciseSlice';
 import {ExerciseDto} from "./models/exerciseDto";
 import './elements/exercise-card'
+import '../../components/confirm-dialog'
 import {UserDto} from '../login/models/userDto';
 import {selectCurrentUser} from "../login/slice/userSlice";
 import {CheckDto} from "./models/checkDto";
@@ -60,13 +61,7 @@ export class HomeView extends ConnectedLitElement {
     private currentVisibility: string = "";
 
     @state()
-    private openWarningDialog = false;
-
-    @state()
     private exerciseToDelete?: ExerciseDto;
-
-    @state()
-    private openHideDialog = false;
 
     @state()
     private exerciseToHide?: ExerciseDto;
@@ -197,72 +192,37 @@ export class HomeView extends ConnectedLitElement {
                        label="Exercise Form">
                 ${this.renderEditExercise()}
             </sl-dialog>
-            <sl-dialog .open="${this.openWarningDialog}"
-                       @sl-hide="${() => {
-                           this.openWarningDialog = false
-                           this.exerciseToDelete = undefined;
-                       }}"
-                       label="Warning">
-                ${this.renderWarningDialog()}
-            </sl-dialog>
-            <sl-dialog .open="${this.openHideDialog}"
-                       @sl-hide="${() => {
-                           this.openHideDialog = false;
-                           this.exerciseToHide = undefined;
-                       }}"
-                       label="Hide Exercise">
-                ${this.renderHideDialog()}
-            </sl-dialog>
+            <confirm-dialog label="Delete exercise" confirmLabel="Delete Exercise" cancelLabel="Close"
+                            .open="${this.exerciseToDelete !== undefined}"
+                            @confirm="${this.confirmDelete}"
+                            @cancel="${() => this.exerciseToDelete = undefined}">
+                You are about to delete this exercise. This action cannot be undone.
+                Are you sure you want to proceed?
+            </confirm-dialog>
+            <confirm-dialog label="Hide exercise" confirmLabel="Hide Exercise" variant="warning"
+                            .open="${this.exerciseToHide !== undefined}"
+                            @confirm="${this.confirmHide}"
+                            @cancel="${() => this.exerciseToHide = undefined}">
+                You are about to hide this exercise from your list.
+                You can add it back at any time from the Browse view.
+                Are you sure you want to proceed?
+            </confirm-dialog>
 
         `;
     }
 
-    private renderHideDialog() {
-        return html`
-            <p>
-                You are about to hide this exercise from your list.
-                You can add it back at any time from the Browse view.
-                Are you sure you want to proceed?
-            </p>
-            <sl-button slot="footer" variant="primary" @click="${() => {
-                this.openHideDialog = false;
-                this.exerciseToHide = undefined;
-            }}">Cancel
-            </sl-button>
-            <sl-button slot="footer" variant="warning" @click="${() => {
-                this.openHideDialog = false;
-                if (this.exerciseToHide?.exerciseId) {
-                    store.dispatch(unselectExercise(this.exerciseToHide.exerciseId));
-                }
-                this.exerciseToHide = undefined;
-            }}">
-                Hide Exercise
-            </sl-button>
-        `
+    private confirmDelete = () => {
+        if (this.exerciseToDelete) {
+            store.dispatch(deleteExercise(this.exerciseToDelete));
+        }
+        this.exerciseToDelete = undefined;
     }
 
-    private renderWarningDialog() {
-        return html`
-            <p>
-                You are about to delete this exercise.
-                This action cannot be undone.
-                Are you sure you want to proceed?
-            </p>
-            <sl-button slot="footer" variant="primary" @click="${() => {
-                this.openWarningDialog = false;
-                this.exerciseToDelete = undefined;
-            }}"> Close
-            </sl-button>
-            <sl-button slot="footer" variant="danger" @click="${() => {
-                this.openWarningDialog = false;
-                if (this.exerciseToDelete) {
-                    store.dispatch(deleteExercise(this.exerciseToDelete));
-                }
-                this.exerciseToDelete = undefined;
-            }}">
-                Delete Exercise
-            </sl-button>
-        `
+    private confirmHide = () => {
+        if (this.exerciseToHide?.exerciseId) {
+            store.dispatch(unselectExercise(this.exerciseToHide.exerciseId));
+        }
+        this.exerciseToHide = undefined;
     }
 
     private renderEditExercise() {
@@ -365,7 +325,6 @@ export class HomeView extends ConnectedLitElement {
                             }}"
                             @deleteExercise="${(e: any) => {
                                 this.exerciseToDelete = e.detail;
-                                this.openWarningDialog = true;
                             }}"
                             @editExercise="${(e: any) => {
                                 this.exerciseDto = {
@@ -404,7 +363,6 @@ export class HomeView extends ConnectedLitElement {
                             }}"
                             @hideExercise="${(e: any) => {
                                 this.exerciseToHide = e.detail;
-                                this.openHideDialog = true;
                             }}"
                     ></exercise-card>`;
             })}

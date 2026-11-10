@@ -181,7 +181,7 @@ Reusable pieces are tracked in `frontend/src/components/README.md` – update it
 - `npm i -D vitest`, script `"test": "vitest run"`; tests next to the code (`*.test.ts`).
 - First tests: `src/api/http.ts` (body parsing, error messages).
 
-### [ ] T2.3 🟠 Extract `confirm-dialog` (reused 3×)
+### [x] T2.3 🟠 Extract `confirm-dialog` (reused 3×)
 - New: `frontend/src/components/confirm-dialog.ts` (props: `open`, `label`, `confirmLabel`, `cancelLabel`, `variant`; slot: message; events `confirm` / `cancel`).
 - Replace: home delete-exercise dialog, home hide-exercise dialog, groups leave/delete-group dialog.
 
