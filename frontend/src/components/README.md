@@ -24,7 +24,7 @@ Belong to one feature, listed here so they are not built a second time.
 | Tag | File | Purpose | Status |
 |---|---|---|---|
 | `<exercise-card>` | `views/home/elements/exercise-card.ts` | One exercise on the home page. Events (`ExerciseCardEvents`): `move-up`, `move-down`, `hide-exercise`, `delete-exercise`, `edit-exercise` (detail ExerciseDto), `check-changed` (detail boolean) | ✅ |
-| `<browse-card>` | `views/home/elements/browse-card.ts` | One exercise in the browse list. Event (`BrowseCardEvents`): `select-exercise` (detail ExerciseDto) | ✅ |
+| `<browse-card>` | `views/home/elements/browse-card.ts` | One exercise in the browse list (title, creator · goal, Add button). Event (`BrowseCardEvents`): `select-exercise` (detail ExerciseDto) | ✅ |
 | `<exercise-form-dialog>` | `views/home/elements/exercise-form-dialog.ts` | Create / edit an exercise (props `open`, `exercise`, `exerciseTypes`, `visibilities`, `groups`; events `save` (ExerciseDto), `close`) | ✅ |
 | `<exercise-timer>` | `views/home/elements/exercise-timer.ts` | Countdown for time exercises (props `targetSeconds`, `completedSeconds`; event `progress-changed`) | ✅ |
 | `<rep-counter>` | `views/home/elements/rep-counter.ts` | Reps input for rep exercises (props `target`, `value`; event `progress-changed`, debounced 500ms) | ✅ |
@@ -47,4 +47,4 @@ Belong to one feature, listed here so they are not built a second time.
 |---|---|---|
 | Design tokens: `--app-bg/surface/border/divider`, `--app-text(-muted/-subtle)`, `--app-accent/success/warning/danger(-soft/-strong)`, `--app-space-1..6`, `--app-radius(-sm/-pill)`, `--app-shadow(-raised)`, `--app-font(-mono)`, `--app-page-max-width` | `src/styles/theme.css` | ✅ |
 | Light / dark mode (`getColorScheme`, `setColorScheme`, `initColorScheme`; class `sl-theme-dark` on `<html>`) | `src/styles/color-scheme.ts` | ✅ |
-| Page layout (`.page-container`, 768px breakpoint) | `src/styles/page.ts` | 🛠 T3.3 |
+| Page layout `pageStyles` (`static styles = [pageStyles, css`...`]` + `<div class="page-container">`, 768px breakpoint) | `src/styles/page.ts` | ✅ |

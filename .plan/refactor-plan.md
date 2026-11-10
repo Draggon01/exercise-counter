@@ -238,7 +238,7 @@ Reusable pieces are tracked in `frontend/src/components/README.md` – update it
 - Import `@shoelace-style/shoelace/dist/themes/dark.css`, toggle `sl-theme-dark` class on `<html>` from `prefers-color-scheme` (optional switch in options view → `optionsSlice`).
 - Works automatically if T3.1 used only tokens.
 
-### [ ] T3.3 🟢 Shared page layout
+### [x] T3.3 🟢 Shared page layout
 - New shared style `src/styles/page.ts` (Lit `css`) with `.page-container { max-width: 800px; margin: 0 auto; padding: var(--app-space-3); }` and the 768px breakpoint.
 - Use in home, browse, groups, statistics, options.
 - `exercise-card`: remove `width: 50%; min-width: 340px` → `width: 100%` inside the container.

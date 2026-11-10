@@ -1,4 +1,5 @@
 import {css, html, PropertyValues} from 'lit';
+import {pageStyles} from "../../styles/page";
 import type {SlInput} from "@shoelace-style/shoelace";
 import "../../components/page-header";
 import {customElement, property, state} from 'lit/decorators.js';
@@ -11,11 +12,7 @@ import {Chart} from "chart.js/auto";
 
 @customElement('statistics-view')
 export class StatisticsView extends ConnectedLitElement {
-    static styles = css`
-        :host {
-            display: block;
-            padding: 1rem;
-        }
+    static styles = [pageStyles, css`
 
 
         .statisticItem {
@@ -40,7 +37,6 @@ export class StatisticsView extends ConnectedLitElement {
 
         .chartContainer {
             width: 100%;
-            max-width: 800px;
             height: auto;
             position: relative;
         }
@@ -57,7 +53,7 @@ export class StatisticsView extends ConnectedLitElement {
         .statistic-key {
             margin: 0;
         }
-    `;
+    `];
 
     @property()
     exerciseId: string = "";
@@ -135,7 +131,7 @@ export class StatisticsView extends ConnectedLitElement {
 
     render() {
         return html`
-            <div>
+            <div class="page-container">
                 <page-header heading="Statistics"></page-header>
                 <div>
                     <sl-input label="Show last x entries" min="0"

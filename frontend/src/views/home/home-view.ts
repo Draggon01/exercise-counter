@@ -1,4 +1,5 @@
 import {css, html} from 'lit';
+import {pageStyles} from "../../styles/page";
 import {customElement, state} from "lit/decorators.js";
 import {RootState, store} from '../../store';
 import {ConnectedLitElement} from "../../connectedLitElement";
@@ -73,53 +74,26 @@ export class HomeView extends ConnectedLitElement {
 
 
 
-    static styles = css`
-        :host {
-            position: relative;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            overflow-y: auto;
-            height: 100%;
-        }
-
-        .addButton {
-            margin-top: 1rem;
-        }
-
+    static styles = [pageStyles, css`
         .action-bar {
             display: flex;
-            gap: 8px;
+            gap: var(--app-space-2);
             flex-wrap: wrap;
-            justify-content: center;
+            margin-bottom: var(--app-space-4);
+        }
+
+        .exercise-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--app-space-3);
         }
 
         @media (max-width: 768px) {
-            .action-bar {
-                width: 100%;
-                padding: 0 8px;
-                box-sizing: border-box;
+            .action-bar sl-button {
+                flex: 1;
             }
         }
-
-        @media (max-width: 400px) {
-            .action-bar {
-                flex-direction: column;
-                align-items: stretch;
-                padding: 0 8px;
-                gap: 6px;
-            }
-
-            .addButton {
-                width: 100%;
-            }
-        }
-    `
+    `];
 
     @state()
     private checksSelected: boolean = false;
@@ -158,25 +132,27 @@ export class HomeView extends ConnectedLitElement {
 
     render() {
         return html`
+            <div class="page-container">
             <div class="action-bar">
-                <sl-button class="addButton" variant="primary" @click="${() => this.openForm()}">
+                <sl-button variant="primary" @click="${() => this.openForm()}">
                     Add Exercise
                 </sl-button>
 
-                <sl-button class="addButton" variant="primary" @click="${() => {
+                <sl-button variant="primary" @click="${() => {
                     void CustomRouter.goto(`/browse`);
                 }}">
                     Browse Exercises
                 </sl-button>
 
-                <sl-button class="addButton" variant="${this.editMode ? 'success' : 'neutral'}" @click="${() => {
+                <sl-button variant="${this.editMode ? 'success' : 'neutral'}" @click="${() => {
                     this.editMode = !this.editMode;
                 }}">
                     ${this.editMode ? 'Done' : 'Edit Order'}
                 </sl-button>
             </div>
 
-            ${this.renderItems()}
+            <div class="exercise-list">${this.renderItems()}</div>
+            </div>
             <exercise-form-dialog .open="${this.formOpen}"
                                   .exercise="${this.exerciseToEdit}"
                                   .exerciseTypes="${this.exerciseTypes}"

@@ -1,4 +1,5 @@
 import {css, html} from 'lit';
+import {pageStyles} from "../../styles/page";
 import type {SlSelect, SlSwitch} from "@shoelace-style/shoelace";
 import {ColorScheme, getColorScheme, setColorScheme} from "../../styles/color-scheme";
 import "../../components/page-header";
@@ -11,17 +12,8 @@ import {ExerciseDto} from "../home/models/exerciseDto";
 
 @customElement('options-view')
 export class OptionsView extends ConnectedLitElement {
-    static styles = css`
-        :host {
-            display: block;
-            padding: 1rem;
-        }
+    static styles = [pageStyles, css`
 
-        .page-container {
-            max-width: 800px;
-            margin: 0 auto;
-            width: 100%;
-        }
 
 
 
@@ -181,12 +173,7 @@ export class OptionsView extends ConnectedLitElement {
             font-size: 0.875rem;
         }
 
-        @media (max-width: 768px) {
-            :host {
-                padding: 0.5rem;
-            }
-        }
-    `;
+    `];
 
     @state()
     private inviteLinks: string[] = [];

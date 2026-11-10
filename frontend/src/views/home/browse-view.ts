@@ -1,4 +1,5 @@
 import {css, html} from 'lit';
+import {pageStyles} from "../../styles/page";
 import "../../components/page-header";
 import {customElement, state} from 'lit/decorators.js';
 import './elements/browse-card'
@@ -15,26 +16,15 @@ export class BrowseView extends ConnectedLitElement {
 
     private idx = 0;
 
-    static styles = css`
-        :host {
-            display: block;
-            padding: 1rem;
+    static styles = [pageStyles, css`
+        .browse-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--app-space-3);
         }
 
-        .content-body {
-            position: relative;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            overflow-y: auto;
-            height: 100%;
-        }
-    `
+
+    `];
 
     connectedCallback() {
         super.connectedCallback();
@@ -50,10 +40,9 @@ export class BrowseView extends ConnectedLitElement {
 
     protected render() {
         return html`
-            <div class="content">
+            <div class="page-container">
                 <page-header heading="Browse Exercises"></page-header>
-                <div class="content-body">
-                    <!-- Content goes here -->
+                <div class="browse-list">
                     ${!this.browseExercises || this.browseExercises.length == 0 ? "no Exercises to Browse!" : ''}
                     ${this.browseExercises.map(ex => html`
                         <browse-card

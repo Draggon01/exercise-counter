@@ -33,18 +33,17 @@ export const ExerciseCardEvents = {
 export class ExerciseCard extends ConnectedLitElement {
     static styles = css`
         :host {
-            width: 100%;
+            display: block;
         }
 
         .card {
             padding: 12px 14px;
-            width: 50%;
-            margin: 6px auto;
+            box-sizing: border-box;
+            width: 100%;
             border-radius: 12px;
             border: 1px solid var(--app-border);
             background: var(--app-surface);
             box-shadow: var(--app-shadow);
-            min-width: 340px;
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -164,11 +163,6 @@ export class ExerciseCard extends ConnectedLitElement {
         }
 
         @media (max-width: 768px) {
-            .card {
-                width: 95%;
-                min-width: unset;
-            }
-
             .card-body {
                 grid-template-columns: 1fr;
             }
@@ -195,7 +189,6 @@ export class ExerciseCard extends ConnectedLitElement {
         @media (max-width: 400px) {
             .card {
                 padding: 8px 10px;
-                margin: 4px auto;
                 gap: 6px;
             }
 

@@ -90,10 +90,9 @@ nothing distinct for now
 
 ## Learned
 
-- `statistics-view.ts` uses `@media (max-width: 768px)` breakpoint and `max-width: 800px` container — follow this pattern for responsive views
+- Every view uses the shared layout from `frontend/src/styles/page.ts` (`static styles = [pageStyles, css`...`]` + `<div class="page-container">`): centered column of `--app-page-max-width` (800px), mobile breakpoint `@media (max-width: 768px)`
 - Inline styles (`style="color: red"`) should be moved to CSS classes for consistency
 - Colors, spacing, radius, shadows and fonts come from the design tokens in `frontend/src/styles/theme.css` (`var(--app-...)`) — no hard-coded hex colors, so dark mode keeps working
-- `groupCard` elements should use `width: 100%; box-sizing: border-box` (not `width: fit-content`) to fill containers properly on desktop
 - Sub pages use `<page-header heading="...">` (Back button + title + `actions` slot) instead of their own `.header` markup/CSS
 - `exercise-card.ts` shows time left until next reset using `timeLeftSeconds` from the backend DTO (calculated server-side), formatted by `formatTimeLeft()` in `src/utils/format.ts` ("2 Days and 3 Hours left", "5 Hours left", "30 Minutes left", rounded up). Urgent (< 6h, `isUrgent()`) is highlighted in orange.
 - `utcOffset` in Exercise is in hours (not minutes). The backend calculates `startTimeUtc = startTime.minusHours(utcOffset)` to convert the user's local reset time to UTC.

@@ -1,4 +1,5 @@
 import {customElement, state} from 'lit/decorators.js';
+import {pageStyles} from "../../styles/page";
 import "../../components/page-header";
 import {css, html} from 'lit';
 import {ConnectedLitElement} from "../../connectedLitElement";
@@ -27,17 +28,8 @@ import {validateForm} from "../../utils/form";
 @customElement('groups-view')
 export class GroupsView extends ConnectedLitElement {
 
-    static styles = css`
-        :host {
-            display: block;
-            padding: 1rem;
-        }
+    static styles = [pageStyles, css`
 
-        .page-container {
-            max-width: 800px;
-            margin: 0 auto;
-            width: 100%;
-        }
 
 
 
@@ -143,16 +135,13 @@ export class GroupsView extends ConnectedLitElement {
         }
 
         @media (max-width: 768px) {
-            :host {
-                padding: 0.5rem;
-            }
 
 
             .groupCard {
                 min-height: 48px;
             }
         }
-    `;
+    `];
 
     @state()
     groups: GroupInformationDto[] = [];
