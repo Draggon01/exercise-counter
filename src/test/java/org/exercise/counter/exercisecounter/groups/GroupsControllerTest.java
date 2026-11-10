@@ -82,6 +82,15 @@ class GroupsControllerTest {
     }
 
     @Test
+    void memberCount_countsMembersButNotPendingInvitations() {
+        groupsController.invite(GROUP, new InvitationRequest("grp-bob"), auth("grp-alice"));
+        assertEquals(1, groupsController.listMine(auth("grp-alice")).getFirst().groupInformation().getFirst().memberCount());
+
+        groupsController.accept(GROUP, auth("grp-bob"));
+        assertEquals(2, groupsController.listMine(auth("grp-alice")).getFirst().groupInformation().getFirst().memberCount());
+    }
+
+    @Test
     void lastMemberLeaving_deletesGroup() {
         groupsController.leave(GROUP, auth("grp-alice"));
 

@@ -269,7 +269,7 @@ Reusable pieces are tracked in `frontend/src/components/README.md` – update it
 - Shared `auth-card` component (logo, title, slot for form).
 - Inline error via `sl-alert`, submit button with `loading` attribute while the thunk runs.
 
-### [ ] T3.9 🟢 Groups view polish
+### [x] T3.9 🟢 Groups view polish
 - Card list with member count / visibility badge, invite as `sl-dialog` instead of inline inputs, pending invites section on top.
 
 ### [ ] T3.10 🟢 Statistics view

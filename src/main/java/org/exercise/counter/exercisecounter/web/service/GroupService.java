@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -56,12 +57,17 @@ public class GroupService {
     /** The user's memberships and pending invitations. */
     @Transactional(readOnly = true)
     public UserGroupMappingDto userGroups(String username) {
-        return new UserGroupMappingDto(username, userGroupMappingRepository.findWithGroupByUsername(username)
+        List<UserGroupMapping> memberships = userGroupMappingRepository.findWithGroupByUsername(username);
+        Map<UUID, Long> memberCounts = memberships.isEmpty() ? Map.of() : userGroupMappingRepository
+                .countMembers(memberships.stream().map(m -> m.getUserGroupMappingId().getGroupId()).toList())
                 .stream()
+                .collect(Collectors.toMap(GroupMemberCount::groupId, GroupMemberCount::members));
+        return new UserGroupMappingDto(username, memberships.stream()
                 .map(mapping -> new GroupInformationDto(
                         mapping.getGroup() == null ? null : mapping.getGroup().getGroupName(),
                         isInvitation(mapping),
-                        mapping.getGroup() == null ? null : mapping.getGroup().getVisibility()))
+                        mapping.getGroup() == null ? null : mapping.getGroup().getVisibility(),
+                        memberCounts.getOrDefault(mapping.getUserGroupMappingId().getGroupId(), 0L)))
                 .toList());
     }
 

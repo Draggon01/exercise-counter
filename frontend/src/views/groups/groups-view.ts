@@ -1,7 +1,6 @@
 import {customElement, state} from 'lit/decorators.js';
-import {pageStyles} from "../../styles/page";
-import "../../components/page-header";
-import {css, html} from 'lit';
+import {css, html, nothing} from 'lit';
+import {createRef, ref, Ref} from "lit/directives/ref.js";
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from '../../store';
 import {
@@ -19,165 +18,244 @@ import {
 import {selectCurrentUser} from "../login/slice/userSlice";
 import {GroupInformationDto} from "./models/GroupInformationDto";
 import {GroupVisibility} from "./models/GroupVisibility";
-import {createRef, ref, Ref} from "lit/directives/ref.js";
-import type {SlInput, SlRadioGroup} from "@shoelace-style/shoelace";
-import "../../components/confirm-dialog";
+import {AsyncStoreState} from "../../commons";
+import {pageStyles} from "../../styles/page";
 import {validateForm} from "../../utils/form";
+import {toast} from "../../components/toast";
+import "../../components/page-header";
+import "../../components/confirm-dialog";
+import "../../components/empty-state";
+import type {SlInput, SlRadioGroup} from "@shoelace-style/shoelace";
 
+const VISIBILITY_LABEL: Record<GroupVisibility, string> = {INVITE_ONLY: "Invite only", PUBLIC: "Public"};
+const VISIBILITY_HINT: Record<GroupVisibility, string> = {
+    INVITE_ONLY: "Only people you invite can join.",
+    PUBLIC: "Everybody can find and join the group.",
+};
 
+/**
+ * Groups of the current user: pending invitations, memberships (invite / leave),
+ * creating a group and joining a public one.
+ */
 @customElement('groups-view')
 export class GroupsView extends ConnectedLitElement {
 
     static styles = [pageStyles, css`
-
-
-
-
-        .actions {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 1rem;
+        section + section {
+            margin-top: var(--app-space-5);
         }
 
-        .groups-list {
+        h3 {
+            margin: 0 0 var(--app-space-2);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--app-text-muted);
+        }
+
+        .list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: var(--app-space-2);
         }
 
-        .groupCard {
+        .group {
             display: flex;
             align-items: center;
-            min-height: 44px;
+            gap: var(--app-space-3);
+            padding: var(--app-space-3) var(--app-space-4);
             border: 1px solid var(--app-border);
+            border-radius: var(--app-radius);
             background: var(--app-surface);
-            border-radius: 8px;
-            padding: 0 4px;
-            width: 100%;
-            box-sizing: border-box;
+            box-shadow: var(--app-shadow);
         }
 
-        .group-label {
+        .group.invitation {
+            border-color: var(--app-accent);
+            background: var(--app-accent-soft);
+        }
+
+        .group-icon {
+            flex-shrink: 0;
+            display: grid;
+            place-items: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--app-accent-soft);
+            color: var(--app-accent);
+            font-size: 1.2rem;
+        }
+
+        .invitation .group-icon {
+            background: var(--app-surface);
+        }
+
+        .group-text {
             flex: 1;
-            margin-left: 4px;
+            min-width: 0;
+        }
+
+        .group-name {
+            font-weight: 600;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        .group-actions {
+        .group-meta {
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
-            flex-shrink: 0;
+            gap: var(--app-space-2);
+            margin-top: 2px;
+            font-size: 0.85em;
+            color: var(--app-text-muted);
         }
 
-        .icon-decline {
-            color: var(--app-danger);
+        .badge {
+            padding: 1px var(--app-space-2);
+            border-radius: var(--app-radius-pill);
+            font-size: 0.85em;
         }
 
-        .icon-accept {
-            color: var(--app-success);
-        }
-
-        .visibility-badge {
-            font-size: 0.7rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: 6px;
-            flex-shrink: 0;
-        }
-
-        .visibility-badge.public {
+        .badge.public {
             background: var(--app-success-soft);
             color: var(--app-success-strong);
         }
 
-        .visibility-badge.invite-only {
-            background: var(--app-accent-soft);
-            color: var(--app-accent-strong);
+        .badge.invite-only {
+            background: var(--app-surface-muted);
+            color: var(--app-text-muted);
         }
 
-        .search-results {
-            border: 1px solid var(--app-border);
-            border-radius: 4px;
-            margin-top: 4px;
-            max-height: 200px;
+        .group-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--app-space-1);
+            flex-shrink: 0;
+        }
+
+        .group-actions sl-icon-button {
+            font-size: 1.15rem;
+        }
+
+        .leave::part(base) {
+            color: var(--app-danger);
+        }
+
+        .skeleton {
+            --border-radius: var(--app-radius);
+            height: 66px;
+        }
+
+        /* dialogs */
+        .dialog-form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--app-space-4);
+        }
+
+        .hint {
+            margin: var(--app-space-1) 0 0;
+            font-size: var(--sl-input-help-text-font-size-medium);
+            color: var(--app-text-muted);
+        }
+
+        sl-radio-group::part(button-group),
+        sl-radio-group::part(button-group__base) {
+            width: 100%;
+        }
+
+        sl-radio-button {
+            flex: 1;
+        }
+
+        .results {
+            display: flex;
+            flex-direction: column;
+            max-height: 240px;
             overflow-y: auto;
+            border: 1px solid var(--app-border);
+            border-radius: var(--app-radius-sm);
         }
 
-        .search-result-item {
-            padding: 8px 12px;
-            cursor: pointer;
+        .result {
+            display: flex;
+            align-items: center;
+            gap: var(--app-space-2);
+            padding: var(--app-space-3);
+            border: none;
             border-bottom: 1px solid var(--app-divider);
+            background: none;
+            color: var(--app-text);
+            font: inherit;
+            text-align: left;
+            cursor: pointer;
         }
 
-        .search-result-item:last-child {
+        .result:last-child {
             border-bottom: none;
         }
 
-        .search-result-item:hover {
+        .result:hover {
             background: var(--app-surface-muted);
         }
 
-        .search-result-item.selected {
+        .result.selected {
             background: var(--app-accent-soft);
-            font-weight: bold;
-        }
-
-        .visibility-radio {
-            margin-top: 1rem;
+            color: var(--app-accent);
+            font-weight: 600;
         }
 
         .no-results {
-            padding: 8px 12px;
+            padding: var(--app-space-3);
             color: var(--app-text-muted);
-            font-style: italic;
+            text-align: center;
         }
 
-        @media (max-width: 768px) {
-
-
-            .groupCard {
-                min-height: 48px;
+        @media (max-width: 480px) {
+            .header-label {
+                display: none;
             }
         }
     `];
 
     @state()
-    groups: GroupInformationDto[] = [];
+    private groups: GroupInformationDto[] = [];
 
     @state()
-    openGroupDialog: boolean = false;
+    private status: AsyncStoreState = "initial";
 
     @state()
-    groupName: string = "";
+    private createOpen = false;
 
     @state()
-    groupVisibility: GroupVisibility = "INVITE_ONLY";
+    private newVisibility: GroupVisibility = "INVITE_ONLY";
 
     @state()
-    openInviteDialog: boolean = false;
+    private joinOpen = false;
 
     @state()
-    openJoinDialog: boolean = false;
+    private joinQuery = "";
 
     @state()
-    groupToDelete?: string;
+    private joinResults: string[] = [];
 
     @state()
-    inviteToGroup?: string = "";
+    private joinSelected = "";
 
+    /** Group to invite someone to (invite dialog open while set). */
     @state()
-    joinSearchQuery: string = "";
+    private inviteTo?: string;
 
+    /** Group to leave (confirm dialog open while set). */
     @state()
-    joinSearchResults: string[] = [];
+    private leaveGroup?: string;
 
-    @state()
-    selectedGroupToJoin: string = "";
-
-    formRef: Ref<HTMLFormElement> = createRef();
-
+    private createFormRef: Ref<HTMLFormElement> = createRef();
+    private inviteFormRef: Ref<HTMLFormElement> = createRef();
 
     connectedCallback() {
         super.connectedCallback();
@@ -185,256 +263,263 @@ export class GroupsView extends ConnectedLitElement {
     }
 
     stateChanged(state: RootState): void {
-        let user = selectCurrentUser(state);
+        const user = selectCurrentUser(state);
         if (user) {
-            let groups = selectUserMappingByUser(state, user.username)
-            this.groups = groups ? groups.groupInformation : [];
+            this.groups = selectUserMappingByUser(state, user.username)?.groupInformation ?? [];
         }
-        this.joinSearchResults = selectPublicGroupSearchResults(state);
+        this.status = state.group.userMappings.status;
+        this.joinResults = selectPublicGroupSearchResults(state);
     }
 
     protected render() {
+        const invitations = this.groups.filter(group => group.isInvited);
+        const memberships = this.groups.filter(group => !group.isInvited);
         return html`
             <div class="page-container">
-                <page-header heading="Groups"></page-header>
-                <div class="actions">
-                    <sl-button
-                            @click="${() => this.openGroupDialog = true}"
-                            variant="primary"
-                    >
-                        Create Group
+                <page-header heading="Groups">
+                    <sl-button slot="actions" @click="${this.openJoin}">
+                        <sl-icon slot="prefix" name="search"></sl-icon>
+                        <span class="header-label">Join</span>
                     </sl-button>
-                    <sl-button
-                            @click="${() => {
-                                this.joinSearchQuery = "";
-                                this.selectedGroupToJoin = "";
-                                this.openJoinDialog = true;
-                            }}"
-                            variant="default"
-                    >
-                        Join Group
+                    <sl-button slot="actions" variant="primary" @click="${this.openCreate}">
+                        <sl-icon slot="prefix" name="plus-lg"></sl-icon>
+                        <span class="header-label">New group</span>
                     </sl-button>
-                </div>
-                <div class="groups-list">
-                    ${this.groups.map(group => group.isInvited ?
-                            html`
-                                <div class="groupCard">
-                                    <div class="group-label">Invited to group: ${group.groupName}</div>
-                                    <div class="group-actions">
-                                        <sl-icon-button
-                                                class="icon-decline"
-                                                name="x-lg"
-                                                @click="${() => {
-                                                    store.dispatch(deleteGroupOnUser(group.groupName));
-                                                }}">
-                                        </sl-icon-button>
-                                        <sl-icon-button
-                                                class="icon-accept"
-                                                name="check-lg"
-                                                @click="${() => {
-                                                    store.dispatch(acceptGroupToUser(group.groupName))
-                                                }}">
-                                        </sl-icon-button>
-                                    </div>
-                                </div>
-                            ` :
-                            html`
-                                <div class="groupCard">
-                                    <div class="group-label">${group.groupName}</div>
-                                    <span class="visibility-badge ${group.visibility === 'PUBLIC' ? 'public' : 'invite-only'}">
-                                        ${group.visibility === 'PUBLIC' ? 'Public' : 'Invite only'}
-                                    </span>
-                                    <div class="group-actions">
-                                        <sl-icon-button
-                                                name="plus-lg"
-                                                @click="${() => {
-                                                    this.inviteToGroup = group.groupName;
-                                                    this.openInviteDialog = true;
-                                                }}">
-                                        </sl-icon-button>
-                                        <sl-icon-button
-                                                name="trash"
-                                                @click="${() => {
-                                                    this.groupToDelete = group.groupName;
-                                                }}">
-                                        </sl-icon-button>
-                                    </div>
-                                </div>
-                            `)}
-                </div>
+                </page-header>
+
+                ${invitations.length > 0 ? html`
+                    <section>
+                        <h3>Invitations</h3>
+                        <div class="list">${invitations.map(group => this.renderInvitation(group))}</div>
+                    </section>
+                ` : nothing}
+
+                <section>
+                    ${invitations.length > 0 ? html`<h3>Your groups</h3>` : nothing}
+                    <div class="list">${this.renderMemberships(memberships)}</div>
+                </section>
             </div>
 
-            <sl-dialog label="Create Group"
-                       .open="${this.openGroupDialog}"
-                       @sl-hide="${() => {
-                           this.openGroupDialog = false;
-                       }}">
-                ${this.renderGroupCreateDialog()}
-            </sl-dialog>
-
-            <sl-dialog label="Join Public Group"
-                       .open="${this.openJoinDialog}"
-                       @sl-hide="${() => {
-                           this.openJoinDialog = false;
-                           this.joinSearchQuery = "";
-                           this.selectedGroupToJoin = "";
-                       }}">
-                ${this.renderJoinDialog()}
-            </sl-dialog>
-
-            <confirm-dialog label="Leave group" confirmLabel="Delete Group" cancelLabel="Close"
-                            .open="${this.groupToDelete !== undefined}"
-                            @confirm="${this.confirmLeaveGroup}"
-                            @cancel="${() => this.groupToDelete = undefined}">
-                You are about to delete this Group. If you are the last user assigned to this group,
-                the group will be completely removed and no exercise will be linked to it anymore.
-                Do you want to proceed?
+            ${this.renderCreateDialog()}
+            ${this.renderJoinDialog()}
+            ${this.renderInviteDialog()}
+            <confirm-dialog label="Leave group" confirmLabel="Leave group" cancelLabel="Stay"
+                            .open="${this.leaveGroup !== undefined}"
+                            @confirm="${this.confirmLeave}"
+                            @cancel="${() => this.leaveGroup = undefined}">
+                Do you want to leave <strong>${this.leaveGroup}</strong>? If you are the last member, the group
+                is deleted and its exercises are no longer shared with anyone.
             </confirm-dialog>
+        `;
+    }
 
+    private renderMemberships(memberships: GroupInformationDto[]) {
+        if (this.status === "error") {
+            return html`
+                <empty-state icon="cloud-slash" heading="Could not load your groups">
+                    <sl-button @click="${() => store.dispatch(listUserMappings())}">Try again</sl-button>
+                </empty-state>`;
+        }
+        if (this.status !== "idle") {
+            return [1, 2].map(() => html`<sl-skeleton effect="pulse" class="skeleton"></sl-skeleton>`);
+        }
+        if (memberships.length === 0) {
+            return html`
+                <empty-state icon="people" heading="You are not in any group yet"
+                             text="Groups let you share exercises with friends and family.">
+                    <sl-button variant="primary" @click="${this.openCreate}">New group</sl-button>
+                    <sl-button @click="${this.openJoin}">Join a public group</sl-button>
+                </empty-state>`;
+        }
+        return memberships.map(group => html`
+            <div class="group">
+                <div class="group-icon"><sl-icon name="people-fill"></sl-icon></div>
+                <div class="group-text">
+                    <div class="group-name">${group.groupName}</div>
+                    <div class="group-meta">
+                        <span>${group.memberCount} ${group.memberCount === 1 ? "member" : "members"}</span>
+                        <span class="badge ${group.visibility === "PUBLIC" ? "public" : "invite-only"}">
+                            ${VISIBILITY_LABEL[group.visibility] ?? group.visibility}
+                        </span>
+                    </div>
+                </div>
+                <div class="group-actions">
+                    <sl-tooltip content="Invite someone">
+                        <sl-icon-button name="person-plus" label="Invite someone to ${group.groupName}"
+                                        @click="${() => this.inviteTo = group.groupName}"></sl-icon-button>
+                    </sl-tooltip>
+                    <sl-tooltip content="Leave group">
+                        <sl-icon-button class="leave" name="box-arrow-right" label="Leave ${group.groupName}"
+                                        @click="${() => this.leaveGroup = group.groupName}"></sl-icon-button>
+                    </sl-tooltip>
+                </div>
+            </div>
+        `);
+    }
 
-            <sl-dialog .open="${this.openInviteDialog}"
-                       @sl-hide="${() => {
-                           this.openInviteDialog = false
-                           this.inviteToGroup = undefined;
-                       }}"
-                       label="Invite">
-                ${this.renderInviteDialog()}
+    private renderInvitation(group: GroupInformationDto) {
+        return html`
+            <div class="group invitation">
+                <div class="group-icon"><sl-icon name="envelope-open"></sl-icon></div>
+                <div class="group-text">
+                    <div class="group-name">${group.groupName}</div>
+                    <div class="group-meta">You were invited to join</div>
+                </div>
+                <div class="group-actions">
+                    <sl-button size="small" @click="${() => store.dispatch(deleteGroupOnUser(group.groupName))}">
+                        Decline
+                    </sl-button>
+                    <sl-button size="small" variant="primary" @click="${() => this.accept(group.groupName)}">
+                        Accept
+                    </sl-button>
+                </div>
+            </div>
+        `;
+    }
+
+    private renderCreateDialog() {
+        return html`
+            <sl-dialog label="New group" .open="${this.createOpen}" @sl-request-close="${() => this.createOpen = false}">
+                ${this.createOpen ? html`
+                    <form class="dialog-form" ${ref(this.createFormRef)}
+                          @submit="${(e: Event) => { e.preventDefault(); this.create(); }}">
+                        <sl-input name="groupName" label="Name" required autofocus
+                                  pattern="[^/\\\\]+" help-text="Not allowed: / and \\"></sl-input>
+                        <div>
+                            <sl-radio-group name="visibility" label="Who can join?" .value="${this.newVisibility}"
+                                            @sl-change="${(e: Event) => this.newVisibility = (e.target as SlRadioGroup).value as GroupVisibility}">
+                                <sl-radio-button value="INVITE_ONLY">Invite only</sl-radio-button>
+                                <sl-radio-button value="PUBLIC">Public</sl-radio-button>
+                            </sl-radio-group>
+                            <p class="hint">${VISIBILITY_HINT[this.newVisibility]}</p>
+                        </div>
+                    </form>
+                ` : nothing}
+                <sl-button slot="footer" @click="${() => this.createOpen = false}">Cancel</sl-button>
+                <sl-button slot="footer" variant="primary" @click="${this.create}">Create group</sl-button>
             </sl-dialog>
         `;
-    }
-
-    private renderGroupCreateDialog() {
-        return html`
-            <p>Hint: Group names are not allowed to include spaces</p>
-            <form ${ref(this.formRef)} @sl-hide="${(e: Event) => e.stopPropagation()}">
-                <sl-input
-                        label="Group Name"
-                        name="groupName"
-                        .value="${this.groupName}"
-                        pattern="[^\\s]+"
-                        required>
-                </sl-input>
-                <sl-radio-group
-                        label="Visibility"
-                        name="visibility"
-                        .value="${this.groupVisibility}"
-                        @sl-change="${(e: Event) => { this.groupVisibility = (e.target as SlRadioGroup).value as GroupVisibility; }}"
-                        class="visibility-radio">
-                    <sl-radio value="INVITE_ONLY">Invite Only</sl-radio>
-                    <sl-radio value="PUBLIC">Public</sl-radio>
-                </sl-radio-group>
-            </form>
-            <sl-button slot="footer" variant="danger" @click="${() => {
-                this.groupName = "";
-                this.groupVisibility = "INVITE_ONLY";
-                this.openGroupDialog = false;
-            }}">
-                Close
-            </sl-button>
-            <sl-button slot="footer" variant="primary" @click="${() => {
-                this.handleCreateGroup()
-            }}">
-                Add
-            </sl-button>
-        `;
-    }
-
-    private handleCreateGroup() {
-        if (validateForm(this.formRef.value!)) {
-            let formData = new FormData(this.formRef.value!);
-            let groupName = formData!.get("groupName")!.toString();
-            store.dispatch(createGroupOnUser({groupName, visibility: this.groupVisibility}))
-            this.openGroupDialog = false;
-            this.groupName = "";
-            this.groupVisibility = "INVITE_ONLY";
-        }
     }
 
     private renderJoinDialog() {
         return html`
-            <sl-input
-                    label="Group Name"
-                    placeholder="Type to search..."
-                    .value="${this.joinSearchQuery}"
-                    @sl-input="${(e: Event) => {
-                        this.joinSearchQuery = (e.target as SlInput).value;
-                        this.selectedGroupToJoin = "";
-                        if (this.joinSearchQuery.length > 0) {
-                            store.dispatch(searchPublicGroups(this.joinSearchQuery));
-                        } else {
-                            store.dispatch(clearPublicGroupSearch());
-                        }
-                    }}">
-            </sl-input>
-            ${this.joinSearchQuery.length > 0 ? html`
-                <div class="search-results">
-                    ${this.joinSearchResults.length > 0 ? this.joinSearchResults.map(name => html`
-                        <div class="search-result-item ${this.selectedGroupToJoin === name ? 'selected' : ''}"
-                             @click="${() => {
-                                 this.selectedGroupToJoin = name;
-                                 this.joinSearchQuery = name;
-                             }}">
-                            ${name}
+            <sl-dialog label="Join a public group" .open="${this.joinOpen}" @sl-request-close="${this.closeJoin}">
+                <div class="dialog-form">
+                    <sl-input label="Search" placeholder="Group name" clearable .value="${this.joinQuery}"
+                              @sl-input="${this.search}" @sl-clear="${this.search}">
+                        <sl-icon slot="prefix" name="search"></sl-icon>
+                    </sl-input>
+                    ${this.joinQuery ? html`
+                        <div class="results" role="listbox">
+                            ${this.joinResults.length > 0 ? this.joinResults.map(name => html`
+                                <button class="result ${this.joinSelected === name ? "selected" : ""}" role="option"
+                                        aria-selected="${this.joinSelected === name}"
+                                        @click="${() => this.joinSelected = name}">
+                                    <sl-icon name="people"></sl-icon>${name}
+                                </button>
+                            `) : html`<div class="no-results">No public group found for "${this.joinQuery}"</div>`}
                         </div>
-                    `) : html`
-                        <div class="no-results">No public groups found</div>
-                    `}
+                    ` : nothing}
                 </div>
-            ` : ''}
-            <sl-button slot="footer" variant="primary" @click="${() => {
-                this.openJoinDialog = false;
-                this.joinSearchQuery = "";
-                this.selectedGroupToJoin = "";
-            }}">
-                Close
-            </sl-button>
-            <sl-button slot="footer" variant="success"
-                       ?disabled="${!this.selectedGroupToJoin}"
-                       @click="${() => {
-                           if (this.selectedGroupToJoin) {
-                               store.dispatch(joinPublicGroup(this.selectedGroupToJoin));
-                               this.openJoinDialog = false;
-                               this.joinSearchQuery = "";
-                               this.selectedGroupToJoin = "";
-                           }
-                       }}">
-                Join
-            </sl-button>
+                <sl-button slot="footer" @click="${this.closeJoin}">Cancel</sl-button>
+                <sl-button slot="footer" variant="primary" ?disabled="${!this.joinSelected}" @click="${this.join}">
+                    Join ${this.joinSelected}
+                </sl-button>
+            </sl-dialog>
         `;
     }
 
-    private confirmLeaveGroup = () => {
-        if (this.groupToDelete) {
-            store.dispatch(deleteGroupOnUser(this.groupToDelete));
-        }
-        this.groupToDelete = undefined;
+    private renderInviteDialog() {
+        return html`
+            <sl-dialog label="Invite to ${this.inviteTo ?? ""}" .open="${this.inviteTo !== undefined}"
+                       @sl-request-close="${() => this.inviteTo = undefined}">
+                ${this.inviteTo !== undefined ? html`
+                    <form class="dialog-form" ${ref(this.inviteFormRef)}
+                          @submit="${(e: Event) => { e.preventDefault(); this.invite(); }}">
+                        <sl-input name="username" label="Username" required autofocus
+                                  help-text="They see the invitation on their Groups page."></sl-input>
+                    </form>
+                ` : nothing}
+                <sl-button slot="footer" @click="${() => this.inviteTo = undefined}">Cancel</sl-button>
+                <sl-button slot="footer" variant="primary" @click="${this.invite}">Send invitation</sl-button>
+            </sl-dialog>
+        `;
     }
 
-    private renderInviteDialog() {
-        let inviteInput: Ref<SlInput> = createRef();
-        return html`
-            <sl-input ${ref(inviteInput)} label="Name"></sl-input>
-            <sl-button slot="footer" variant="primary" @click="${() => {
-                this.openInviteDialog = false;
-                this.inviteToGroup = undefined;
-                if (inviteInput.value) {
-                    inviteInput.value.value = "";
-                }
-            }}"> Close
-            </sl-button>
-            <sl-button slot="footer" variant="danger" @click="${() => {
-                this.openInviteDialog = false;
-                if (this.inviteToGroup) {
-                    let userToInvite = inviteInput.value!.value;
-                    store.dispatch(inviteUserToGroup([userToInvite, this.inviteToGroup]))
-                }
-                this.inviteToGroup = undefined;
-                if (inviteInput.value) {
-                    inviteInput.value.value = "";
-                }
-            }}">
-                Invite
-            </sl-button>
-        `
+    private openCreate = () => {
+        this.newVisibility = "INVITE_ONLY";
+        this.createOpen = true;
+    }
+
+    private openJoin = () => {
+        this.joinQuery = "";
+        this.joinSelected = "";
+        store.dispatch(clearPublicGroupSearch());
+        this.joinOpen = true;
+    }
+
+    private closeJoin = () => {
+        this.joinOpen = false;
+    }
+
+    private create = async () => {
+        const form = this.createFormRef.value;
+        if (!form || !validateForm(form)) return;
+        const groupName = (form.querySelector('[name="groupName"]') as SlInput).value.trim();
+        const result = await store.dispatch(createGroupOnUser({groupName, visibility: this.newVisibility}));
+        if (createGroupOnUser.fulfilled.match(result)) {
+            this.createOpen = false;
+            toast(`Group "${groupName}" created`, "success");
+        }
+    }
+
+    private search = (e: Event) => {
+        this.joinQuery = (e.target as SlInput).value;
+        this.joinSelected = "";
+        if (this.joinQuery) {
+            store.dispatch(searchPublicGroups(this.joinQuery));
+        } else {
+            store.dispatch(clearPublicGroupSearch());
+        }
+    }
+
+    private join = async () => {
+        const name = this.joinSelected;
+        const result = await store.dispatch(joinPublicGroup(name));
+        if (joinPublicGroup.fulfilled.match(result)) {
+            this.joinOpen = false;
+            toast(`You joined "${name}"`, "success");
+        }
+    }
+
+    private accept = async (groupName: string) => {
+        const result = await store.dispatch(acceptGroupToUser(groupName));
+        if (acceptGroupToUser.fulfilled.match(result)) {
+            toast(`You joined "${groupName}"`, "success");
+        }
+    }
+
+    private invite = async () => {
+        const form = this.inviteFormRef.value;
+        const group = this.inviteTo;
+        if (!form || !group || !validateForm(form)) return;
+        const username = (form.querySelector('[name="username"]') as SlInput).value.trim();
+        const result = await store.dispatch(inviteUserToGroup([username, group]));
+        if (!inviteUserToGroup.fulfilled.match(result)) {
+            return; // the error toast comes from the middleware
+        }
+        if (result.payload) {
+            this.inviteTo = undefined;
+            toast(`Invitation sent to ${username}`, "success");
+        } else {
+            toast(`${username} does not exist or is already in "${group}"`, "warning");
+        }
+    }
+
+    private confirmLeave = () => {
+        if (this.leaveGroup) {
+            store.dispatch(deleteGroupOnUser(this.leaveGroup));
+        }
+        this.leaveGroup = undefined;
     }
 }
