@@ -7,10 +7,6 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -46,7 +42,6 @@ public class SecurityConfig {
                         .permitAll()
                 )
                 .userDetailsService(userDetailsService)
-                .userDetailsService(inMemoryUserDetailsService())
                 .logout(logout -> logout
                         .logoutUrl("/api/logout")
                         .logoutSuccessHandler((_, response, _) -> {
@@ -93,16 +88,5 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
-    }
-
-    @Bean
-    public UserDetailsService inMemoryUserDetailsService() {
-        UserDetails user = User
-                .withUsername("user")
-                .password("{noop}password")
-                .roles("USER")
-                .build();
-
-        return new InMemoryUserDetailsManager(user);
     }
 }

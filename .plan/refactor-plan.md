@@ -15,7 +15,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 
 ## Phase 0 – Bugs & security (do first)
 
-### [ ] T0.1 🔴 Remove hardcoded in-memory user
+### [x] T0.1 🔴 Remove hardcoded in-memory user
 - File: `web/security/SecurityConfig.java`
 - Steps:
   1. Delete the `inMemoryUserDetailsService()` bean and the `.userDetailsService(inMemoryUserDetailsService())` line.
