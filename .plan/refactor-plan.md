@@ -213,7 +213,7 @@ Reusable pieces are tracked in `frontend/src/components/README.md` – update it
 
 ## Phase 3 – Better looking frontend
 
-### [ ] T3.1 🟢 Design tokens + theme file
+### [x] T3.1 🟢 Design tokens + theme file
 - New: `frontend/src/styles/theme.css` (imported in `main.ts`):
   ```css
   :root {

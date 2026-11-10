@@ -41,9 +41,9 @@ export class ExerciseCard extends ConnectedLitElement {
             width: 50%;
             margin: 6px auto;
             border-radius: 12px;
-            border: 1px solid #c8e0e0;
-            background: #ffffff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+            border: 1px solid var(--app-border);
+            background: var(--app-surface);
+            box-shadow: var(--app-shadow);
             min-width: 340px;
             display: flex;
             flex-direction: column;
@@ -66,7 +66,7 @@ export class ExerciseCard extends ConnectedLitElement {
             overflow: hidden;
             text-overflow: ellipsis;
             flex: 1;
-            color: #1a2e2e;
+            color: var(--app-text);
         }
 
         .actions {
@@ -85,7 +85,7 @@ export class ExerciseCard extends ConnectedLitElement {
         }
 
         .label {
-            color: #666;
+            color: var(--app-text-muted);
             white-space: nowrap;
         }
 
@@ -96,21 +96,21 @@ export class ExerciseCard extends ConnectedLitElement {
         .divider {
             grid-column: 1 / -1;
             border: none;
-            border-top: 1px solid #f0f0f0;
+            border-top: 1px solid var(--app-divider);
             margin: 2px 0;
         }
 
         .time-left {
             font-size: 0.85em;
-            color: #888;
+            color: var(--app-text-subtle);
         }
 
         .no-finisher {
-            color: #aaa;
+            color: var(--app-text-subtle);
         }
 
         .time-left.urgent {
-            color: #e06c1a;
+            color: var(--app-warning);
             font-weight: 600;
         }
 
@@ -125,7 +125,7 @@ export class ExerciseCard extends ConnectedLitElement {
             align-items: center;
             justify-content: space-between;
             padding-top: 6px;
-            border-top: 1px solid #f0f0f0;
+            border-top: 1px solid var(--app-divider);
         }
 
         .finished-label {
@@ -133,15 +133,15 @@ export class ExerciseCard extends ConnectedLitElement {
             align-items: center;
             gap: 6px;
             font-size: 0.9em;
-            color: #555;
+            color: var(--app-text-muted);
         }
 
         .hide-icon {
-            color: #5bb8d4;
+            color: var(--app-accent);
         }
 
         .trash-icon {
-            color: #c0392b;
+            color: var(--app-danger);
         }
 
         .stats-btn {
@@ -149,7 +149,7 @@ export class ExerciseCard extends ConnectedLitElement {
         }
 
         .collapse-icon {
-            color: #888;
+            color: var(--app-text-subtle);
         }
 
         .card.collapsed {
@@ -174,7 +174,7 @@ export class ExerciseCard extends ConnectedLitElement {
             }
 
             .label {
-                color: #888;
+                color: var(--app-text-subtle);
                 font-size: 0.8em;
                 margin-bottom: 0;
             }

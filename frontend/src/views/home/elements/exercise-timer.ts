@@ -20,13 +20,13 @@ export class ExerciseTimer extends LitElement {
         .timer-display {
             font-size: 1.15em;
             font-weight: bold;
-            font-family: monospace;
-            color: #333;
+            font-family: var(--app-font-mono);
+            color: var(--app-text);
             min-width: 52px;
         }
 
         .timer-display.completed {
-            color: #2e7d32;
+            color: var(--app-success);
         }
 
         .timer-controls {

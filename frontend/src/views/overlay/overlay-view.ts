@@ -15,7 +15,6 @@ export class OverlayView extends ConnectedLitElement {
             left: 0;
             right: 0;
             bottom: 0;
-            font-family: Open Sans, sans-serif;
         }
 
         header {
@@ -24,13 +23,18 @@ export class OverlayView extends ConnectedLitElement {
             justify-content: space-between;
             padding: 1rem;
             background: var(--sl-color-primary-600);
-            color: white;
+            color: var(--app-on-accent);
             height: 1rem;
         }
 
         main {
             flex: 1;
             overflow: auto;
+        }
+
+        .user-menu {
+            color: var(--app-on-accent);
+            cursor: pointer;
         }
 
         .sizeing {
@@ -64,7 +68,7 @@ export class OverlayView extends ConnectedLitElement {
         return html`
             <header>
                 <h3>Exercise Counter</h3>
-                <div style="color:black;">
+                <div class="user-menu">
                     <sl-dropdown>
                         <div slot="trigger">
                             <sl-avatar class="sizeing" label="User avatar"></sl-avatar>

@@ -24,7 +24,7 @@ export class BrowseCard extends ConnectedLitElement {
             margin: 2px auto;
             border-radius: 8px;
             display: grid;
-            border: 1px solid teal;
+            border: 1px solid var(--app-border);
             grid-template-rows: 0.5fr 1fr;
             min-width: 340px;
         }
@@ -60,6 +60,10 @@ export class BrowseCard extends ConnectedLitElement {
             grid-template-columns: max-content auto;
             gap: 8px;
         }
+
+        .select-button {
+            padding: 5px;
+        }
     `;
 
     stateChanged(state: RootState): void {
@@ -85,7 +89,7 @@ export class BrowseCard extends ConnectedLitElement {
                     <div>
                         <sl-button @click="${() => {
                             this._selectClick()
-                        }}" style="padding:5px" variant="primary">Select
+                        }}" class="select-button" variant="primary">Select
                         </sl-button>
                     </div>
                 </div>

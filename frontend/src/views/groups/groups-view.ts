@@ -57,7 +57,8 @@ export class GroupsView extends ConnectedLitElement {
             display: flex;
             align-items: center;
             min-height: 44px;
-            border: 1px solid teal;
+            border: 1px solid var(--app-border);
+            background: var(--app-surface);
             border-radius: 8px;
             padding: 0 4px;
             width: 100%;
@@ -79,11 +80,11 @@ export class GroupsView extends ConnectedLitElement {
         }
 
         .icon-decline {
-            color: red;
+            color: var(--app-danger);
         }
 
         .icon-accept {
-            color: green;
+            color: var(--app-success);
         }
 
         .visibility-badge {
@@ -95,17 +96,17 @@ export class GroupsView extends ConnectedLitElement {
         }
 
         .visibility-badge.public {
-            background: #d1fae5;
-            color: #065f46;
+            background: var(--app-success-soft);
+            color: var(--app-success-strong);
         }
 
         .visibility-badge.invite-only {
-            background: #e0e7ff;
-            color: #3730a3;
+            background: var(--app-accent-soft);
+            color: var(--app-accent-strong);
         }
 
         .search-results {
-            border: 1px solid #ccc;
+            border: 1px solid var(--app-border);
             border-radius: 4px;
             margin-top: 4px;
             max-height: 200px;
@@ -115,7 +116,7 @@ export class GroupsView extends ConnectedLitElement {
         .search-result-item {
             padding: 8px 12px;
             cursor: pointer;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--app-divider);
         }
 
         .search-result-item:last-child {
@@ -123,17 +124,21 @@ export class GroupsView extends ConnectedLitElement {
         }
 
         .search-result-item:hover {
-            background: #f0f9ff;
+            background: var(--app-surface-muted);
         }
 
         .search-result-item.selected {
-            background: #e0f2fe;
+            background: var(--app-accent-soft);
             font-weight: bold;
+        }
+
+        .visibility-radio {
+            margin-top: 1rem;
         }
 
         .no-results {
             padding: 8px 12px;
-            color: #666;
+            color: var(--app-text-muted);
             font-style: italic;
         }
 
@@ -325,7 +330,7 @@ export class GroupsView extends ConnectedLitElement {
                         name="visibility"
                         .value="${this.groupVisibility}"
                         @sl-change="${(e: Event) => { this.groupVisibility = (e.target as SlRadioGroup).value as GroupVisibility; }}"
-                        style="margin-top: 1rem;">
+                        class="visibility-radio">
                     <sl-radio value="INVITE_ONLY">Invite Only</sl-radio>
                     <sl-radio value="PUBLIC">Public</sl-radio>
                 </sl-radio-group>

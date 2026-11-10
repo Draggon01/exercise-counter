@@ -1,0 +1,59 @@
+/*
+ * Design tokens of the app. Use these (var(--app-...)) instead of hard-coded colors/sizes.
+ * They are built on Shoelace's scales, which flip automatically in the dark theme
+ * (class "sl-theme-dark" on <html>), so components get dark mode for free.
+ * Custom properties pierce Shadow DOM, so Lit components can use them directly.
+ */
+:root {
+    /* surfaces */
+    --app-bg: var(--sl-color-neutral-50);
+    --app-surface: var(--sl-color-neutral-0);
+    --app-surface-muted: var(--sl-color-neutral-100);
+    --app-border: var(--sl-color-neutral-200);
+    --app-divider: var(--sl-color-neutral-100);
+
+    /* text */
+    --app-text: var(--sl-color-neutral-900);
+    --app-text-muted: var(--sl-color-neutral-600);
+    --app-text-subtle: var(--sl-color-neutral-500);
+
+    /* brand + status */
+    --app-accent: var(--sl-color-primary-600);
+    --app-accent-strong: var(--sl-color-primary-700);
+    --app-accent-soft: var(--sl-color-primary-50);
+    --app-on-accent: #ffffff;
+    --app-success: var(--sl-color-success-600);
+    --app-success-strong: var(--sl-color-success-700);
+    --app-success-soft: var(--sl-color-success-50);
+    --app-warning: var(--sl-color-warning-600);
+    --app-warning-soft: var(--sl-color-warning-50);
+    --app-danger: var(--sl-color-danger-600);
+    --app-danger-soft: var(--sl-color-danger-50);
+
+    /* shape + spacing */
+    --app-radius: 12px;
+    --app-radius-sm: 8px;
+    --app-radius-pill: 999px;
+    --app-space-1: 4px;
+    --app-space-2: 8px;
+    --app-space-3: 12px;
+    --app-space-4: 16px;
+    --app-space-5: 24px;
+    --app-space-6: 32px;
+    --app-shadow: var(--sl-shadow-small);
+    --app-shadow-raised: var(--sl-shadow-medium);
+
+    /* type + layout */
+    --app-font: var(--sl-font-sans);
+    --app-font-mono: var(--sl-font-mono);
+    --app-page-max-width: 800px;
+    --app-header-height: 56px;
+}
+
+html, body {
+    margin: 0;
+    background: var(--app-bg);
+    color: var(--app-text);
+    font-family: var(--app-font);
+    -webkit-font-smoothing: antialiased;
+}

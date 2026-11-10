@@ -36,8 +36,7 @@ export class LoginView extends LitElement {
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: var(--sl-color-neutral-50);
-            font-family: Open Sans, sans-serif;
+            background-color: var(--app-bg);
         }
         .login-container {
             width: 100%;
@@ -49,7 +48,7 @@ export class LoginView extends LitElement {
             padding: 2rem;
             border-radius: var(--sl-border-radius-medium);
             box-shadow: var(--sl-shadow-medium);
-            background: white;
+            background: var(--app-surface);
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
@@ -92,7 +91,7 @@ export class LoginView extends LitElement {
             }
 
             :host {
-                background-color: white;
+                background-color: var(--app-surface);
                 align-items: flex-start;
                 padding-top: 10vh;
             }

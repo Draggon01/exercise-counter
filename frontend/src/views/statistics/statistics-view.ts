@@ -53,6 +53,10 @@ export class StatisticsView extends ConnectedLitElement {
                 max-height: 600px;
             }
         }
+
+        .statistic-key {
+            margin: 0;
+        }
     `;
 
     @property()
@@ -179,7 +183,7 @@ export class StatisticsView extends ConnectedLitElement {
                             .map(([key, value]: [string, string[]]) => {
                                 return html`
                                     <div class="statisticItem">
-                                        <h3 style="margin: 0">${this.statisticKeyDateResolver(key)} → </h3>
+                                        <h3 class="statistic-key">${this.statisticKeyDateResolver(key)} → </h3>
                                         <div class="statisticText">${value.join(', ')}</div>
                                     </div>
                                 `
