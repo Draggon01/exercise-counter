@@ -338,8 +338,10 @@ export class StatisticsView extends ConnectedLitElement {
         }
         const periods = this.range === "all" ? allPeriods : allPeriods.slice(-Number(this.range));
         const everyone = participants(info, this.me);
-        const users = visiblePeople(everyone, this.statistic.participants, this.showEveryone);
-        const hidden = everyone.length - users.length;
+        const users = visiblePeople(everyone, this.statistic.participants, this.showEveryone, periods, current, this.me);
+        // former participants who were active in the range – what the checkbox would add
+        const hidden = visiblePeople(everyone, this.statistic.participants, true, periods, current, this.me).length
+            - visiblePeople(everyone, this.statistic.participants, false, periods, current, this.me).length;
         const summaries = users.map(user => summarize(user, periods, current));
         const mine = summarize(this.me, periods, current);
         return html`

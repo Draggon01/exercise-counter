@@ -39,12 +39,25 @@ describe("statistics helpers", () => {
         expect(summarize("x", periods, [])).toMatchObject({currentStreak: 1, bestStreak: 3, rate: 0.8});
     });
 
-    it("shows only current participants unless everyone is requested", () => {
-        const everyone = ["me", "anna", "bob"];
+    describe("visiblePeople", () => {
+        const everyone = ["me", "anna", "bob", "old"];
+        const range = [{date: "1", finishers: ["anna", "bob"]}, {date: "2", finishers: ["bob"]}];
 
-        expect(visiblePeople(everyone, ["bob", "me"], false)).toEqual(["me", "bob"]);
-        expect(visiblePeople(everyone, ["bob", "me"], true)).toEqual(everyone);
-        expect(visiblePeople(everyone, undefined, false)).toEqual(everyone);
+        it("shows current participants who were active in the range, and always me", () => {
+            expect(visiblePeople(everyone, ["me", "anna", "old"], false, range, [], "me")).toEqual(["me", "anna"]);
+        });
+
+        it("with showEveryone also former participants, but still only those active in the range", () => {
+            expect(visiblePeople(everyone, ["me", "anna"], true, range, [], "me")).toEqual(["me", "anna", "bob"]);
+        });
+
+        it("counts the running period as activity", () => {
+            expect(visiblePeople(everyone, ["old"], false, [], ["old"], "me")).toEqual(["me", "old"]);
+        });
+
+        it("skips the participant rule without participant information", () => {
+            expect(visiblePeople(everyone, undefined, false, range, [], "me")).toEqual(["me", "anna", "bob"]);
+        });
     });
 
     it("handles no periods", () => {

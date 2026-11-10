@@ -42,16 +42,18 @@ export function participants(finishedInformation: Record<string, string[]>, me?:
 }
 
 /**
- * People shown in the statistics: by default only current participants (exercise on their home page),
- * with {@code showEveryone} also everybody who ever finished a period. Keeps the order of {@code everyone}
- * (current user first). Without participant information (older backend) everyone is shown.
+ * People shown in the statistics:
+ * - only people who finished at least one period in the selected range (or the running period), and
+ * - only current participants (exercise on their home page), unless {@code showEveryone} is set.
+ * The current user is always shown. Keeps the order of {@code everyone} (current user first).
+ * Without participant information (older backend) the participant rule is skipped.
  */
-export function visiblePeople(everyone: string[], currentParticipants: string[] | undefined, showEveryone: boolean): string[] {
-    if (showEveryone || !currentParticipants) {
-        return everyone;
-    }
-    const active = new Set(currentParticipants);
-    return everyone.filter(user => active.has(user));
+export function visiblePeople(everyone: string[], currentParticipants: string[] | undefined, showEveryone: boolean,
+                              periods: PeriodRow[], current: string[], me?: string): string[] {
+    const activeInRange = new Set([...periods.flatMap(p => p.finishers), ...current]);
+    const participating = currentParticipants ? new Set(currentParticipants) : undefined;
+    return everyone.filter(user => user === me
+        || (activeInRange.has(user) && (showEveryone || !participating || participating.has(user))));
 }
 
 /**
