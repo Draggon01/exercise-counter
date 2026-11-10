@@ -121,7 +121,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 - New: `web/service/CheckService.java` + `CheckController` (move `/check/**` out of `ExerciseController`).
 - Unit test for streak calculation.
 
-### [ ] T1.8 🟠 Service layer – selection
+### [x] T1.8 🟠 Service layer – selection
 - New: `web/service/SelectionService.java`
 - Remove the `ExerciseController` dependency from `UserSelectionController` (use `ExerciseService` instead).
 

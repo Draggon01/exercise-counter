@@ -1,10 +1,8 @@
 package org.exercise.counter.exercisecounter.web.rest.userselection;
 
-import org.exercise.counter.exercisecounter.web.data.userselection.UserSelection;
-import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionId;
-import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
-import org.exercise.counter.exercisecounter.web.rest.exercise.ExerciseController;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
+import org.exercise.counter.exercisecounter.web.service.ExerciseService;
+import org.exercise.counter.exercisecounter.web.service.SelectionService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,63 +14,31 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/selection/")
+@RequestMapping("/api/selection")
 public class UserSelectionController {
-    private final UserSelectionRepository userSelectionRepository;
-    private final ExerciseController exerciseController;
 
-    public UserSelectionController(UserSelectionRepository userSelectionRepository,
-                                   ExerciseController exerciseController) {
-        this.userSelectionRepository = userSelectionRepository;
-        this.exerciseController = exerciseController;
+    private final SelectionService selectionService;
+    private final ExerciseService exerciseService;
+
+    public UserSelectionController(SelectionService selectionService, ExerciseService exerciseService) {
+        this.selectionService = selectionService;
+        this.exerciseService = exerciseService;
     }
 
     @PostMapping("/select")
     public void select(@RequestBody String exerciseId, @AuthenticationPrincipal UserDetails user) {
-        String username = user.getUsername();
-
-        int nextOrder = userSelectionRepository.findMaxPositionByUsername(username)
-                .map(max -> max + 1)
-                .orElse(0);
-
-        UserSelectionId userSelectionId = new UserSelectionId(username, UUID.fromString(exerciseId));
-        userSelectionRepository.save(new UserSelection(userSelectionId, nextOrder));
+        selectionService.select(UUID.fromString(exerciseId), user.getUsername());
     }
 
     @PostMapping("/unselect")
     public void unselect(@RequestBody String exerciseId, @AuthenticationPrincipal UserDetails user) {
-        String username = user.getUsername();
-
-        UserSelectionId userSelectionId = new UserSelectionId(username, UUID.fromString(exerciseId));
-        userSelectionRepository.deleteById(userSelectionId);
-        recompactPosition(username);
+        selectionService.unselect(UUID.fromString(exerciseId), user.getUsername());
     }
 
+    /** Saves the new order and returns the user's exercises in that order. */
     @PostMapping("/reorder")
     public List<ExerciseDto> reorder(@RequestBody List<String> exerciseIds, @AuthenticationPrincipal UserDetails user) {
-        String username = user.getUsername();
-
-        for (int i = 0; i < exerciseIds.size(); i++) {
-            final int position = i;
-            UUID exerciseId = UUID.fromString(exerciseIds.get(i));
-            UserSelectionId id = new UserSelectionId(username, exerciseId);
-            userSelectionRepository.findById(id).ifPresent(sel -> {
-                sel.setPosition(position);
-                userSelectionRepository.save(sel);
-            });
-        }
-        return exerciseController.getAllExercisesForUser(user);
-    }
-
-    private void recompactPosition(String username) {
-        List<UserSelection> selections = userSelectionRepository
-                .findByUserSelectionId_UsernameOrderByPositionAsc(username);
-        for (int i = 0; i < selections.size(); i++) {
-            UserSelection sel = selections.get(i);
-            if (!sel.getPosition().equals(i)) {
-                sel.setPosition(i);
-                userSelectionRepository.save(sel);
-            }
-        }
+        selectionService.reorder(exerciseIds.stream().map(UUID::fromString).toList(), user.getUsername());
+        return exerciseService.listSelected(user.getUsername());
     }
 }
