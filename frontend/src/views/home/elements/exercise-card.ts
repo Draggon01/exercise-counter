@@ -9,10 +9,25 @@ import {CheckDto} from "../models/checkDto";
 import {RootState, store} from "../../../store";
 import {loadExerciseLog, saveExerciseLog} from "../slice/exerciseSlice";
 import {selectAutoCollapse} from "../../options/slice/optionsSlice";
+import type {SlCheckbox} from "@shoelace-style/shoelace";
 import {formatDuration, formatTimeLeft, isUrgent} from "../../../utils/format";
 import {isRepExercise, isTimeExercise} from "../../../utils/exercise";
 import "./exercise-timer";
 import "./rep-counter";
+
+/**
+ * Events of {@link ExerciseCard}. Detail is the card's {@link ExerciseDto}, except for
+ * `checkChanged` (detail: the new "finished" state as boolean).
+ * Lit templates need the literal names, e.g. `@delete-exercise=${...}`.
+ */
+export const ExerciseCardEvents = {
+    moveUp: "move-up",
+    moveDown: "move-down",
+    hide: "hide-exercise",
+    delete: "delete-exercise",
+    edit: "edit-exercise",
+    checkChanged: "check-changed",
+} as const;
 
 @customElement("exercise-card")
 export class ExerciseCard extends ConnectedLitElement {
@@ -364,30 +379,24 @@ export class ExerciseCard extends ConnectedLitElement {
         this._collapsed = !this._collapsed;
     }
 
-    private _moveUpClick = () => {
-        this.dispatchEvent(new CustomEvent("moveUp", {detail: this.item, bubbles: true, composed: true}))
+    private _emit<T>(type: string, detail: T) {
+        this.dispatchEvent(new CustomEvent<T>(type, {detail}));
     }
 
-    private _moveDownClick = () => {
-        this.dispatchEvent(new CustomEvent("moveDown", {detail: this.item, bubbles: true, composed: true}))
-    }
+    private _moveUpClick = () => this._emit(ExerciseCardEvents.moveUp, this.item);
 
-    private _hideClick = () => {
-        this.dispatchEvent(new CustomEvent("hideExercise", {detail: this.item}))
-    }
+    private _moveDownClick = () => this._emit(ExerciseCardEvents.moveDown, this.item);
 
-    private _trashClick = () => {
-        this.dispatchEvent(new CustomEvent("deleteExercise", {detail: this.item}))
-    }
+    private _hideClick = () => this._emit(ExerciseCardEvents.hide, this.item);
 
-    private _editClick = () => {
-        this.dispatchEvent(new CustomEvent("editExercise", {detail: this.item}))
-    }
+    private _trashClick = () => this._emit(ExerciseCardEvents.delete, this.item);
 
-    private _checkChange = (e: any) => {
+    private _editClick = () => this._emit(ExerciseCardEvents.edit, this.item);
+
+    private _checkChange = (e: Event) => {
         if (this._autoCollapse) {
             this._collapsed = !this.checked;
         }
-        this.dispatchEvent(new CustomEvent("checkChanged", {detail: e.target.checked}))
+        this._emit(ExerciseCardEvents.checkChanged, (e.target as SlCheckbox).checked);
     }
 }

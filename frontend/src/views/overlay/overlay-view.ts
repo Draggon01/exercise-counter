@@ -1,7 +1,7 @@
 import {customElement, state} from 'lit/decorators.js';
 import {css, html} from 'lit';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
-import {store} from "../../store";
+import {RootState, store} from "../../store";
 import {logoutUser, selectCurrentUser} from "../login/slice/userSlice";
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {UserDto} from "../login/models/userDto";
@@ -57,7 +57,7 @@ export class OverlayView extends ConnectedLitElement {
         void CustomRouter.goto("/");
     }
 
-    stateChanged(state: any) {
+    stateChanged(state: RootState) {
         this.user = selectCurrentUser(state);
     }
 

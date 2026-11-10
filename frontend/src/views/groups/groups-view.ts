@@ -18,7 +18,7 @@ import {selectCurrentUser} from "../login/slice/userSlice";
 import {GroupInformationDto} from "./models/GroupInformationDto";
 import {GroupVisibility} from "./models/GroupVisibility";
 import {createRef, ref, Ref} from "lit/directives/ref.js";
-import {SlInput} from "@shoelace-style/shoelace";
+import type {SlInput, SlRadioGroup} from "@shoelace-style/shoelace";
 import "../../components/confirm-dialog";
 import {validateForm} from "../../utils/form";
 
@@ -311,7 +311,7 @@ export class GroupsView extends ConnectedLitElement {
     private renderGroupCreateDialog() {
         return html`
             <p>Hint: Group names are not allowed to include spaces</p>
-            <form ${ref(this.formRef)} @sl-hide="${(e: any) => e.stopPropagation()}">
+            <form ${ref(this.formRef)} @sl-hide="${(e: Event) => e.stopPropagation()}">
                 <sl-input
                         label="Group Name"
                         name="groupName"
@@ -323,7 +323,7 @@ export class GroupsView extends ConnectedLitElement {
                         label="Visibility"
                         name="visibility"
                         .value="${this.groupVisibility}"
-                        @sl-change="${(e: any) => { this.groupVisibility = e.target.value as GroupVisibility; }}"
+                        @sl-change="${(e: Event) => { this.groupVisibility = (e.target as SlRadioGroup).value as GroupVisibility; }}"
                         style="margin-top: 1rem;">
                     <sl-radio value="INVITE_ONLY">Invite Only</sl-radio>
                     <sl-radio value="PUBLIC">Public</sl-radio>
@@ -361,8 +361,8 @@ export class GroupsView extends ConnectedLitElement {
                     label="Group Name"
                     placeholder="Type to search..."
                     .value="${this.joinSearchQuery}"
-                    @sl-input="${(e: any) => {
-                        this.joinSearchQuery = e.target.value;
+                    @sl-input="${(e: Event) => {
+                        this.joinSearchQuery = (e.target as SlInput).value;
                         this.selectedGroupToJoin = "";
                         if (this.joinSearchQuery.length > 0) {
                             store.dispatch(searchPublicGroups(this.joinSearchQuery));

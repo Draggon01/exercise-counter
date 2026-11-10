@@ -1,4 +1,5 @@
 import {css, html} from 'lit';
+import type {SlSelect, SlSwitch} from "@shoelace-style/shoelace";
 import "../../components/page-header";
 import {customElement, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
@@ -247,8 +248,8 @@ export class OptionsView extends ConnectedLitElement {
         store.dispatch(clearInviteLinks());
     }
 
-    private handleExerciseSelect(e: any) {
-        this.selectedExerciseId = e.target.value;
+    private handleExerciseSelect(e: Event) {
+        this.selectedExerciseId = (e.target as SlSelect).value as string;
         this.selectedPeriodId = "";
         if (this.selectedExerciseId) {
             store.dispatch(loadUnfinishedPeriods(this.selectedExerciseId));
@@ -292,7 +293,7 @@ export class OptionsView extends ConnectedLitElement {
                                     </div>
                                     <sl-switch
                                             ?checked="${this.autoCollapse}"
-                                            @sl-change="${(e: any) => store.dispatch(setAutoCollapse(e.target.checked))}"
+                                            @sl-change="${(e: Event) => store.dispatch(setAutoCollapse((e.target as SlSwitch).checked))}"
                                     ></sl-switch>
                                 </div>
                             </div>
@@ -354,7 +355,7 @@ export class OptionsView extends ConnectedLitElement {
                                         label="Period"
                                         placeholder="${this.selectedExerciseId ? (this.unfinishedPeriodsStatus === 'loading' ? 'Loading…' : (this.unfinishedPeriods.length === 0 ? 'No unfinished periods' : 'Select a period')) : 'Select an exercise first'}"
                                         ?disabled="${!this.selectedExerciseId || this.unfinishedPeriods.length === 0}"
-                                        @sl-change="${(e: any) => { this.selectedPeriodId = e.target.value; }}"
+                                        @sl-change="${(e: Event) => { this.selectedPeriodId = (e.target as SlSelect).value as string; }}"
                                         .value="${this.selectedPeriodId}"
                                 >
                                     ${this.unfinishedPeriods.map(p => html`

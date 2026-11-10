@@ -1,4 +1,5 @@
 import {css, html, PropertyValues} from 'lit';
+import type {SlInput} from "@shoelace-style/shoelace";
 import "../../components/page-header";
 import {customElement, property, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
@@ -66,7 +67,7 @@ export class StatisticsView extends ConnectedLitElement {
     @state()
     showLastXEntries: number = -1;
 
-    chart: any;
+    chart?: Chart;
 
     connectedCallback() {
         super.connectedCallback();
@@ -137,23 +138,24 @@ export class StatisticsView extends ConnectedLitElement {
                               .max="${this.statistic && this.statistic.finishedInformation ? Object.keys(this.statistic.finishedInformation).length : 0}"
                               type="number"
                               .value="${this.showLastXEntries}"
-                              @sl-change="${(e: any) => {
-                                  if (e.target.value > Object.keys(this.statistic.finishedInformation).length) {
-                                      this.showLastXEntries = Object.keys(this.statistic.finishedInformation).length;
-                                      e.target.value = Object.keys(this.statistic.finishedInformation).length;
-                                  } else if (e.target.value < 0) {
-                                      this.showLastXEntries = 0;
-                                      e.target.value = 0;
-                                  }
-                                  this.showLastXEntries = e.target.value;
-                                  this.chart.data = this.generateData();
-                                  this.chart.update();
-                              }}"
+                              @sl-change="${this.onShowLastChange}"
                     ></sl-input>
                 </div>
                 ${this.showStatistics()}
             </div>
         `;
+    }
+
+    /** Clamps "show last x entries" to 0..number of entries and redraws the chart. */
+    private onShowLastChange = (e: Event) => {
+        const input = e.target as SlInput;
+        const max = Object.keys(this.statistic.finishedInformation).length;
+        const value = Math.min(max, Math.max(0, Number(input.value) || 0));
+        input.value = String(value);
+        this.showLastXEntries = value;
+        if (!this.chart) return;
+        this.chart.data = this.generateData();
+        this.chart.update();
     }
 
     private showStatistics() {

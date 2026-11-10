@@ -159,10 +159,7 @@ export class HomeView extends ConnectedLitElement {
     render() {
         return html`
             <div class="action-bar">
-                <sl-button class="addButton" variant="primary" @click="${() => {
-                    this.exerciseToEdit = undefined;
-                    this.formOpen = true;
-                }}">
+                <sl-button class="addButton" variant="primary" @click="${() => this.openForm()}">
                     Add Exercise
                 </sl-button>
 
@@ -238,47 +235,12 @@ export class HomeView extends ConnectedLitElement {
                             .checked="${this.getChecked(element)}"
                             .finishedUser="${this.checks[element.exerciseId] ?? []}"
                             .editMode="${this.editMode}"
-                            @moveUp="${() => {
-                                if (index > 0) {
-                                    const newOrder = [...exerciseDtos];
-                                    [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
-                                    store.dispatch(reorderExercises(newOrder.map(e => e.exerciseId)));
-                                }
-                            }}"
-                            @moveDown="${() => {
-                                if (index < exerciseDtos.length - 1) {
-                                    const newOrder = [...exerciseDtos];
-                                    [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
-                                    store.dispatch(reorderExercises(newOrder.map(e => e.exerciseId)));
-                                }
-                            }}"
-                            @deleteExercise="${(e: any) => {
-                                this.exerciseToDelete = e.detail;
-                            }}"
-                            @editExercise="${(e: any) => {
-                                this.exerciseToEdit = {...e.detail};
-                                this.formOpen = true;
-                            }}"
-                            @checkChanged="${async (e: any) => {
-                                let check = e.detail;
-                                if (check) {
-                                    await store.dispatch(saveCheck({
-                                        exerciseId: element.exerciseId,
-                                        user: "checked by Backend",
-                                        streak: check.streak
-                                    }))
-                                } else {
-                                    await store.dispatch(deleteCheck({
-                                        exerciseId: element.exerciseId,
-                                        user: "checked by Backend",
-                                        streak: check.streak
-                                    }))
-                                }
-                                store.dispatch(listChecksPerExercise());
-                            }}"
-                            @hideExercise="${(e: any) => {
-                                this.exerciseToHide = e.detail;
-                            }}"
+                            @move-up="${() => this.move(exerciseDtos, index, -1)}"
+                            @move-down="${() => this.move(exerciseDtos, index, 1)}"
+                            @delete-exercise="${(e: CustomEvent<ExerciseDto>) => this.exerciseToDelete = e.detail}"
+                            @edit-exercise="${(e: CustomEvent<ExerciseDto>) => this.openForm(e.detail)}"
+                            @check-changed="${(e: CustomEvent<boolean>) => this.setFinished(element, e.detail)}"
+                            @hide-exercise="${(e: CustomEvent<ExerciseDto>) => this.exerciseToHide = e.detail}"
                     ></exercise-card>`;
             })}
         `;
@@ -287,6 +249,29 @@ export class HomeView extends ConnectedLitElement {
     private getChecked(element: ExerciseDto) {
         let check = this.listChecks.find(check => check.exerciseId === element.exerciseId);
         return !!check;
+    }
+
+    /** Opens the exercise form for a new exercise, or to edit the given one. */
+    private openForm(exercise?: ExerciseDto) {
+        this.exerciseToEdit = exercise ? {...exercise} : undefined;
+        this.formOpen = true;
+    }
+
+    /** Swaps the exercise at {@code index} with its neighbour and saves the new order. */
+    private move(order: ExerciseDto[], index: number, by: -1 | 1) {
+        const target = index + by;
+        if (target < 0 || target >= order.length) {
+            return;
+        }
+        const newOrder = [...order];
+        [newOrder[index], newOrder[target]] = [newOrder[target], newOrder[index]];
+        store.dispatch(reorderExercises(newOrder.map(e => e.exerciseId)));
+    }
+
+    private async setFinished(exercise: ExerciseDto, finished: boolean) {
+        const check: CheckDto = {exerciseId: exercise.exerciseId, user: this.user?.username ?? "", streak: -1};
+        await store.dispatch(finished ? saveCheck(check) : deleteCheck(check));
+        store.dispatch(listChecksPerExercise());
     }
 
     private saveExerciseForm = (e: CustomEvent<ExerciseDto>) => {

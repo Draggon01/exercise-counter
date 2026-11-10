@@ -23,8 +23,8 @@ Belong to one feature, listed here so they are not built a second time.
 
 | Tag | File | Purpose | Status |
 |---|---|---|---|
-| `<exercise-card>` | `views/home/elements/exercise-card.ts` | One exercise on the home page (header, goal, progress, finished-by, footer) | ✅ |
-| `<browse-card>` | `views/home/elements/browse-card.ts` | One exercise in the browse list with a Select button | ✅ |
+| `<exercise-card>` | `views/home/elements/exercise-card.ts` | One exercise on the home page. Events (`ExerciseCardEvents`): `move-up`, `move-down`, `hide-exercise`, `delete-exercise`, `edit-exercise` (detail ExerciseDto), `check-changed` (detail boolean) | ✅ |
+| `<browse-card>` | `views/home/elements/browse-card.ts` | One exercise in the browse list. Event (`BrowseCardEvents`): `select-exercise` (detail ExerciseDto) | ✅ |
 | `<exercise-form-dialog>` | `views/home/elements/exercise-form-dialog.ts` | Create / edit an exercise (props `open`, `exercise`, `exerciseTypes`, `visibilities`, `groups`; events `save` (ExerciseDto), `close`) | ✅ |
 | `<exercise-timer>` | `views/home/elements/exercise-timer.ts` | Countdown for time exercises (props `targetSeconds`, `completedSeconds`; event `progress-changed`) | ✅ |
 | `<rep-counter>` | `views/home/elements/rep-counter.ts` | Reps input for rep exercises (props `target`, `value`; event `progress-changed`, debounced 500ms) | ✅ |

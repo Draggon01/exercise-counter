@@ -59,7 +59,7 @@ export class BrowseView extends ConnectedLitElement {
                     ${this.browseExercises.map(ex => html`
                         <browse-card
                                 .item="${ex}"
-                                @selectClick="${(e: any) => this.handleExerciseSelect(e)}"
+                                @select-exercise="${this.handleExerciseSelect}"
                         ></browse-card>
                     `)}
                 </div>
@@ -67,10 +67,8 @@ export class BrowseView extends ConnectedLitElement {
         `;
     }
 
-    private handleExerciseSelect(event: any) {
-        if (event.detail) {
-            store.dispatch(selectExercise((event.detail as ExerciseDto).exerciseId))
-        }
+    private handleExerciseSelect = (event: CustomEvent<ExerciseDto>) => {
+        store.dispatch(selectExercise(event.detail.exerciseId));
     }
 
 }

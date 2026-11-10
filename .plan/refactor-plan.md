@@ -201,7 +201,7 @@ Reusable pieces are tracked in `frontend/src/components/README.md` – update it
 - Fix: `_getTimeLeft()` shows negative minutes when less than an hour is left ("-30 Minutes left").
 - Card keeps header/body/footer layout only. Keep `disconnectedCallback` cleanup in the timer.
 
-### [ ] T2.6 🟠 Typed custom events
+### [x] T2.6 🟠 Typed custom events
 - Replace `(e: any)` with `CustomEvent<ExerciseDto>` etc. Define event names as constants.
 
 ### [ ] T2.7 🟠 Small cleanups

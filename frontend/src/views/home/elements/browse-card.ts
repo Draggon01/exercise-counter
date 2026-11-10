@@ -4,6 +4,11 @@ import {ExerciseDto} from "../models/exerciseDto";
 import {ConnectedLitElement} from "../../../connectedLitElement";
 import {RootState} from '../../../store';
 
+/** Events of `<browse-card>`; detail is the {@link ExerciseDto}. */
+export const BrowseCardEvents = {
+    select: "select-exercise",
+} as const;
+
 @customElement("browse-card")
 export class BrowseCard extends ConnectedLitElement {
     static styles = css`
@@ -89,6 +94,6 @@ export class BrowseCard extends ConnectedLitElement {
     }
 
     private _selectClick = () => {
-        this.dispatchEvent(new CustomEvent("selectClick", {detail: this.item}))
+        this.dispatchEvent(new CustomEvent<ExerciseDto>(BrowseCardEvents.select, {detail: this.item}))
     }
 }

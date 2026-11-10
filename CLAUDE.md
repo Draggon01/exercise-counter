@@ -76,6 +76,7 @@ npm test                # frontend unit tests (vitest, *.test.ts next to the cod
 - Always execute api calls etc. in the redux slice, dont diretly fetch data from the backend
 - Routing via `CustomRouter` from `../../index`
 - Dont use the updated method in Lit elements if not completely necessary.
+- Custom events: kebab-case names exported as constants next to the element (e.g. `ExerciseCardEvents`), `CustomEvent<T>` with a typed `detail`; listeners type the event (`(e: CustomEvent<ExerciseDto>) => ...`, Shoelace targets via `e.target as SlSelect`) — no `any`
 
 ## Git
 - Always run: `git add -A && git commit -m "fix: description (#ISSUE_NUMBER)"`
