@@ -117,7 +117,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 - Move from `ExerciseController`: list all / selected / available (visibility filter), save (incl. group mappings + selection + scheduler restart), delete, authority check.
 - Controller only delegates. Add unit tests for the visibility filter (PUBLIC / PRIVATE / GROUPS).
 
-### [ ] T1.7 🟠 Service layer – checks & streaks
+### [x] T1.7 🟠 Service layer – checks & streaks
 - New: `web/service/CheckService.java` + `CheckController` (move `/check/**` out of `ExerciseController`).
 - Unit test for streak calculation.
 

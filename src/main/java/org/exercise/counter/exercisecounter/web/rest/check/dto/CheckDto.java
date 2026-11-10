@@ -1,4 +1,4 @@
-package org.exercise.counter.exercisecounter.web.rest.exercise.dto;
+package org.exercise.counter.exercisecounter.web.rest.check.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
