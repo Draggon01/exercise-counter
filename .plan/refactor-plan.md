@@ -72,7 +72,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
   `visibility` (Hibernate had silently added that column in prod). Entity now maps `group_visibility`;
   `V20261110_001` copies existing values from `visibility` and drops it (no-op on fresh DBs).
 
-### [ ] T0.9 🔴 Delete `TestController` and test-only scheduler code
+### [x] T0.9 🔴 Delete `TestController` and test-only scheduler code
 - Files: `web/rest/test/TestController.java`, `SchedulerService.restartSchedulerForExTest`
 
 ### [ ] T0.10 🔴 Fix invite-link generation

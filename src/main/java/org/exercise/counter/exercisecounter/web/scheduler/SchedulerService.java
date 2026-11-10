@@ -110,17 +110,6 @@ public class SchedulerService {
         return Instant.now().plusSeconds(1);
     }
 
-    @Deprecated(forRemoval = true)
-    public void restartSchedulerForExTest(Exercise exercise) {
-        UUID exerciseId = exercise.getExerciseId();
-        this.addScheduledExerciseUpdate(
-                exerciseId,
-                () -> runResetJob(exerciseId),
-                Instant.now().plusMillis(1000),
-                Duration.ofMinutes(1)
-        );
-    }
-
     /**
      * Start timers for exercises
      */
