@@ -1,17 +1,11 @@
 package org.exercise.counter.exercisecounter.web.data.statistic;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.exercise.counter.exercisecounter.web.data.user.User;
 
 import java.util.UUID;
 
 @Entity
-@RequiredArgsConstructor
-@Getter
-@Setter
 public class FinishedUser {
 
     @Id
@@ -25,4 +19,31 @@ public class FinishedUser {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "username", nullable = false)
     private User username;
+
+    public FinishedUser() {
+    }
+
+    public UUID getId() {
+        return this.id;
+    }
+
+    public Period getPeriod() {
+        return this.period;
+    }
+
+    public User getUsername() {
+        return this.username;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public void setPeriod(Period period) {
+        this.period = period;
+    }
+
+    public void setUsername(User username) {
+        this.username = username;
+    }
 }

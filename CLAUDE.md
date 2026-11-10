@@ -54,7 +54,7 @@ npm run build           # build for production
     - `web/views/`        — Place for views, f.e. the login page has its own folder, or the home folder includes the main page where the exercises get shown.
 
 ## Conventions
-- Lombok is used — prefer `@RequiredArgsConstructor`, `@Data`
+- Do NOT use Lombok (it was removed). Write constructors, getters/setters, `equals`/`hashCode` and loggers (`LoggerFactory.getLogger`) in plain Java; prefer records where possible
 - Follow existing package and naming patterns
 - All endpoints authenticated except `/api/public/**`
 - Try to use Records for new Dto objects

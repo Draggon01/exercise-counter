@@ -1,8 +1,6 @@
 package org.exercise.counter.exercisecounter.web.scheduler;
 
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.exercise.counter.exercisecounter.web.data.exercise.Exercise;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseRepository;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -14,15 +12,17 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages one scheduled reset task per exercise. The actual reset logic lives in
  * {@link ExerciseResetJob}, which runs in its own transaction.
  */
 @Service
-@Slf4j
-@RequiredArgsConstructor
 public class SchedulerService {
+
+    private static final Logger log = LoggerFactory.getLogger(SchedulerService.class);
 
     private final ThreadPoolTaskScheduler taskScheduler;
     private final ExerciseRepository exerciseRepository;
@@ -130,5 +130,11 @@ public class SchedulerService {
             targetDateTime = targetDateTime.plusDays(1);
         }
         return targetDateTime.toInstant();
+    }
+
+    public SchedulerService(ThreadPoolTaskScheduler taskScheduler, ExerciseRepository exerciseRepository, ExerciseResetJob exerciseResetJob) {
+        this.taskScheduler = taskScheduler;
+        this.exerciseRepository = exerciseRepository;
+        this.exerciseResetJob = exerciseResetJob;
     }
 }

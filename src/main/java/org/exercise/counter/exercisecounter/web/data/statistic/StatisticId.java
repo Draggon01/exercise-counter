@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import lombok.NonNull;
 
 import java.io.Serializable;
 import java.text.ParseException;
@@ -63,7 +62,6 @@ public record StatisticId(
     }
 
     @Override
-    @NonNull
     public String toString() {
         return toKeyString();
     }

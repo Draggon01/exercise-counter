@@ -3,9 +3,6 @@ package org.exercise.counter.exercisecounter.web.data.statistic;
 import io.hypersistence.utils.hibernate.type.range.PostgreSQLRangeType;
 import io.hypersistence.utils.hibernate.type.range.Range;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.exercise.counter.exercisecounter.web.data.exercise.Exercise;
 import org.hibernate.annotations.Type;
 
@@ -14,9 +11,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Entity
-@RequiredArgsConstructor
-@Getter
-@Setter
 public class Period {
 
     private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -33,7 +27,6 @@ public class Period {
     @Column(name = "time_range", columnDefinition = "tsrange", nullable = false)
     private Range<LocalDateTime> timeRange;
 
-
     /**
      * Key used by the statistics view. It shows the day the period was closed (the reset day),
      * which is what the legacy single-point periods always displayed.
@@ -43,5 +36,30 @@ public class Period {
         return end + ":" + end;
     }
 
+    public Period() {
+    }
 
+    public UUID getPeriodId() {
+        return this.periodId;
+    }
+
+    public Exercise getExercise() {
+        return this.exercise;
+    }
+
+    public Range<LocalDateTime> getTimeRange() {
+        return this.timeRange;
+    }
+
+    public void setPeriodId(UUID periodId) {
+        this.periodId = periodId;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
+    }
+
+    public void setTimeRange(Range<LocalDateTime> timeRange) {
+        this.timeRange = timeRange;
+    }
 }

@@ -1,8 +1,6 @@
 package org.exercise.counter.exercisecounter.web.scheduler;
 
 import io.hypersistence.utils.hibernate.type.range.Range;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.exercise.counter.exercisecounter.web.data.checks.Check;
 import org.exercise.counter.exercisecounter.web.data.checks.CheckRepository;
 import org.exercise.counter.exercisecounter.web.data.exercise.Exercise;
@@ -22,6 +20,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Closes the current period of an exercise: stores who finished it, clears checks and logs
@@ -31,9 +31,9 @@ import java.util.UUID;
  * (calling a transactional method on {@code this} from a scheduler lambda bypasses it).
  */
 @Service
-@Slf4j
-@RequiredArgsConstructor
 public class ExerciseResetJob {
+
+    private static final Logger log = LoggerFactory.getLogger(ExerciseResetJob.class);
 
     private final ExerciseRepository exerciseRepository;
     private final CheckRepository checkRepository;
@@ -116,5 +116,21 @@ public class ExerciseResetJob {
             return Range.closed(end, end);
         }
         return Range.openClosed(start, end);
+    }
+
+    public ExerciseResetJob(ExerciseRepository exerciseRepository,
+                            CheckRepository checkRepository,
+                            ExerciseLogRepository exerciseLogRepository,
+                            PeriodRepository periodRepository,
+                            FinishedUserRepository finishedUserRepository,
+                            UserRepository userRepository,
+                            Clock clock) {
+        this.exerciseRepository = exerciseRepository;
+        this.checkRepository = checkRepository;
+        this.exerciseLogRepository = exerciseLogRepository;
+        this.periodRepository = periodRepository;
+        this.finishedUserRepository = finishedUserRepository;
+        this.userRepository = userRepository;
+        this.clock = clock;
     }
 }

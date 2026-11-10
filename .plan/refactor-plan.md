@@ -90,8 +90,10 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 
 ## Phase 1 – Clearer backend
 
-### [ ] T1.1 🟠 Use `@RequiredArgsConstructor` everywhere
-- All controllers, `SchedulerService`, `SecurityConfig`, `JpaUserDetailsService`. Remove hand-written constructors.
+### [x] T1.1 🟠 Remove Lombok completely
+- Decision: Lombok is not used anymore (see CLAUDE.md).
+- Done: all Lombok annotations replaced by plain Java (constructors, accessors, `equals`/`hashCode` via
+  `Objects`, SLF4J loggers); dependency, annotation processor and plugin excludes removed from `pom.xml`.
 
 ### [ ] T1.2 🟠 Use `@AuthenticationPrincipal`
 - Replace `((UserDetails) authentication.getPrincipal()).getUsername()` (~20×) with a parameter `@AuthenticationPrincipal UserDetails user`.

@@ -1,16 +1,11 @@
 package org.exercise.counter.exercisecounter.web.data.register;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.UUID;
+import java.util.Objects;
 
 @Entity(name = "register")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Register {
 
     @Id
@@ -20,4 +15,46 @@ public class Register {
 
     @Column
     private String issuer;
+
+    public Register() {
+    }
+
+    public Register(UUID registerId, String issuer) {
+        this.registerId = registerId;
+        this.issuer = issuer;
+    }
+
+    public UUID getRegisterId() {
+        return this.registerId;
+    }
+
+    public String getIssuer() {
+        return this.issuer;
+    }
+
+    public void setRegisterId(UUID registerId) {
+        this.registerId = registerId;
+    }
+
+    public void setIssuer(String issuer) {
+        this.issuer = issuer;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Register other)) return false;
+        return Objects.equals(getRegisterId(), other.getRegisterId()) &&
+                Objects.equals(getIssuer(), other.getIssuer());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getRegisterId(), getIssuer());
+    }
+
+    @Override
+    public String toString() {
+        return "Register(registerId=" + this.getRegisterId() + ", issuer=" + this.getIssuer() + ")";
+    }
 }

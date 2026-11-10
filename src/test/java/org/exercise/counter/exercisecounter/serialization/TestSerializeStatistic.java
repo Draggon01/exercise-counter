@@ -2,7 +2,6 @@ package org.exercise.counter.exercisecounter.serialization;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
 import org.exercise.counter.exercisecounter.web.data.statistic.Statistic;
 import org.exercise.counter.exercisecounter.web.data.statistic.StatisticId;
 import org.exercise.counter.exercisecounter.web.data.statistic.StatisticJpa;
@@ -12,9 +11,12 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@Slf4j
 public class TestSerializeStatistic {
+
+    private static final Logger log = LoggerFactory.getLogger(TestSerializeStatistic.class);
     @Test
     public void testStatisticElement() throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -29,7 +31,6 @@ public class TestSerializeStatistic {
 
         Statistic statistic1 = objectMapper.readValue(json, Statistic.class);
         System.out.println(statistic1);
-
 
         StatisticJpa jpa = new StatisticJpa(UUID.randomUUID(), statistic);
         json = objectMapper.writeValueAsString(jpa);

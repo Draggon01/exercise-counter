@@ -4,16 +4,13 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-
-@Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Statistic implements Serializable {
 
@@ -37,5 +34,30 @@ public class Statistic implements Serializable {
 
     public void removeInformation(StatisticId statisticId) {
         finishedInformation.remove(statisticId);
+    }
+
+    public Map<StatisticId, List<String>> getFinishedInformation() {
+        return this.finishedInformation;
+    }
+
+    public void setFinishedInformation(Map<StatisticId, List<String>> finishedInformation) {
+        this.finishedInformation = finishedInformation;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Statistic other)) return false;
+        return Objects.equals(getFinishedInformation(), other.getFinishedInformation());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getFinishedInformation());
+    }
+
+    @Override
+    public String toString() {
+        return "Statistic(finishedInformation=" + this.getFinishedInformation() + ")";
     }
 }

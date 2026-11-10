@@ -2,9 +2,7 @@ package org.exercise.counter.exercisecounter.migration.data;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import lombok.Getter;
 
-@Getter
 @Entity
 public class DataMigrationHistory {
 
@@ -18,4 +16,7 @@ public class DataMigrationHistory {
         this.version = version;
     }
 
+    public String getVersion() {
+        return this.version;
+    }
 }
