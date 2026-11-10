@@ -8,10 +8,10 @@ import {selectAllExercises} from "../home/slice/exerciseSlice";
 import {selectCurrentUser} from "../login/slice/userSlice";
 import {AsyncStoreState} from "../../commons";
 import {pageStyles} from "../../styles/page";
-import {closedPeriods, CURRENT_PERIOD, participants, PeriodRow, summarize, UserSummary} from "../../utils/statistics";
+import {closedPeriods, CURRENT_PERIOD, participants, PeriodRow, summarize, UserSummary, visiblePeople} from "../../utils/statistics";
 import "../../components/page-header";
 import "../../components/empty-state";
-import type {SlRadioGroup} from "@shoelace-style/shoelace";
+import type {SlCheckbox, SlRadioGroup} from "@shoelace-style/shoelace";
 
 type Range = "7" | "30" | "all";
 
@@ -46,6 +46,9 @@ export class StatisticsView extends ConnectedLitElement {
 
         .filters {
             display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--app-space-2) var(--app-space-4);
         }
 
         /* label only for screen readers */
@@ -280,6 +283,10 @@ export class StatisticsView extends ConnectedLitElement {
     @state()
     private range: Range = "30";
 
+    /** Also show people who no longer have the exercise on their home page. */
+    @state()
+    private showEveryone = false;
+
     /** Tooltip of the hovered / focused grid cell. */
     @state()
     private tip?: { status: string, detail: string, x: number, y: number };
@@ -330,9 +337,11 @@ export class StatisticsView extends ConnectedLitElement {
                 </empty-state>`;
         }
         const periods = this.range === "all" ? allPeriods : allPeriods.slice(-Number(this.range));
-        const users = participants(info, this.me);
+        const everyone = participants(info, this.me);
+        const users = visiblePeople(everyone, this.statistic.participants, this.showEveryone);
+        const hidden = everyone.length - users.length;
         const summaries = users.map(user => summarize(user, periods, current));
-        const mine = summaries.find(s => s.username === this.me);
+        const mine = summarize(this.me, periods, current);
         return html`
             <div class="filters">
                 <sl-radio-group size="small" label="Time range" .value="${this.range}"
@@ -341,8 +350,13 @@ export class StatisticsView extends ConnectedLitElement {
                     <sl-radio-button value="30">30 periods</sl-radio-button>
                     <sl-radio-button value="all">All</sl-radio-button>
                 </sl-radio-group>
+                ${this.showEveryone || hidden > 0 ? html`
+                    <sl-checkbox size="small" .checked="${this.showEveryone}"
+                                 @sl-change="${(e: Event) => this.showEveryone = (e.target as SlCheckbox).checked}">
+                        Show former participants${hidden > 0 ? ` (${hidden})` : ""}
+                    </sl-checkbox>` : nothing}
             </div>
-            ${mine ? this.renderKpis(mine) : nothing}
+            ${this.renderKpis(mine)}
             <section>
                 <h3>Completion by person</h3>
                 <div class="meters">${[...summaries].sort((a, b) => b.rate - a.rate).map(s => this.renderMeter(s))}</div>

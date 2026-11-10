@@ -8,6 +8,7 @@ import org.exercise.counter.exercisecounter.web.data.statistic.PeriodFinisher;
 import org.exercise.counter.exercisecounter.web.data.statistic.PeriodRepository;
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
+import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
 import org.exercise.counter.exercisecounter.web.rest.error.NotFoundException;
 import org.exercise.counter.exercisecounter.web.rest.statistic.dto.PeriodDto;
 import org.exercise.counter.exercisecounter.web.rest.statistic.dto.StatisticDto;
@@ -35,20 +36,23 @@ public class StatisticService {
     private final PeriodRepository periodRepository;
     private final FinishedUserRepository finishedUserRepository;
     private final UserRepository userRepository;
+    private final UserSelectionRepository userSelectionRepository;
 
     public StatisticService(CheckRepository checkRepository,
                             PeriodRepository periodRepository,
                             FinishedUserRepository finishedUserRepository,
-                            UserRepository userRepository) {
+                            UserRepository userRepository,
+                            UserSelectionRepository userSelectionRepository) {
         this.checkRepository = checkRepository;
         this.periodRepository = periodRepository;
         this.finishedUserRepository = finishedUserRepository;
         this.userRepository = userRepository;
+        this.userSelectionRepository = userSelectionRepository;
     }
 
     /**
      * Finishers per closed period (keyed by reset day) plus {@value #CURRENT_PERIOD_KEY} for the running one.
-     * Periods closed on the same day are merged.
+     * Periods closed on the same day are merged. Also lists who currently has the exercise on their home page.
      */
     @Transactional(readOnly = true)
     public StatisticDto load(UUID exerciseId) {
@@ -61,7 +65,7 @@ public class StatisticService {
         statistics.put(CURRENT_PERIOD_KEY, checkRepository.findCheckByCheckIdExerciseId(exerciseId).stream()
                 .map(check -> check.getCheckId().getUsername())
                 .toList());
-        return new StatisticDto(statistics);
+        return new StatisticDto(statistics, userSelectionRepository.findUsernamesByExerciseId(exerciseId));
     }
 
     /** Closed periods of the exercise the user did not finish. */

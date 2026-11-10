@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {closedPeriods, participants, periodDate, summarize} from "./statistics";
+import {closedPeriods, participants, periodDate, summarize, visiblePeople} from "./statistics";
 
 const info = {
     "2026-11-07:2026-11-07": ["anna", "me"],
@@ -37,6 +37,14 @@ describe("statistics helpers", () => {
             {date: "4", finishers: []}, {date: "5", finishers: ["x"]},
         ];
         expect(summarize("x", periods, [])).toMatchObject({currentStreak: 1, bestStreak: 3, rate: 0.8});
+    });
+
+    it("shows only current participants unless everyone is requested", () => {
+        const everyone = ["me", "anna", "bob"];
+
+        expect(visiblePeople(everyone, ["bob", "me"], false)).toEqual(["me", "bob"]);
+        expect(visiblePeople(everyone, ["bob", "me"], true)).toEqual(everyone);
+        expect(visiblePeople(everyone, undefined, false)).toEqual(everyone);
     });
 
     it("handles no periods", () => {

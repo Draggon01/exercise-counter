@@ -12,6 +12,9 @@ import org.exercise.counter.exercisecounter.web.data.statistic.Period;
 import org.exercise.counter.exercisecounter.web.data.statistic.PeriodRepository;
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
+import org.exercise.counter.exercisecounter.web.data.userselection.UserSelection;
+import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionId;
+import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
 import org.exercise.counter.exercisecounter.web.rest.error.NotFoundException;
 import org.exercise.counter.exercisecounter.web.service.StatisticService;
 import org.junit.jupiter.api.AfterEach;
@@ -42,6 +45,7 @@ class StatisticServiceTest {
     @Autowired private PeriodRepository periodRepository;
     @Autowired private FinishedUserRepository finishedUserRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private UserSelectionRepository userSelectionRepository;
 
     private Exercise first;
     private Exercise second;
@@ -73,6 +77,14 @@ class StatisticServiceTest {
         String key = day.toLocalDate() + ":" + day.toLocalDate();
         assertEquals(Set.of(A, B), Set.copyOf(stats.get(key)));
         assertEquals(List.of(), stats.get(StatisticService.CURRENT_PERIOD_KEY));
+    }
+
+    @Test
+    void participants_areTheUsersWithTheExerciseOnTheirHomePage() {
+        userSelectionRepository.save(new UserSelection(new UserSelectionId(B, first.getExerciseId()), 0));
+
+        assertEquals(List.of(B), statisticService.load(first.getExerciseId()).participants());
+        assertEquals(List.of(), statisticService.load(second.getExerciseId()).participants());
     }
 
     @Test

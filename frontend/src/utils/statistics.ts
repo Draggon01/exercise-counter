@@ -42,6 +42,19 @@ export function participants(finishedInformation: Record<string, string[]>, me?:
 }
 
 /**
+ * People shown in the statistics: by default only current participants (exercise on their home page),
+ * with {@code showEveryone} also everybody who ever finished a period. Keeps the order of {@code everyone}
+ * (current user first). Without participant information (older backend) everyone is shown.
+ */
+export function visiblePeople(everyone: string[], currentParticipants: string[] | undefined, showEveryone: boolean): string[] {
+    if (showEveryone || !currentParticipants) {
+        return everyone;
+    }
+    const active = new Set(currentParticipants);
+    return everyone.filter(user => active.has(user));
+}
+
+/**
  * Streaks and completion of one user over the given closed periods (oldest first).
  * The current streak counts the finished periods back from the newest one, plus the running period
  * if it is already done – a streak is not lost while the running period can still be finished.
