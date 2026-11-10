@@ -11,6 +11,10 @@
       "Statistics with your streaks, completion per person and who finished when",
       "Groups show their members; accept or decline invitations right away",
       "What's new is shown once after an update – like this",
+      "Install the app on your phone's home screen – it starts without the browser bar and shows a message when you are offline",
+      "Large timer view while a timer runs – the screen stays on",
+      "New and edited exercises get their own page instead of a small dialog",
+      "Statistics only show people who currently take part and were active in the selected time",
       "Fixed: creating exercises, the back button, a timer that finished immediately and the time left below one hour"
     ]
   },

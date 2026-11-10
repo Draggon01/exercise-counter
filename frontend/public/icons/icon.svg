@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- App icon: lightning bolt (Bootstrap Icons "lightning-charge-fill", MIT) on the app accent (#0284c7) -->
+  <rect width="512" height="512" rx="112" fill="#0284c7"/>
+  <path transform="translate(256 256) scale(19) translate(-8 -8)" fill="#ffffff" d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"/>
+</svg>

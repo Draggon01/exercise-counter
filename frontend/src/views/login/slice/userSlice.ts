@@ -102,4 +102,5 @@ export const userSlice = createSlice({
 
 export const selectCurrentUser = ((state: SliceProjection) => state.user.user)
 export const selectUserInit = ((state: SliceProjection) => state.user.init)
+export const selectUserStatus = ((state: SliceProjection) => state.user.status)
 export const userReducer = userSlice.reducer as Reducer<SliceState>

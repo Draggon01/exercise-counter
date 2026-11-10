@@ -86,6 +86,13 @@ npm test                # frontend unit tests (vitest, *.test.ts next to the cod
 
 
 
+## App (PWA)
+- The frontend is an installable app: `frontend/public/manifest.webmanifest`, icons in `frontend/public/icons/`,
+  service worker `frontend/public/sw.js` (registered in production builds only)
+- The service worker never caches `/api/**`; build assets are cache-first, pages network-first (offline: cached app shell)
+- Bump `CACHE_VERSION` in `sw.js` when its caching logic changes; the web server must serve `/sw.js` from the root
+  and answer unknown paths with `index.html` (SPA)
+
 ## Changelog
 - Every user-facing change adds (or extends) the newest entry in `src/main/resources/changelog.json`
   (newest first; `version`, `date`, `title`, `items` written for users, not developers)

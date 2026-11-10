@@ -340,12 +340,14 @@ Goal: when a user logs in and there is a changelog entry they have not seen yet,
 The app is mostly used on phones, like an installed app. Check every task on a 390px wide screen
 (and in dark mode); reuse the building blocks in `frontend/src/components/README.md`.
 
-### [ ] T5.1 📱 Installable app (PWA)
+### [x] T5.1 📱 Installable app (PWA)
 - Web app manifest (name, short name, icons 192/512 + maskable, `display: standalone`, theme/background color
   matching the tokens), `<meta name="theme-color">` for light and dark, Apple touch icon.
 - Service worker (e.g. `vite-plugin-pwa`) that caches the app shell so it starts instantly and shows an
   offline message instead of a blank page; API calls stay network-only.
 - Done when: "Add to home screen" works on Android/iOS and the app opens without browser UI.
+- Done: manifest + icons (lightning bolt, maskable), hand-written `sw.js` (no plugin), offline start screen
+  with automatic retry. Verified with Chromium's installability check and an offline reload.
 
 ### [ ] T5.2 📱 Touch-friendly controls
 - All tap targets at least 44×44px (card menu, collapse chevron, group actions, timer buttons).
@@ -389,4 +391,4 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
 | 2 – Frontend structure | 9 | 9 |
 | 3 – Visual | 10 | 10 |
 | 4 – Features | 1 | 1 |
-| 5 – Mobile / app experience | 7 | 0 |
+| 5 – Mobile / app experience | 7 | 1 |

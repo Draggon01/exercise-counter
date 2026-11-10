@@ -47,6 +47,15 @@ Belong to one feature, listed here so they are not built a second time.
 | `closedPeriods`, `participants`, `summarize` (streaks, completion) | `src/utils/statistics.ts` | Statistics of an exercise from the backend's `finishedInformation` | ✅ |
 | `isTimeExercise(type)` / `isRepExercise(type)` / `isIncreaseExercise(type)` | `src/utils/exercise.ts` | Branching on `ExerciseType` (exercise form, exercise card) | ✅ |
 
+## App / PWA
+
+| What | File | Notes | Status |
+|---|---|---|---|
+| Web app manifest | `public/manifest.webmanifest` | name, colors, icons; linked in `index.html` | ✅ |
+| App icons | `public/icons/` | `icon.svg` / `icon-maskable.svg` are the sources; PNGs are rendered from them | ✅ |
+| Service worker | `public/sw.js` | production only (registered in `main.ts`); never caches `/api/**`; bump `CACHE_VERSION` when the caching logic changes | ✅ |
+| Offline start screen | `lit-router.ts` | "Server not reachable" with retry instead of an endless spinner; retries on `online` | ✅ |
+
 ## Styles
 
 | What | File | Status |
