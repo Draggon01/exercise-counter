@@ -1,8 +1,8 @@
 import {customElement, state} from 'lit/decorators.js';
+import "../../components/page-header";
 import {css, html} from 'lit';
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from '../../store';
-import {CustomRouter} from "../../index";
 import {
     acceptGroupToUser,
     createGroupOnUser,
@@ -37,16 +37,7 @@ export class GroupsView extends ConnectedLitElement {
             width: 100%;
         }
 
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 1rem;
-        }
 
-        .header h2 {
-            margin: 0;
-        }
 
         .actions {
             display: flex;
@@ -149,9 +140,6 @@ export class GroupsView extends ConnectedLitElement {
                 padding: 0.5rem;
             }
 
-            .header {
-                gap: 12px;
-            }
 
             .groupCard {
                 min-height: 48px;
@@ -212,16 +200,7 @@ export class GroupsView extends ConnectedLitElement {
     protected render() {
         return html`
             <div class="page-container">
-                <div class="header">
-                    <sl-button
-                            @click="${() => {
-                                void CustomRouter.goto(`/`);
-                            }}"
-                            variant="primary"
-                    >Back
-                    </sl-button>
-                    <h2>Groups</h2>
-                </div>
+                <page-header heading="Groups"></page-header>
                 <div class="actions">
                     <sl-button
                             @click="${() => this.openGroupDialog = true}"

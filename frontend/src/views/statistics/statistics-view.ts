@@ -1,10 +1,10 @@
 import {css, html, PropertyValues} from 'lit';
+import "../../components/page-header";
 import {customElement, property, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from "../../store";
 import {StatisticDto} from "./models/statisticDto";
 import {loadStatistic, selectStatistic} from "./slice/statisticSlice";
-import {CustomRouter} from "../../index";
 import {createRef, Ref, ref} from "lit/directives/ref.js";
 import {Chart} from "chart.js/auto";
 
@@ -16,12 +16,6 @@ export class StatisticsView extends ConnectedLitElement {
             padding: 1rem;
         }
 
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            grid-template-columns: auto auto;
-        }
 
         .statisticItem {
             display: flex;
@@ -51,10 +45,6 @@ export class StatisticsView extends ConnectedLitElement {
         }
 
         @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
 
             .chartContainer {
                 max-width: 100%;
@@ -141,16 +131,7 @@ export class StatisticsView extends ConnectedLitElement {
     render() {
         return html`
             <div>
-                <div class="header">
-                    <sl-button
-                            @click="${() => {
-                                void CustomRouter.goto(`/`);
-                            }}"
-                            variant="primary"
-                    >Back
-                    </sl-button>
-                    <h2>Statistics</h2>
-                </div>
+                <page-header heading="Statistics"></page-header>
                 <div>
                     <sl-input label="Show last x entries" min="0"
                               .max="${this.statistic && this.statistic.finishedInformation ? Object.keys(this.statistic.finishedInformation).length : 0}"

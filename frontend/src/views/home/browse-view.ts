@@ -1,10 +1,10 @@
 import {css, html} from 'lit';
+import "../../components/page-header";
 import {customElement, state} from 'lit/decorators.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import './elements/browse-card'
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from '../../store';
-import {CustomRouter} from "../../index";
 import {listExercisesAvailable, selectAllExercises, selectExercise} from "./slice/exerciseSlice";
 import {ExerciseDto} from "./models/exerciseDto";
 
@@ -52,15 +52,7 @@ export class BrowseView extends ConnectedLitElement {
     protected render() {
         return html`
             <div class="content">
-                <div class="toolbar">
-                    <sl-button
-                            @click="${() => {
-                                void CustomRouter.goto(`/`);
-                            }}"
-                            variant="primary">
-                        Back
-                    </sl-button>
-                </div>
+                <page-header heading="Browse Exercises"></page-header>
                 <div class="content-body">
                     <!-- Content goes here -->
                     ${!this.browseExercises || this.browseExercises.length == 0 ? "no Exercises to Browse!" : ''}

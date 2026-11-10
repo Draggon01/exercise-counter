@@ -92,7 +92,7 @@ nothing distinct for now
 - `statistics-view.ts` uses `@media (max-width: 768px)` breakpoint and `max-width: 800px` container — follow this pattern for responsive views
 - Inline styles (`style="color: red"`) should be moved to CSS classes for consistency
 - `groupCard` elements should use `width: 100%; box-sizing: border-box` (not `width: fit-content`) to fill containers properly on desktop
-- The `.header` class in groups/statistics views uses `display: flex` — the `grid-template-columns` property in the original groups-view was dead code (flex ignores it)
+- Sub pages use `<page-header heading="...">` (Back button + title + `actions` slot) instead of their own `.header` markup/CSS
 - `exercise-card.ts` shows time left until next reset using `timeLeftSeconds` from the backend DTO (calculated server-side). Display ">= 1 day" as "X Days left", otherwise "X Hours left". Urgent (< 6h) is highlighted in orange.
 - `utcOffset` in Exercise is in hours (not minutes). The backend calculates `startTimeUtc = startTime.minusHours(utcOffset)` to convert the user's local reset time to UTC.
 - `timeLeftSeconds` in `ExerciseDto` is computed via `SchedulerService.getTimeLeftSeconds()` which calls `ScheduledFuture.getDelay()` — this correctly reflects the actual next-reset time for multi-day exercises (`daysRepeat > 1`). Do NOT recalculate it in `ExerciseService`/controllers using date arithmetic; the scheduler is the authoritative source.

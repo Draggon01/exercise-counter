@@ -90,7 +90,5 @@ export class ChildrenRoutes extends LitElement {
     }
 }
 
-export function navigate(path: string) {
-    window.history.pushState({}, '', path);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-}
+/** @deprecated import from "./utils/navigation" – kept so existing imports keep working */
+export {navigate} from "./utils/navigation";

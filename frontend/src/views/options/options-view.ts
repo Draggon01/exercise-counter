@@ -1,8 +1,8 @@
 import {css, html} from 'lit';
+import "../../components/page-header";
 import {customElement, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from '../../store';
-import {CustomRouter} from "../../index";
 import {clearInviteLinks, clearUnfinishedPeriods, generateInviteLink, loadOptions, loadUnfinishedPeriods, PeriodDto, selectAutoCollapse, selectInviteLinks, selectInviteLinkStatus, selectMissedEntryStatus, selectUnfinishedPeriods, selectUnfinishedPeriodsStatus, setAutoCollapse, submitMissedEntry} from "./slice/optionsSlice";
 import {listExercises, selectAllExercises} from "../home/slice/exerciseSlice";
 import {ExerciseDto} from "../home/models/exerciseDto";
@@ -32,16 +32,7 @@ export class OptionsView extends ConnectedLitElement {
             width: 100%;
         }
 
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 1.5rem;
-        }
 
-        .header h2 {
-            margin: 0;
-        }
 
         .tab-content {
             padding: 1rem 0;
@@ -279,14 +270,7 @@ export class OptionsView extends ConnectedLitElement {
     protected render() {
         return html`
             <div class="page-container">
-                <div class="header">
-                    <sl-button
-                            @click="${() => void CustomRouter.goto('/')}"
-                            variant="primary"
-                    >Back
-                    </sl-button>
-                    <h2>Options</h2>
-                </div>
+                <page-header heading="Options"></page-header>
 
                 <sl-tab-group placement="top">
                     <!-- Tabs -->

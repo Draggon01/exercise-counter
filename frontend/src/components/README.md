@@ -11,7 +11,7 @@ Generic UI that is not tied to one feature. Import once (side-effect import) whe
 | Tag | File | Use it for | API | Used in | Status |
 |---|---|---|---|---|---|
 | `<confirm-dialog>` | `confirm-dialog.ts` | Asking before a destructive or irreversible action (delete, hide, leave) | props: `open`, `label`, `confirmLabel`, `cancelLabel`, `variant` (`danger` \| `warning` \| `primary`); default slot: message; events: `confirm`, `cancel` | home (delete / hide exercise), groups (leave group) | ✅ |
-| `<page-header>` | `page-header.ts` | Top of every sub page: Back button + title, optional actions | props: `heading`, `backTo` (default `/`); slot `actions` | browse, groups, statistics, options | 🛠 T2.8 |
+| `<page-header>` | `page-header.ts` | Top of every sub page: Back button + title, optional actions | props: `heading`, `backTo` (default `/`); slot `actions` | browse, groups, statistics, options | ✅ |
 | `<empty-state>` | `empty-state.ts` | "Nothing here yet" message with optional call to action | – | home, browse, statistics, group search | 🛠 T3.7 |
 | toast (`toast()`) | `toast.ts` | Short feedback / error messages (`sl-alert`) | – | everywhere (via listener on `*/rejected`) | 🛠 T3.7 |
 | `<auth-card>` | `auth-card.ts` | Frame for login / register forms | – | login, register | 🛠 T3.8 |
@@ -35,7 +35,7 @@ Belong to one feature, listed here so they are not built a second time.
 |---|---|---|---|
 | `apiGet` / `apiPost` / `apiPut` / `apiDelete`, `apiThunk`, `ApiError` | `src/api/http.ts` | **Every** backend call (inside a Redux slice) | ✅ |
 | `ConnectedLitElement` | `src/connectedLitElement.ts` | Base class for elements that read the Redux store (`stateChanged`) | ✅ |
-| `navigate(path)` / `CustomRouter.goto(path)` | `src/lit-router.ts` / `src/index.ts` | Navigation | ✅ |
+| `navigate(path)` | `src/utils/navigation.ts` | Navigation without importing the app/router (safe in components and tests); `CustomRouter.goto` in `src/index.ts` still works in views | ✅ |
 | `validateForm(form)` | `src/utils/form.ts` | Show validation messages of all Shoelace fields and return whether the form is valid | 🛠 T2.4 |
 | `formatDuration(seconds)` | `src/utils/format.ts` | `M:SS` / `H:MM:SS` for time exercises | 🛠 T2.5 |
 | `formatTimeLeft(seconds)` | `src/utils/format.ts` | "2 Days and 3 Hours left" / "45 Minutes left" | 🛠 T2.5 |

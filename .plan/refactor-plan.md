@@ -185,7 +185,7 @@ Reusable pieces are tracked in `frontend/src/components/README.md` – update it
 - New: `frontend/src/components/confirm-dialog.ts` (props: `open`, `label`, `confirmLabel`, `cancelLabel`, `variant`; slot: message; events `confirm` / `cancel`).
 - Replace: home delete-exercise dialog, home hide-exercise dialog, groups leave/delete-group dialog.
 
-### [ ] T2.8 🟠 Extract `page-header` (reused 4×)
+### [x] T2.8 🟠 Extract `page-header` (reused 4×)
 - New: `frontend/src/components/page-header.ts` (Back button + `heading`, `backTo`, slot `actions`).
 - Replace the Back-button headers in browse, groups, statistics, options.
 
