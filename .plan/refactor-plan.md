@@ -65,9 +65,12 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 - File: `ExerciseController.addExercise`
 - Steps: ignore `exercise.creator()`; for new exercises use the authenticated username, for existing ones keep the stored creator.
 
-### [ ] T0.8 🔴 Flyway only – no Hibernate DDL
+### [x] T0.8 🔴 Flyway only – no Hibernate DDL
 - File: `src/main/resources/application.properties`
 - Steps: `spring.jpa.hibernate.ddl-auto=validate`. Start the app; if validation fails, add a new migration for the missing column/table.
+- Done: validation found that `V20260328_001` created `groups.group_visibility` while the entity mapped
+  `visibility` (Hibernate had silently added that column in prod). Entity now maps `group_visibility`;
+  `V20261110_001` copies existing values from `visibility` and drops it (no-op on fresh DBs).
 
 ### [ ] T0.9 🔴 Delete `TestController` and test-only scheduler code
 - Files: `web/rest/test/TestController.java`, `SchedulerService.restartSchedulerForExTest`

@@ -20,7 +20,7 @@ public class Group {
     @Column
     String groupName;
 
-    @Column
+    @Column(name = "group_visibility", nullable = false)
     @Enumerated(EnumType.STRING)
     GroupVisibility visibility = GroupVisibility.INVITE_ONLY;
 }
