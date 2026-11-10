@@ -29,7 +29,7 @@ Belong to one feature, listed here so they are not built a second time.
 | `<browse-card>` | `views/home/elements/browse-card.ts` | One exercise in the browse list (title, creator · goal, Add button). Event (`BrowseCardEvents`): `select-exercise` (detail ExerciseDto) | ✅ |
 | `<exercise-form>` | `views/home/elements/exercise-form.ts` | Create / edit form: "what do you count" + "increase" → type (`toExerciseType`), time picker, sharing; sticky Cancel / Save bar (props `exercise`, `groups`, `saving`; events `save` (ExerciseDto), `cancel`) | ✅ |
 | `<exercise-edit-view>` | `views/exercise-edit/exercise-edit-view.ts` | Page `/exercises/new` and `/exercises/:id/edit` around `<exercise-form>` (loads exercise + groups, saves, toasts) | ✅ |
-| `<exercise-timer>` | `views/home/elements/exercise-timer.ts` | Countdown for time exercises (props `targetSeconds`, `completedSeconds`; event `progress-changed`) | ✅ |
+| `<exercise-timer>` | `views/home/elements/exercise-timer.ts` | Countdown for time exercises with a large focus view while running (minimize / reopen), keeps the screen on (props `targetSeconds`, `completedSeconds`, `label`; event `progress-changed`) | ✅ |
 | `<rep-counter>` | `views/home/elements/rep-counter.ts` | Reps input for rep exercises (props `target`, `value`; event `progress-changed`, debounced 500ms) | ✅ |
 
 ## Helpers

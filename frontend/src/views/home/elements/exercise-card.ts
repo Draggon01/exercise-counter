@@ -354,6 +354,7 @@ export class ExerciseCard extends ConnectedLitElement {
             return html`
                 <div class="progress">
                     <exercise-timer .targetSeconds="${this._target()}" .completedSeconds="${this._progress}"
+                                    .label="${this.item.exerciseTitle}"
                                     @progress-changed="${this._saveProgress}"></exercise-timer>
                 </div>`;
         }

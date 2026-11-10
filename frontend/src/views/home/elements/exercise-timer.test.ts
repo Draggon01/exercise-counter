@@ -73,6 +73,48 @@ describe("exercise-timer", () => {
         expect(progress).toHaveBeenLastCalledWith(0);
     });
 
+    it("opens a large focus view on start; minimize keeps it running", async () => {
+        const {timer} = await mount(90);
+        timer.label = "Plank";
+        await click(timer, "Start");
+        const focus = () => timer.shadowRoot!.querySelector(".focus");
+
+        expect(focus()).not.toBeNull();
+        expect(focus()!.querySelector(".focus-title")!.textContent).toBe("Plank");
+        expect(focus()!.querySelector(".big-time")!.textContent!.trim()).toBe("1:30");
+
+        await click(timer, "Minimize");
+        expect(focus()).toBeNull();
+        vi.advanceTimersByTime(3_000);
+        await timer.updateComplete;
+        const small = timer.shadowRoot!.querySelector("button.timer-display") as HTMLElement;
+        expect(small.textContent!.trim()).toBe("1:27");
+
+        small.click();
+        await timer.updateComplete;
+        expect(focus()).not.toBeNull();
+    });
+
+    it("reset closes the focus view", async () => {
+        const {timer} = await mount(90);
+        await click(timer, "Start");
+
+        await click(timer, "Reset");
+
+        expect(timer.shadowRoot!.querySelector(".focus")).toBeNull();
+    });
+
+    it("shows Done in the focus view when finished", async () => {
+        const {timer} = await mount(2);
+        await click(timer, "Start");
+        vi.advanceTimersByTime(2_000);
+        await timer.updateComplete;
+
+        expect(timer.shadowRoot!.querySelector(".focus .big-time")!.textContent!.trim()).toBe("✓ Done!");
+        await click(timer, "Close");
+        expect(timer.shadowRoot!.querySelector(".focus")).toBeNull();
+    });
+
     it("reports progress when removed while running", async () => {
         const {timer, progress} = await mount(90);
         await click(timer, "Start");
