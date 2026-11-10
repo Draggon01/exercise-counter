@@ -28,7 +28,6 @@ import {
 } from "./slice/checkSlice";
 import {listUserMappings, selectUserMappingByUser} from "../groups/slice/groupSlice";
 import {loadOptions} from "../options/slice/optionsSlice";
-import {loadExerciseMeta, selectExerciseTypes, selectVisibilities} from "../../shared-slices/meta/metaSlice";
 
 
 @customElement("home-view")
@@ -42,12 +41,6 @@ export class HomeView extends ConnectedLitElement {
 
     @state()
     private user?: UserDto;
-
-    @state()
-    private exerciseTypes: Record<string, string> = {};
-
-    @state()
-    private visibility: string[] = [];
 
     /** Exercise form: open for a new exercise (exerciseToEdit undefined) or to edit one. */
     @state()
@@ -104,12 +97,9 @@ export class HomeView extends ConnectedLitElement {
         store.dispatch(listChecksPerExercise());
         store.dispatch(listUserMappings());
         store.dispatch(loadOptions());
-        store.dispatch(loadExerciseMeta());
     }
 
     stateChanged(state: RootState) {
-        this.exerciseTypes = selectExerciseTypes(state);
-        this.visibility = selectVisibilities(state);
         if (state.checks.checks.status === "idle") {
             this.listChecks = selectAllChecks(state);
         }
@@ -148,8 +138,6 @@ export class HomeView extends ConnectedLitElement {
             </div>
             <exercise-form-dialog .open="${this.formOpen}"
                                   .exercise="${this.exerciseToEdit}"
-                                  .exerciseTypes="${this.exerciseTypes}"
-                                  .visibilities="${this.visibility}"
                                   .groups="${this.groups}"
                                   @save="${this.saveExerciseForm}"
                                   @close="${() => this.formOpen = false}">

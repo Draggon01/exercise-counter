@@ -255,7 +255,7 @@ Reusable pieces are tracked in `frontend/src/components/README.md` – update it
 - `sl-progress-bar` for reps/time vs target.
 - Edit-order mode: compact drag handle (or keep ↑/↓ but as small icon buttons).
 
-### [ ] T3.6 🟢 Exercise form UX
+### [x] T3.6 🟢 Exercise form UX
 - Refresh time: `<sl-input type="time" step="1">` instead of regex (current regex rejects 14:00–19:59!).
 - Exercise type as radio cards with short description; show value/increase only when relevant.
 - Visibility as `sl-radio-group`, groups as multi `sl-select`.
