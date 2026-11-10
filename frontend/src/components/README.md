@@ -26,8 +26,8 @@ Belong to one feature, listed here so they are not built a second time.
 | `<exercise-card>` | `views/home/elements/exercise-card.ts` | One exercise on the home page (header, goal, progress, finished-by, footer) | ✅ |
 | `<browse-card>` | `views/home/elements/browse-card.ts` | One exercise in the browse list with a Select button | ✅ |
 | `<exercise-form-dialog>` | `views/home/elements/exercise-form-dialog.ts` | Create / edit an exercise (props `open`, `exercise`, `exerciseTypes`, `visibilities`, `groups`; events `save` (ExerciseDto), `close`) | ✅ |
-| `<exercise-timer>` | `views/home/elements/exercise-timer.ts` | Countdown for time exercises (start/pause/reset, finish sound, saves progress) | 🛠 T2.5 |
-| `<rep-counter>` | `views/home/elements/rep-counter.ts` | Reps input for rep exercises (debounced save) | 🛠 T2.5 |
+| `<exercise-timer>` | `views/home/elements/exercise-timer.ts` | Countdown for time exercises (props `targetSeconds`, `completedSeconds`; event `progress-changed`) | ✅ |
+| `<rep-counter>` | `views/home/elements/rep-counter.ts` | Reps input for rep exercises (props `target`, `value`; event `progress-changed`, debounced 500ms) | ✅ |
 
 ## Helpers
 
@@ -37,9 +37,9 @@ Belong to one feature, listed here so they are not built a second time.
 | `ConnectedLitElement` | `src/connectedLitElement.ts` | Base class for elements that read the Redux store (`stateChanged`) | ✅ |
 | `navigate(path)` | `src/utils/navigation.ts` | Navigation without importing the app/router (safe in components and tests); `CustomRouter.goto` in `src/index.ts` still works in views | ✅ |
 | `validateForm(form)` | `src/utils/form.ts` | Show validation messages of all Shoelace fields and return whether the form is valid (exercise form, create group) | ✅ |
-| `formatDuration(seconds)` | `src/utils/format.ts` | `M:SS` / `H:MM:SS` for time exercises | 🛠 T2.5 |
-| `formatTimeLeft(seconds)` | `src/utils/format.ts` | "2 Days and 3 Hours left" / "45 Minutes left" | 🛠 T2.5 |
-| `isTimeExercise(type)` / `isRepExercise(type)` / `isIncreaseExercise(type)` | `src/utils/exercise.ts` | Branching on `ExerciseType` (exercise form; exercise card in T2.5) | ✅ |
+| `formatDuration(seconds)` | `src/utils/format.ts` | `M:SS` / `H:MM:SS` for time exercises | ✅ |
+| `formatTimeLeft(seconds)`, `isUrgent(seconds)` | `src/utils/format.ts` | "2 Days and 3 Hours left" / "45 Minutes left"; < 6h left | ✅ |
+| `isTimeExercise(type)` / `isRepExercise(type)` / `isIncreaseExercise(type)` | `src/utils/exercise.ts` | Branching on `ExerciseType` (exercise form, exercise card) | ✅ |
 
 ## Styles
 

@@ -9,6 +9,10 @@ import {CheckDto} from "../models/checkDto";
 import {RootState, store} from "../../../store";
 import {loadExerciseLog, saveExerciseLog} from "../slice/exerciseSlice";
 import {selectAutoCollapse} from "../../options/slice/optionsSlice";
+import {formatDuration, formatTimeLeft, isUrgent} from "../../../utils/format";
+import {isRepExercise, isTimeExercise} from "../../../utils/exercise";
+import "./exercise-timer";
+import "./rep-counter";
 
 @customElement("exercise-card")
 export class ExerciseCard extends ConnectedLitElement {
@@ -86,44 +90,20 @@ export class ExerciseCard extends ConnectedLitElement {
             color: #888;
         }
 
+        .no-finisher {
+            color: #aaa;
+        }
+
         .time-left.urgent {
             color: #e06c1a;
             font-weight: 600;
         }
 
-        .timer-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
 
-        .timer-display {
-            font-size: 1.15em;
-            font-weight: bold;
-            font-family: monospace;
-            color: #333;
-            min-width: 52px;
-        }
 
-        .timer-display.completed {
-            color: #2e7d32;
-        }
 
-        .timer-controls {
-            display: flex;
-            gap: 4px;
-        }
 
-        .rep-section {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
 
-        .rep-input {
-            width: 70px;
-        }
 
         .card-footer {
             display: flex;
@@ -213,22 +193,9 @@ export class ExerciseCard extends ConnectedLitElement {
                 gap: 3px 8px;
             }
 
-            .timer-row {
-                gap: 6px;
-            }
 
-            .timer-display {
-                font-size: 1em;
-                min-width: 44px;
-            }
 
-            .rep-section {
-                gap: 4px;
-            }
 
-            .rep-input {
-                width: 56px;
-            }
 
             .card-footer {
                 padding-top: 4px;
@@ -265,20 +232,9 @@ export class ExerciseCard extends ConnectedLitElement {
     @state()
     private _autoCollapse = true;
 
+    /** Seconds (time exercises) or reps done in the current period. */
     @state()
-    private _timerRunning = false;
-
-    @state()
-    private _timerSecondsLeft = 0;
-
-    @state()
-    private _timerCompleted = false;
-
-    @state()
-    private _repsCompleted = 0;
-
-    private _timerInterval?: ReturnType<typeof setInterval>;
-    private _saveDebounce?: ReturnType<typeof setTimeout>;
+    private _progress = 0;
 
     async connectedCallback() {
         super.connectedCallback();
@@ -286,12 +242,6 @@ export class ExerciseCard extends ConnectedLitElement {
             await this._loadLog();
         }
         this._collapsed = this._autoCollapse && this.checked;
-    }
-
-    disconnectedCallback() {
-        super.disconnectedCallback();
-        if (this._timerInterval) clearInterval(this._timerInterval);
-        if (this._saveDebounce) clearTimeout(this._saveDebounce);
     }
 
     stateChanged(state: RootState) {
@@ -304,37 +254,18 @@ export class ExerciseCard extends ConnectedLitElement {
         }
     }
 
-    private _isTimeExercise(): boolean {
-        const t = this.item.exerciseType as string;
-        return t === 'TIMEREPEAT' || t === 'TIMEINCREASE';
-    }
-
-    private _isRepExercise(): boolean {
-        const t = this.item.exerciseType as string;
-        return t === 'NUMBERREPEAT' || t === 'NUMBERINCREASE';
-    }
-
-    private _getTargetSeconds(): number {
+    /** Target of the current period: seconds for time exercises, reps otherwise. */
+    private _target(): number {
         return parseInt(this.item.exerciseValue ?? '0', 10) || 0;
-    }
-
-    private _formatTime(totalSeconds: number): string {
-        const h = Math.floor(totalSeconds / 3600);
-        const m = Math.floor((totalSeconds % 3600) / 60);
-        const s = totalSeconds % 60;
-        if (h > 0) {
-            return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-        }
-        return `${m}:${s.toString().padStart(2, '0')}`;
     }
 
     private _formatTodayValue(): string {
         if (!this.item.exerciseValue) return 'not Set';
-        if (this._isTimeExercise()) {
+        if (isTimeExercise(this.item.exerciseType)) {
             const secs = parseInt(this.item.exerciseValue, 10);
-            return isNaN(secs) ? this.item.exerciseValue : this._formatTime(secs);
+            return isNaN(secs) ? this.item.exerciseValue : formatDuration(secs);
         }
-        if (this._isRepExercise()) {
+        if (isRepExercise(this.item.exerciseType)) {
             return `${this.item.exerciseValue} reps`;
         }
         return this.item.exerciseValue;
@@ -344,126 +275,16 @@ export class ExerciseCard extends ConnectedLitElement {
         if (!this.item.exerciseId) return;
         try {
             const log = await store.dispatch(loadExerciseLog(this.item.exerciseId)).unwrap();
-            if (log.value != null) {
-                if (this._isTimeExercise()) {
-                    this._timerSecondsLeft = Math.max(0, this._getTargetSeconds() - log.value);
-                    if (this._timerSecondsLeft === 0) this._timerCompleted = true;
-                } else if (this._isRepExercise()) {
-                    this._repsCompleted = log.value;
-                }
-            }
-        } catch (_) { /* ignore */
+            this._progress = log.value ?? 0;
+        } catch (_) { /* no saved progress */
         }
     }
 
-    private _saveLog(value: number) {
-        if (!this.item.exerciseId) return;
-        store.dispatch(saveExerciseLog({exerciseId: this.item.exerciseId, value}));
-    }
-
-    private _startTimer = () => {
-        if (this._timerCompleted || this._timerRunning) return;
-        this._timerRunning = true;
-        this._timerInterval = setInterval(() => {
-            this._timerSecondsLeft--;
-            if (this._timerSecondsLeft <= 0) {
-                this._timerSecondsLeft = 0;
-                this._timerRunning = false;
-                this._timerCompleted = true;
-                clearInterval(this._timerInterval);
-                this._playFinishSound();
-                void this._saveLog(this._getTargetSeconds());
-            }
-        }, 1000);
-    }
-
-    private _pauseTimer = () => {
-        this._timerRunning = false;
-        clearInterval(this._timerInterval);
-        void this._saveLog(this._getTargetSeconds() - this._timerSecondsLeft);
-    }
-
-    private _resetTimer = () => {
-        this._timerRunning = false;
-        this._timerCompleted = false;
-        clearInterval(this._timerInterval);
-        this._timerSecondsLeft = this._getTargetSeconds();
-        void this._saveLog(0);
-    }
-
-    private _setReps(value: number) {
-        this._repsCompleted = Math.max(0, isNaN(value) ? 0 : value);
-        this._scheduleSave();
-    }
-
-    private _scheduleSave() {
-        if (this._saveDebounce) clearTimeout(this._saveDebounce);
-        this._saveDebounce = setTimeout(() => void this._saveLog(this._repsCompleted), 500);
-    }
-
-    private _playFinishSound() {
-        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx() as AudioContext;
-        [0, 0.4, 0.8].forEach(offset => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, ctx.currentTime + offset);
-            gain.gain.setValueAtTime(0.5, ctx.currentTime + offset);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.3);
-            osc.start(ctx.currentTime + offset);
-            osc.stop(ctx.currentTime + offset + 0.35);
-        });
-    }
-
-    private _renderTimerSection() {
-        const target = this._getTargetSeconds();
-        const isAtStart = this._timerSecondsLeft === target && !this._timerCompleted;
-        return html`
-            <div class="timer-row">
-                <div class="timer-display ${this._timerCompleted ? 'completed' : ''}">
-                    ${this._timerCompleted ? '✓ Done!' : this._formatTime(this._timerSecondsLeft)}
-                </div>
-                <div class="timer-controls">
-                    ${this._timerCompleted ? html`
-                        <sl-button size="small" variant="neutral" @click="${this._resetTimer}">Reset</sl-button>
-                    ` : this._timerRunning ? html`
-                        <sl-button size="small" variant="warning" @click="${this._pauseTimer}">⏸ Pause</sl-button>
-                    ` : html`
-                        <sl-button size="small" variant="primary" @click="${this._startTimer}">
-                            ${isAtStart ? '▶ Start' : '▶ Resume'}
-                        </sl-button>
-                        ${!isAtStart ? html`
-                            <sl-button size="small" variant="neutral"
-                                       @click="${this._resetTimer}">Reset
-                            </sl-button>
-                        ` : ''}
-                    `}
-                </div>
-            </div>
-        `;
-    }
-
-    private _renderRepSection() {
-        const target = parseInt(this.item.exerciseValue ?? '0', 10);
-        return html`
-            <div class="rep-section">
-                <sl-input
-                        class="rep-input"
-                        type="number"
-                        size="small"
-                        min="0"
-                        max="${target}"
-                        no-spin-buttons
-                        .value="${String(this._repsCompleted)}"
-                        @sl-change="${(e: any) => this._setReps(parseInt(e.target.value, 10))}"
-                ></sl-input>
-                <span>/ ${target}</span>
-            </div>
-        `;
+    private _saveProgress = (e: CustomEvent<number>) => {
+        this._progress = e.detail;
+        if (this.item.exerciseId) {
+            store.dispatch(saveExerciseLog({exerciseId: this.item.exerciseId, value: e.detail}));
+        }
     }
 
     render() {
@@ -502,23 +323,25 @@ export class ExerciseCard extends ConnectedLitElement {
                     <div class="card-body">
                         <span class="label">Today's Goal:</span>
                         <span class="value">${this._formatTodayValue()}</span>
-                        ${this._isTimeExercise() ? html`
+                        ${isTimeExercise(this.item.exerciseType) ? html`
                             <span class="label">Timer:</span>
-                            <div>${this._renderTimerSection()}</div>
-                        ` : this._isRepExercise() ? html`
+                            <exercise-timer .targetSeconds="${this._target()}" .completedSeconds="${this._progress}"
+                                            @progress-changed="${this._saveProgress}"></exercise-timer>
+                        ` : isRepExercise(this.item.exerciseType) ? html`
                             <span class="label">Progress:</span>
-                            <div>${this._renderRepSection()}</div>
+                            <rep-counter .target="${this._target()}" .value="${this._progress}"
+                                         @progress-changed="${this._saveProgress}"></rep-counter>
                         ` : ''}
                         <hr class="divider">
                         <span class="label">Finished by:</span>
                         <span>
                             ${this.finishedUser.length === 0
-                                    ? html`<span style="color:#aaa">—</span>`
+                                    ? html`<span class="no-finisher">—</span>`
                                     : this.finishedUser.map((check, idx) =>
                                             check.user + " {" + check.streak + "}" + (idx < this.finishedUser.length - 1 ? ", " : ""))}
                         </span>
                         <span class="label">Time left:</span>
-                        <span class="${this._isUrgent() ? 'time-left urgent' : 'time-left'}">${this._getTimeLeft()}</span>
+                        <span class="${isUrgent(this.item.timeLeftSeconds) ? 'time-left urgent' : 'time-left'}">${formatTimeLeft(this.item.timeLeftSeconds)}</span>
                     </div>
                     <div class="card-footer">
                         <sl-button class="stats-btn" variant="primary" size="small"
@@ -534,30 +357,6 @@ export class ExerciseCard extends ConnectedLitElement {
                 ` : ''}
             </div>
         `;
-    }
-
-    private _getTimeLeft(): string {
-        const secs = this.item.timeLeftSeconds;
-        if (secs == null) return '—';
-
-        const totalHours = secs / 3600;
-        const days = Math.floor(totalHours / 24);
-        const hours = Math.floor(totalHours - days * 24) + 1;
-        const minutes = Math.floor((secs - days * 24 * 3600 - hours * 3600) / 60);
-
-        if (days >= 1) {
-            return `${days} ${days === 1 ? 'Day' : 'Days'} and ${hours} ${hours === 1 ? 'Hour' : 'Hours'} left`;
-        }
-        if (hours > 1) {
-            return `${hours} ${hours === 1 ? 'Hour' : 'Hours'} left`;
-        }
-        return `${minutes} ${minutes === 1 ? 'Minute' : 'Minutes'} left`;
-    }
-
-    private _isUrgent(): boolean {
-        const secs = this.item.timeLeftSeconds;
-        if (secs == null) return false;
-        return secs < 6 * 60 * 60;
     }
 
     private _toggleCollapse = () => {

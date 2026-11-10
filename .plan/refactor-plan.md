@@ -195,7 +195,7 @@ Reusable pieces are tracked in `frontend/src/components/README.md` – update it
 - New helper `src/utils/form.ts` `validateForm(form)` – also used by the groups create dialog (same loop today).
 - `home-view` keeps only: action bar, list, event wiring. Target < 200 lines.
 
-### [ ] T2.5 🟠 Split `exercise-card` + shared helpers
+### [x] T2.5 🟠 Split `exercise-card` + shared helpers
 - New: `exercise-timer.ts` (interval, Web Audio, save log) and `rep-counter.ts` (debounced save).
 - New helpers with tests: `src/utils/format.ts` (`formatDuration`, `formatTimeLeft`), `src/utils/exercise.ts` (`isTimeExercise`, `isRepExercise`, `isIncreaseExercise`) – also used by the exercise form.
 - Fix: `_getTimeLeft()` shows negative minutes when less than an hour is left ("-30 Minutes left").
