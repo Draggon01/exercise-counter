@@ -105,7 +105,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 - New: `web/rest/exercise/ExerciseMapper.java` (`@Component`)
 - Steps: one `toDto(Exercise, List<String> groups, long timeLeft, Integer position)` and `toEntity(ExerciseDto, String creator)`. Replace the 4 copies of `new ExerciseDto(...)` in `ExerciseController`.
 
-### [ ] T1.5 🟠 Global error handling
+### [x] T1.5 🟠 Global error handling
 - New: `web/rest/GlobalExceptionHandler.java` (`@RestControllerAdvice`)
 - Steps:
   1. Add small exceptions: `NotFoundException`, `ForbiddenException` (or use `ResponseStatusException`).

@@ -15,6 +15,7 @@ import org.exercise.counter.exercisecounter.web.data.statistic.PeriodRepository;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelection;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionId;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
+import org.exercise.counter.exercisecounter.web.rest.error.ForbiddenException;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.CheckDto;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
 import org.exercise.counter.exercisecounter.web.scheduler.SchedulerService;
@@ -243,7 +244,7 @@ public class ExerciseController {
                 .ifPresent(ex -> {
                     String username = user.getUsername();
                     if (!username.equals(ex.getCreator())) {
-                        throw new RuntimeException(username + " tried to edit/delete exercise " + ex.getExerciseId() + " which he did not create!");
+                        throw new ForbiddenException(username + " is not the creator of exercise " + ex.getExerciseId());
                     }
                 });
     }

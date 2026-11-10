@@ -11,15 +11,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.exercise.counter.exercisecounter.web.data.groups.*;
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
+import org.exercise.counter.exercisecounter.web.rest.error.ForbiddenException;
+import org.exercise.counter.exercisecounter.web.rest.error.NotFoundException;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.CreateGroupRequestDto;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.GroupInformationDto;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.UserGroupMappingDto;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.ExerciseGroupMappingDto;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController()
 @RequestMapping("/api/groups")
@@ -95,12 +95,12 @@ public class GroupsController {
 
         List<Group> byGroupName = groupRepository.findByGroupName(groupName);
         if (byGroupName.size() != 1) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found");
+            throw new NotFoundException("Group not found");
         }
 
         Group group = byGroupName.getFirst();
         if (group.getVisibility() != GroupVisibility.PUBLIC) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Group is not public");
+            throw new ForbiddenException("Group is not public");
         }
 
         Optional<UserGroupMapping> existing = userGroupMappingRepository.findById(
@@ -162,7 +162,7 @@ public class GroupsController {
         Group group = byGroupName.getFirst();
 
         if (!memberGroupIds(user.getUsername()).contains(group.getGroupId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only members can invite to a group");
+            throw new ForbiddenException("Only members can invite to a group");
         }
 
         Optional<User> byUsername = userRepository.findByUsername(username);
