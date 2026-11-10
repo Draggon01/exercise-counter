@@ -1,7 +1,7 @@
 package org.exercise.counter.exercisecounter.web.rest.user;
 
 import jakarta.servlet.http.HttpSession;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.exercise.counter.exercisecounter.web.data.register.Register;
 import org.exercise.counter.exercisecounter.web.data.register.RegisterRepository;
 import org.exercise.counter.exercisecounter.web.data.user.User;

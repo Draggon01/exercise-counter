@@ -98,7 +98,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 ### [ ] T1.2 🟠 Use `@AuthenticationPrincipal`
 - Replace `((UserDetails) authentication.getPrincipal()).getUsername()` (~20×) with a parameter `@AuthenticationPrincipal UserDetails user`.
 
-### [ ] T1.3 🟠 Use Spring's `@Transactional`
+### [x] T1.3 🟠 Use Spring's `@Transactional`
 - Replace `jakarta.transaction.Transactional` with `org.springframework.transaction.annotation.Transactional`. Add `readOnly = true` on read endpoints/services.
 
 ### [ ] T1.4 🟠 Introduce `ExerciseMapper`

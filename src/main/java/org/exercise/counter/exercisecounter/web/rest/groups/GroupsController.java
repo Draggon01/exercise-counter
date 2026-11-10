@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.exercise.counter.exercisecounter.web.data.groups.*;
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
@@ -41,7 +41,7 @@ public class GroupsController {
      * Exercise → group mappings, limited to the groups the current user is a member of.
      */
     @GetMapping("/exercises/list")
-    @Transactional
+    @Transactional(readOnly = true)
     public List<ExerciseGroupMappingDto> listExerciseGroups(Authentication authentication) {
         Set<UUID> memberGroupIds = memberGroupIds(currentUsername(authentication));
         return exerciseGroupMappingRepository.findAll().stream()
@@ -58,13 +58,13 @@ public class GroupsController {
      * Group memberships and invitations of the current user only.
      */
     @GetMapping("/user/list")
-    @Transactional
+    @Transactional(readOnly = true)
     public List<UserGroupMappingDto> listUserGroups(Authentication authentication) {
         return List.of(buildUserMappingDto(currentUsername(authentication)));
     }
 
     @GetMapping("/public/search")
-    @Transactional
+    @Transactional(readOnly = true)
     public List<String> searchPublicGroups(@RequestParam String query) {
         return groupRepository.findByGroupNameContainingIgnoreCaseAndVisibility(query, GroupVisibility.PUBLIC)
                 .stream()

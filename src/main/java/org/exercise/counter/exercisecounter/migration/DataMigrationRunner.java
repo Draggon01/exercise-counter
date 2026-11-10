@@ -1,6 +1,6 @@
 package org.exercise.counter.exercisecounter.migration;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.exercise.counter.exercisecounter.migration.data.DataMigrationHistory;
 import org.exercise.counter.exercisecounter.migration.data.DataMigrationHistoryRepository;
 import org.springframework.boot.context.event.ApplicationReadyEvent;

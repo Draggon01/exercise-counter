@@ -1,6 +1,6 @@
 package org.exercise.counter.exercisecounter.web.rest.exercise;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.exercise.counter.exercisecounter.web.data.checks.Check;
 import org.exercise.counter.exercisecounter.web.data.checks.CheckId;
 import org.exercise.counter.exercisecounter.web.data.checks.CheckRepository;
