@@ -318,6 +318,50 @@ Goal: when a user logs in and there is a changelog entry they have not seen yet,
 
 ---
 
+## Phase 5 – Mobile / app experience
+
+The app is mostly used on phones, like an installed app. Check every task on a 390px wide screen
+(and in dark mode); reuse the building blocks in `frontend/src/components/README.md`.
+
+### [ ] T5.1 📱 Installable app (PWA)
+- Web app manifest (name, short name, icons 192/512 + maskable, `display: standalone`, theme/background color
+  matching the tokens), `<meta name="theme-color">` for light and dark, Apple touch icon.
+- Service worker (e.g. `vite-plugin-pwa`) that caches the app shell so it starts instantly and shows an
+  offline message instead of a blank page; API calls stay network-only.
+- Done when: "Add to home screen" works on Android/iOS and the app opens without browser UI.
+
+### [ ] T5.2 📱 Touch-friendly controls
+- All tap targets at least 44×44px (card menu, collapse chevron, group actions, timer buttons).
+- Inputs at least 16px font size (iOS zooms into smaller inputs), `inputmode="numeric"` for numbers,
+  `enterkeyhint` on forms.
+- `viewport-fit=cover` + safe-area padding for header and bottom nav (notch / home indicator).
+
+### [ ] T5.3 📱 Mobile layout
+- Floating "+" button (FAB) above the bottom nav for "New exercise" instead of the action bar on mobile.
+- Dialogs full screen on mobile (`sl-dialog` width 100vw / height 100dvh) with the save button reachable.
+- Sticky page header while scrolling long lists.
+
+### [ ] T5.4 📱 Gestures
+- Reorder exercises by drag & drop with touch (long press) instead of the ↑/↓ edit mode.
+- Pull to refresh on home (reload exercises and checks).
+- Optional: swipe a card to mark it done.
+
+### [ ] T5.5 📱 App feel during workouts
+- Keep the screen on while a timer runs (Screen Wake Lock API, released on pause/finish).
+- Short vibration when a timer finishes or an exercise is marked done (`navigator.vibrate`, if supported).
+- Offline banner when the server is not reachable (status 0 from `src/api/http.ts`).
+
+### [ ] T5.6 📱 Performance on phones
+- Load chart.js only on the statistics page (dynamic import).
+- Register only the Shoelace components that are used instead of all (smaller bundle).
+- Lighthouse mobile audit: aim for 90+ in performance and accessibility.
+
+### [ ] T5.7 📱 Reminders (optional, needs backend work)
+- Web push notification a few hours before the reset if today's exercise is not done yet
+  (opt-in in Options; backend sends via the scheduler).
+
+---
+
 ## Progress
 
 | Phase | Tasks | Done |
@@ -325,5 +369,6 @@ Goal: when a user logs in and there is a changelog entry they have not seen yet,
 | 0 – Bugs & security | 11 | 11 |
 | 1 – Backend | 15 | 15 |
 | 2 – Frontend structure | 9 | 9 |
-| 3 – Visual | 10 | 0 |
+| 3 – Visual | 10 | 8 |
 | 4 – Features | 1 | 0 |
+| 5 – Mobile / app experience | 7 | 0 |
