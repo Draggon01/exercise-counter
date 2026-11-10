@@ -112,7 +112,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
   2. Map them + `NoSuchElementException` (from `orElseThrow()`) to 404/403 with a JSON body `{ "error": "..." }`.
   3. Replace `throw new RuntimeException(...)` in `checkExerciseAuthority` with `ForbiddenException`.
 
-### [ ] T1.6 🟠 Service layer – exercises
+### [x] T1.6 🟠 Service layer – exercises
 - New: `web/service/ExerciseService.java`
 - Move from `ExerciseController`: list all / selected / available (visibility filter), save (incl. group mappings + selection + scheduler restart), delete, authority check.
 - Controller only delegates. Add unit tests for the visibility filter (PUBLIC / PRIVATE / GROUPS).

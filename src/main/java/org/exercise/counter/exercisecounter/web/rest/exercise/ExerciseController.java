@@ -1,181 +1,74 @@
 package org.exercise.counter.exercisecounter.web.rest.exercise;
 
-import org.springframework.transaction.annotation.Transactional;
 import org.exercise.counter.exercisecounter.web.data.checks.Check;
 import org.exercise.counter.exercisecounter.web.data.checks.CheckId;
 import org.exercise.counter.exercisecounter.web.data.checks.CheckRepository;
-import org.exercise.counter.exercisecounter.web.data.exercise.Exercise;
-import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseRepository;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseType;
 import org.exercise.counter.exercisecounter.web.data.exercise.Visibility;
-import org.exercise.counter.exercisecounter.web.data.groups.*;
 import org.exercise.counter.exercisecounter.web.data.statistic.FinishedUserRepository;
 import org.exercise.counter.exercisecounter.web.data.statistic.Period;
 import org.exercise.counter.exercisecounter.web.data.statistic.PeriodRepository;
-import org.exercise.counter.exercisecounter.web.data.userselection.UserSelection;
-import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionId;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
-import org.exercise.counter.exercisecounter.web.rest.error.ForbiddenException;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.CheckDto;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
-import org.exercise.counter.exercisecounter.web.scheduler.SchedulerService;
+import org.exercise.counter.exercisecounter.web.service.ExerciseService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
 public class ExerciseController {
 
-    private final ExerciseRepository exerciseRepository;
+    private final ExerciseService exerciseService;
     private final CheckRepository checkRepository;
-    private final SchedulerService schedulerService;
-    private final ExerciseGroupMappingRepository exerciseGroupMappingRepository;
-    private final UserGroupMappingRepository userGroupMappingRepository;
     private final UserSelectionRepository userSelectionRepository;
     private final PeriodRepository periodRepository;
     private final FinishedUserRepository finishedUserRepository;
 
-
-    public ExerciseController(
-            ExerciseRepository exerciseRepository,
-            CheckRepository checkRepository,
-            SchedulerService schedulerService,
-            ExerciseGroupMappingRepository exerciseGroupMappingRepository,
-            UserGroupMappingRepository userGroupMappingRepository,
-            UserSelectionRepository userSelectionRepository, PeriodRepository periodRepository, FinishedUserRepository finishedUserRepository) {
-        this.exerciseRepository = exerciseRepository;
+    public ExerciseController(ExerciseService exerciseService,
+                              CheckRepository checkRepository,
+                              UserSelectionRepository userSelectionRepository,
+                              PeriodRepository periodRepository,
+                              FinishedUserRepository finishedUserRepository) {
+        this.exerciseService = exerciseService;
         this.checkRepository = checkRepository;
-        this.schedulerService = schedulerService;
-        this.exerciseGroupMappingRepository = exerciseGroupMappingRepository;
-        this.userGroupMappingRepository = userGroupMappingRepository;
         this.userSelectionRepository = userSelectionRepository;
         this.periodRepository = periodRepository;
         this.finishedUserRepository = finishedUserRepository;
     }
 
+    /** All exercises the current user may see. */
     @GetMapping("/exercises/list")
-    public List<ExerciseDto> getAllExercises() {
-        return exerciseRepository.findAll().stream()
-                .map(exercise -> ExerciseMapper.toDto(exercise, groupsForExercise(exercise.getExerciseId()), timeLeftSeconds(exercise), null))
-                .toList();
+    public List<ExerciseDto> getAllExercises(@AuthenticationPrincipal UserDetails user) {
+        return exerciseService.listVisible(user.getUsername());
     }
-
 
     @GetMapping("/exercises/list/selected")
     public List<ExerciseDto> getAllExercisesForUser(@AuthenticationPrincipal UserDetails user) {
-        String username = user.getUsername();
-
-        return userSelectionRepository.findByUserSelectionId_UsernameOrderByPositionAsc(username)
-                .stream()
-                .map(selection -> ExerciseMapper.toDto(selection.getExercise(), groupsForExercise(selection.getExercise().getExerciseId()), timeLeftSeconds(selection.getExercise()), selection.getPosition())).toList();
+        return exerciseService.listSelected(user.getUsername());
     }
 
     @GetMapping("/exercises/list/available")
     public List<ExerciseDto> getAllExercisesAvailableForUser(@AuthenticationPrincipal UserDetails user) {
-        String username = user.getUsername();
-
-        //get groups from user
-        List<String> groups = userGroupMappingRepository.findByUserGroupMappingId_Username(username)
-                .stream()
-                .filter(groupMapping -> !groupMapping.getIsInvited())
-                .map(groupMapping -> groupMapping.getGroup().getGroupName())
-                .toList();
-
-        List<UUID> alreadySelectedExercises = userSelectionRepository.findByUserSelectionId_Username(username)
-                .stream()
-                .map(selection -> selection.getExercise().getExerciseId())
-                .toList();
-
-        return exerciseRepository.findAll()
-                .stream()
-                .filter(exercise -> !alreadySelectedExercises.contains(exercise.getExerciseId()))
-                .filter(exercise -> switch (exercise.getVisibility()) {
-                    case Visibility.PUBLIC -> true;
-                    case Visibility.PRIVATE -> exercise.getCreator().equals(username);
-                    case Visibility.GROUPS ->
-                            exerciseGroupMappingRepository.findByExerciseGroupMappingId_ExerciseId(exercise.getExerciseId())
-                                    .stream()
-                                    .map(groupMapping -> groupMapping.getGroup().getGroupName())
-                                    .anyMatch(groups::contains);
-                })
-                .map(exercise -> ExerciseMapper.toDto(exercise, groupsForExercise(exercise.getExerciseId()), timeLeftSeconds(exercise), getSorting(exercise, username))).toList();
-    }
-
-    private Integer getSorting(Exercise exercise, String username) {
-        Optional<UserSelection> byId = userSelectionRepository
-                .findById(new UserSelectionId(username, exercise.getExerciseId()));
-        return byId.map(UserSelection::getPosition).orElse(null);
-    }
-
-    private long timeLeftSeconds(Exercise exercise) {
-        return schedulerService.getTimeLeftSeconds(exercise.getExerciseId());
-    }
-
-    private List<String> groupsForExercise(UUID exerciseId) {
-        return exerciseGroupMappingRepository.findByExerciseGroupMappingId_ExerciseId(exerciseId)
-                .stream()
-                .map(mapping -> mapping.getGroup().getGroupName())
-                .toList();
+        return exerciseService.listAvailable(user.getUsername());
     }
 
     @PostMapping("/exercises/save")
-    @Transactional
     public ExerciseDto addExercise(@RequestBody ExerciseDto exercise, @AuthenticationPrincipal UserDetails user) {
-        checkExerciseAuthority(exercise.exerciseId(), user);
-        // never trust the creator sent by the client; for existing exercises
-        // checkExerciseAuthority already guarantees the stored creator is this user
-        String creator = user.getUsername();
-        Exercise save = exerciseRepository.save(ExerciseMapper.toEntity(exercise, creator));
-
-        exerciseGroupMappingRepository.deleteAll(exerciseGroupMappingRepository.findByExerciseGroupMappingId_ExerciseId(save.getExerciseId()));
-        List<UserGroupMapping> byUserGroupMappingIdUsername =
-                userGroupMappingRepository.findByUserGroupMappingId_Username(user.getUsername());
-        for (String group : exercise.groups()) {
-            byUserGroupMappingIdUsername
-                    .stream()
-                    .filter(mapping -> mapping.getGroup().getGroupName().equals(group))
-                    .findFirst()
-                    .ifPresent(mapping -> exerciseGroupMappingRepository.save(
-                            new ExerciseGroupMapping(new ExerciseGroupMappingId(save.getExerciseId(), mapping.getGroup().getGroupId()), mapping.getGroup())
-                    ));
-        }
-
-        //add exercise to user, as it should be there if one is created
-        userSelectionRepository.save(
-                new UserSelection(
-                        new UserSelectionId(
-                                user.getUsername(),
-                                save.getExerciseId()), exercise.position()
-                )
-        );
-        schedulerService.restartSchedulerFor(save);
-        return ExerciseMapper.toDto(save, groupsForExercise(save.getExerciseId()), timeLeftSeconds(save), exercise.position());
+        return exerciseService.save(exercise, user.getUsername());
     }
 
     @PostMapping("/exercises/delete")
     public ExerciseDto deleteExercise(@RequestBody ExerciseDto exerciseToDelete, @AuthenticationPrincipal UserDetails user) {
-        UUID exerciseId = exerciseToDelete.exerciseId();
-        checkExerciseAuthority(exerciseId, user);
-        exerciseRepository.deleteById(exerciseId);
-        schedulerService.cancelSchedulerFor(exerciseId);
+        exerciseService.delete(exerciseToDelete.exerciseId(), user.getUsername());
         return exerciseToDelete;
-    }
-
-    private void checkExerciseAuthority(UUID exerciseId, UserDetails user) {
-        if (exerciseId == null) {
-            return;
-        }
-        exerciseRepository.findById(exerciseId)
-                .ifPresent(ex -> {
-                    String username = user.getUsername();
-                    if (!username.equals(ex.getCreator())) {
-                        throw new ForbiddenException(username + " is not the creator of exercise " + ex.getExerciseId());
-                    }
-                });
     }
 
     @GetMapping("/check/list")
