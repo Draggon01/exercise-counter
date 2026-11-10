@@ -42,7 +42,9 @@ npm run build           # build for production
     - `migration/`  — Place for Data migrations that need java code to run
     - `web/`        — General place for the backend code
     - `web/data/`   — Place for Spring Data Repositories and entities
-    - `web/rest/`   — Place for REST Controllers
+    - `web/rest/`   — Place for REST Controllers (thin: read request, call a service, return a DTO) and their `dto/` records
+    - `web/rest/error/` — `GlobalExceptionHandler`, `NotFoundException` (404), `ForbiddenException` (403); errors are JSON `{"error": "..."}`
+    - `web/service/` — Business logic and transactions (`ExerciseService`, `CheckService`, `SelectionService`, `GroupService`, `StatisticService`, `InviteService`)
     - `web/scheduler/`  — Place for Schedulers, that update the checks
     - `web/security/`   — Spring security
 - `src/test/java/...` Backend tests
@@ -57,7 +59,10 @@ npm run build           # build for production
 - Do NOT use Lombok (it was removed). Write constructors, getters/setters, `equals`/`hashCode` and loggers (`LoggerFactory.getLogger`) in plain Java; prefer records where possible
 - Follow existing package and naming patterns
 - All endpoints authenticated except `/api/public/**`
-- Try to use Records for new Dto objects
+- Use Records for DTOs, including request bodies — no raw `String` or `Map` request bodies
+- Get the current user with `@AuthenticationPrincipal UserDetails user`, never by casting `authentication.getPrincipal()`
+- Put logic in a service, not in a controller; use Spring's `@Transactional` (`readOnly = true` for reads)
+- Avoid N+1 queries: use fetch-join / batch (`...In(...)`) repository methods; `QueryCountTest` guards the main read paths
 - when creating new view in the frontend where data is used make sure to create a corresponding Redux slice and attach it to the store.ts
 - try to write unit tests for new code/features if it is possible
 - Views are Lit custom elements in `frontend/src/views/<name>/<name>-view.ts`
@@ -86,7 +91,7 @@ nothing distinct for now
 - The `.header` class in groups/statistics views uses `display: flex` — the `grid-template-columns` property in the original groups-view was dead code (flex ignores it)
 - `exercise-card.ts` shows time left until next reset using `timeLeftSeconds` from the backend DTO (calculated server-side). Display ">= 1 day" as "X Days left", otherwise "X Hours left". Urgent (< 6h) is highlighted in orange.
 - `utcOffset` in Exercise is in hours (not minutes). The backend calculates `startTimeUtc = startTime.minusHours(utcOffset)` to convert the user's local reset time to UTC.
-- `timeLeftSeconds` in `ExerciseDto` is computed via `SchedulerService.getTimeLeftSeconds()` which calls `ScheduledFuture.getDelay()` — this correctly reflects the actual next-reset time for multi-day exercises (`daysRepeat > 1`). Do NOT recalculate it in `ExerciseController` using date arithmetic; the scheduler is the authoritative source.
+- `timeLeftSeconds` in `ExerciseDto` is computed via `SchedulerService.getTimeLeftSeconds()` which calls `ScheduledFuture.getDelay()` — this correctly reflects the actual next-reset time for multi-day exercises (`daysRepeat > 1`). Do NOT recalculate it in `ExerciseService`/controllers using date arithmetic; the scheduler is the authoritative source.
 - `daysRepeat` controls how often the scheduler fires (every N days), not how many days the exercise runs per cycle. `startTime` is the daily clock time of the reset, but the reset only happens every `daysRepeat` days.
 - `exerciseValue` for time exercises (TIMEREPEAT, TIMEINCREASE) is stored as seconds (integer string). Format with `formatTime(secs)` → `M:SS` or `H:MM:SS`.
 - `ExerciseLog` entity (composite key: exerciseId + username) stores one "current period" progress per user per exercise. `value` is seconds-completed for time exercises, or reps-completed for rep exercises. Endpoints: `GET /api/log/{exerciseId}` and `POST /api/log/save`.

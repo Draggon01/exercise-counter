@@ -158,6 +158,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 - Move the list in `SecurityConfig.corsConfigurationSource` to `app.cors.allowed-origins` in `application.properties`.
 
 ### [ ] T1.15 ⚠️ RESTful endpoints (optional)
+- Deferred: do this right after **T2.1** (API client), so the frontend only changes in `src/api/` + slices once.
 - `POST /api/exercises` (create), `PUT /api/exercises/{id}`, `DELETE /api/exercises/{id}`, `DELETE /api/checks/{exerciseId}` …
 - Do together with T2.1 so only `src/api/` + slices change in the frontend.
 
@@ -295,6 +296,9 @@ Goal: when a user logs in and there is a changelog entry they have not seen yet,
    (newest first); closing it dispatches `markChangelogSeen`. Render it once in `overlay-view`.
 9. Optional: "What's new" entry in the user dropdown that opens the full changelog.
 
+11. Migrate the existing hand-written "What's new" list in `options-view.ts` into `changelog.json`
+    and render it from the slice instead (keep the history).
+
 **Process**
 10. Add a "Changelog" section to CLAUDE.md: every user-facing change adds an entry to `changelog.json`.
 
@@ -305,7 +309,7 @@ Goal: when a user logs in and there is a changelog entry they have not seen yet,
 | Phase | Tasks | Done |
 |---|---|---|
 | 0 – Bugs & security | 11 | 11 |
-| 1 – Backend | 15 | 1 |
+| 1 – Backend | 15 | 14 (T1.15 deferred to after T2.1) |
 | 2 – Frontend structure | 7 | 0 |
 | 3 – Visual | 10 | 0 |
 | 4 – Features | 1 | 0 |
