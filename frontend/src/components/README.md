@@ -46,4 +46,5 @@ Belong to one feature, listed here so they are not built a second time.
 | What | File | Status |
 |---|---|---|
 | Design tokens: `--app-bg/surface/border/divider`, `--app-text(-muted/-subtle)`, `--app-accent/success/warning/danger(-soft/-strong)`, `--app-space-1..6`, `--app-radius(-sm/-pill)`, `--app-shadow(-raised)`, `--app-font(-mono)`, `--app-page-max-width` | `src/styles/theme.css` | ✅ |
+| Light / dark mode (`getColorScheme`, `setColorScheme`, `initColorScheme`; class `sl-theme-dark` on `<html>`) | `src/styles/color-scheme.ts` | ✅ |
 | Page layout (`.page-container`, 768px breakpoint) | `src/styles/page.ts` | 🛠 T3.3 |

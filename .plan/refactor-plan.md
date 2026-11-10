@@ -234,7 +234,7 @@ Reusable pieces are tracked in `frontend/src/components/README.md` – update it
 - Replace all hardcoded colors (`#c8e0e0`, `#666`, `teal`, `red`, `green`, `#aaa`, …) in views with tokens.
 - Move remaining inline `style="..."` to classes (overlay, groups, statistics, browse-card, exercise-card).
 
-### [ ] T3.2 🟢 Dark mode
+### [x] T3.2 🟢 Dark mode
 - Import `@shoelace-style/shoelace/dist/themes/dark.css`, toggle `sl-theme-dark` class on `<html>` from `prefers-color-scheme` (optional switch in options view → `optionsSlice`).
 - Works automatically if T3.1 used only tokens.
 

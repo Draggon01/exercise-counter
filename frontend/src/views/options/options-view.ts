@@ -1,5 +1,6 @@
 import {css, html} from 'lit';
 import type {SlSelect, SlSwitch} from "@shoelace-style/shoelace";
+import {ColorScheme, getColorScheme, setColorScheme} from "../../styles/color-scheme";
 import "../../components/page-header";
 import {customElement, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
@@ -128,6 +129,11 @@ export class OptionsView extends ConnectedLitElement {
             font-size: 0.9rem;
         }
 
+        .appearance-select {
+            width: 140px;
+            flex-shrink: 0;
+        }
+
         .setting-description {
             font-size: 0.8rem;
             color: var(--sl-color-neutral-500);
@@ -225,6 +231,15 @@ export class OptionsView extends ConnectedLitElement {
         this.missedEntryStatus = selectMissedEntryStatus(state);
     }
 
+    /** Device-local display preference, stored in localStorage (see styles/color-scheme.ts). */
+    @state()
+    private colorScheme: ColorScheme = getColorScheme();
+
+    private handleColorScheme = (e: Event) => {
+        this.colorScheme = (e.target as SlSelect).value as ColorScheme;
+        setColorScheme(this.colorScheme);
+    }
+
     private async handleGenerateLink() {
         await store.dispatch(generateInviteLink());
     }
@@ -284,6 +299,21 @@ export class OptionsView extends ConnectedLitElement {
                                             ?checked="${this.autoCollapse}"
                                             @sl-change="${(e: Event) => store.dispatch(setAutoCollapse((e.target as SlSwitch).checked))}"
                                     ></sl-switch>
+                                </div>
+                                <div class="setting-row">
+                                    <div>
+                                        <div class="setting-label">Appearance</div>
+                                        <div class="setting-description">
+                                            Light or dark colors. "System" follows your device setting.
+                                        </div>
+                                    </div>
+                                    <sl-select class="appearance-select" size="small"
+                                               .value="${this.colorScheme}"
+                                               @sl-change="${this.handleColorScheme}">
+                                        <sl-option value="system">System</sl-option>
+                                        <sl-option value="light">Light</sl-option>
+                                        <sl-option value="dark">Dark</sl-option>
+                                    </sl-select>
                                 </div>
                             </div>
                         </div>
