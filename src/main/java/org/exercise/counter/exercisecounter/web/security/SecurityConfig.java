@@ -2,6 +2,7 @@ package org.exercise.counter.exercisecounter.web.security;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -24,14 +25,18 @@ public class SecurityConfig {
 
     private final JpaUserDetailsService userDetailsService;
     private final ObjectProvider<InMemoryUserDetailsManager> devUserDetailsService;
+    private final List<String> allowedOrigins;
 
     /**
      * @param devUserDetailsService only available with the {@code dev} profile, see {@link DevSecurityConfig}
+     * @param allowedOrigins        {@code app.cors.allowed-origins} (comma separated)
      */
     public SecurityConfig(JpaUserDetailsService userDetailsService,
-                          ObjectProvider<InMemoryUserDetailsManager> devUserDetailsService) {
+                          ObjectProvider<InMemoryUserDetailsManager> devUserDetailsService,
+                          @Value("${app.cors.allowed-origins}") List<String> allowedOrigins) {
         this.userDetailsService = userDetailsService;
         this.devUserDetailsService = devUserDetailsService;
+        this.allowedOrigins = allowedOrigins;
     }
 
     @Bean
@@ -86,16 +91,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "http://localhost:8080",
-                "http://localhost:80",
-                "http://192.168.178.52:80",
-                "http://192.168.178.52:8080",
-                "https://exercise-counter.de")); // Vite dev
+        config.setAllowedOrigins(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true); // 🔥 Allow cookies
+        config.setAllowCredentials(true); // session cookie
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

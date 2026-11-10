@@ -154,7 +154,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
   `data_migration_history` or the table is empty – otherwise it is kept untouched. The data migration
   framework (`DataMigration`, runner, history) stays for future data migrations.
 
-### [ ] T1.14 🟠 CORS origins from config
+### [x] T1.14 🟠 CORS origins from config
 - Move the list in `SecurityConfig.corsConfigurationSource` to `app.cors.allowed-origins` in `application.properties`.
 
 ### [ ] T1.15 ⚠️ RESTful endpoints (optional)
