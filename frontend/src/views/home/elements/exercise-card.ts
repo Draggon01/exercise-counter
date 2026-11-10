@@ -428,6 +428,7 @@ export class ExerciseCard extends ConnectedLitElement {
     private _moveDownClick = () => this._emit(ExerciseCardEvents.moveDown, this.item);
 
     private _toggleFinished = () => {
+        if (!this.checked) navigator.vibrate?.(30); // short feedback on phones when marking it done
         this._emit(ExerciseCardEvents.checkChanged, !this.checked);
     }
 }

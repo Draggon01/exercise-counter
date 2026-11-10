@@ -372,10 +372,12 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
   Pull to refresh in the app shell (`utils/refresh.ts`) for home, browse, groups, statistics.
   Swipe to done left out: too easy to trigger by accident while scrolling, "Mark as done" is one tap.
 
-### [ ] T5.5 📱 App feel during workouts
+### [x] T5.5 📱 App feel during workouts
 - ~~Keep the screen on while a timer runs~~ and ~~vibrate when it finishes~~ – done (feedback F3).
 - Short vibration when an exercise is marked done (`navigator.vibrate`, if supported).
 - Offline banner when the server is not reachable (status 0 from `src/api/http.ts`).
+- Done: vibration on "Mark as done"; offline banner in the app shell from `navigator.onLine` + `online`/`offline`
+  events (a failed request already shows a toast); back online reloads the page's data (pull-to-refresh loaders).
 
 ### [ ] T5.6 📱 Performance on phones
 - ~~Load chart.js only on the statistics page~~ – done in T3.10: chart.js removed (bundle 812 kB → 615 kB).
@@ -397,4 +399,4 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
 | 2 – Frontend structure | 9 | 9 |
 | 3 – Visual | 10 | 10 |
 | 4 – Features | 1 | 1 |
-| 5 – Mobile / app experience | 7 | 4 |
+| 5 – Mobile / app experience | 7 | 5 |

@@ -1,5 +1,5 @@
 import {customElement, state} from 'lit/decorators.js';
-import {css, html} from 'lit';
+import {css, html, nothing} from 'lit';
 import {RootState, store} from "../../store";
 import {logoutUser, selectCurrentUser} from "../login/slice/userSlice";
 import {ConnectedLitElement} from "../../connectedLitElement";
@@ -30,9 +30,32 @@ export class OverlayView extends ConnectedLitElement {
         :host {
             display: grid;
             /* the header grows by the notch / status bar inset (viewport-fit=cover) */
-            grid-template-rows: calc(var(--app-header-height) + env(safe-area-inset-top)) 1fr auto;
+            grid-template-rows: calc(var(--app-header-height) + env(safe-area-inset-top)) auto 1fr auto;
             height: 100vh;
             height: 100dvh;
+        }
+
+        /* fixed rows, so a hidden offline banner does not move the others */
+        header { grid-row: 1; }
+        .offline { grid-row: 2; }
+        main { grid-row: 3; }
+        .bottom-nav { grid-row: 4; }
+
+        .offline {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--app-space-2);
+            padding: var(--app-space-2) var(--app-space-4);
+            background: var(--app-warning-soft);
+            color: var(--app-text);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .offline sl-icon {
+            flex-shrink: 0;
+            color: var(--app-warning);
         }
 
         header {
@@ -273,14 +296,29 @@ export class OverlayView extends ConnectedLitElement {
         this.path = window.location.pathname;
     }
 
+    /** The device has no network – shown as a banner below the header. */
+    @state()
+    private offline = !navigator.onLine;
+
+    private onConnectionChange = () => {
+        const wasOffline = this.offline;
+        this.offline = !navigator.onLine;
+        // back online: load what was missed while offline
+        if (wasOffline && !this.offline) void requestAppRefresh();
+    }
+
     connectedCallback() {
         super.connectedCallback();
         window.addEventListener("popstate", this.onLocationChange);
+        window.addEventListener("online", this.onConnectionChange);
+        window.addEventListener("offline", this.onConnectionChange);
     }
 
     disconnectedCallback() {
         super.disconnectedCallback();
         window.removeEventListener("popstate", this.onLocationChange);
+        window.removeEventListener("online", this.onConnectionChange);
+        window.removeEventListener("offline", this.onConnectionChange);
     }
 
     stateChanged(state: RootState) {
@@ -335,6 +373,11 @@ export class OverlayView extends ConnectedLitElement {
                     </sl-menu>
                 </sl-dropdown>
             </header>
+            ${this.offline ? html`
+                <div class="offline" role="status">
+                    <sl-icon name="wifi-off"></sl-icon>
+                    You are offline – changes can’t be saved right now.
+                </div>` : nothing}
             <main @touchstart="${this.pullStart}" @touchmove="${this.pullMove}" @touchend="${this.pullEnd}"
                   @touchcancel="${this.pullEnd}">
                 ${this.renderPull()}
