@@ -1,13 +1,11 @@
 package org.exercise.counter.exercisecounter.web.data.statistic;
 
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.KeyDeserializer;
-
-import java.io.IOException;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.KeyDeserializer;
 
 public class StatisticIdKeyDeserializer extends KeyDeserializer {
     @Override
-    public Object deserializeKey(String key, DeserializationContext deserializationContext) throws IOException {
+    public Object deserializeKey(String key, DeserializationContext deserializationContext) {
         try {
             return StatisticId.fromString(key);
         } catch (Exception e) {

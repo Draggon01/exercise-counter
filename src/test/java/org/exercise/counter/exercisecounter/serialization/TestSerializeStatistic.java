@@ -1,11 +1,10 @@
 package org.exercise.counter.exercisecounter.serialization;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.exercise.counter.exercisecounter.web.data.statistic.Statistic;
 import org.exercise.counter.exercisecounter.web.data.statistic.StatisticId;
 import org.exercise.counter.exercisecounter.web.data.statistic.StatisticJpa;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.Date;
@@ -18,7 +17,7 @@ public class TestSerializeStatistic {
 
     private static final Logger log = LoggerFactory.getLogger(TestSerializeStatistic.class);
     @Test
-    public void testStatisticElement() throws JsonProcessingException {
+    public void testStatisticElement() {
         ObjectMapper objectMapper = new ObjectMapper();
         Statistic statistic = new Statistic();
 
@@ -41,7 +40,7 @@ public class TestSerializeStatistic {
     }
 
     @Test
-    public void serializeEmptyStatistic() throws JsonProcessingException {
+    public void serializeEmptyStatistic() {
         ObjectMapper objectMapper = new ObjectMapper();
         Statistic statistic = new Statistic();
 
