@@ -65,6 +65,7 @@ npm run build           # build for production
 - Get the current user with `@AuthenticationPrincipal UserDetails user`, never by casting `authentication.getPrincipal()`
 - Put logic in a service, not in a controller; use Spring's `@Transactional` (`readOnly = true` for reads)
 - Avoid N+1 queries: use fetch-join / batch (`...In(...)`) repository methods; `QueryCountTest` guards the main read paths
+- Reusable components/helpers are listed in `frontend/src/components/README.md`: check it BEFORE creating a component, dialog, helper or style, reuse what exists, and add every new reusable piece there in the same commit. Generic UI goes to `frontend/src/components/`, pure helpers to `frontend/src/utils/` (with vitest tests)
 - when creating new view in the frontend where data is used make sure to create a corresponding Redux slice and attach it to the store.ts
 - try to write unit tests for new code/features if it is possible
 - Views are Lit custom elements in `frontend/src/views/<name>/<name>-view.ts`

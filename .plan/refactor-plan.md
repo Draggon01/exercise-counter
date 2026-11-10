@@ -175,17 +175,30 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 - `home-view.connectedCallback`: `/api/exercises/exercisetype` + `/visibility` → new slice `src/othrSlices/meta/metaSlice.ts` (register in `store.ts`).
 - `lit-router.ts` `/register/:id` enter: `isInviteLinkValid` → thunk in `registerSlice`.
 
-### [ ] T2.3 🟠 Extract `confirm-dialog`
-- New: `frontend/src/components/confirm-dialog.ts` (props: `open`, `label`, `message`, `confirmText`, `variant`; event `confirm` / `cancel`).
-- Replace delete + hide dialogs in `home-view.ts`.
+Reusable pieces are tracked in `frontend/src/components/README.md` – update it with every task below.
+
+### [ ] T2.9 🟠 Frontend unit tests (vitest) – do first
+- `npm i -D vitest`, script `"test": "vitest run"`; tests next to the code (`*.test.ts`).
+- First tests: `src/api/http.ts` (body parsing, error messages).
+
+### [ ] T2.3 🟠 Extract `confirm-dialog` (reused 3×)
+- New: `frontend/src/components/confirm-dialog.ts` (props: `open`, `label`, `confirmLabel`, `cancelLabel`, `variant`; slot: message; events `confirm` / `cancel`).
+- Replace: home delete-exercise dialog, home hide-exercise dialog, groups leave/delete-group dialog.
+
+### [ ] T2.8 🟠 Extract `page-header` (reused 4×)
+- New: `frontend/src/components/page-header.ts` (Back button + `heading`, `backTo`, slot `actions`).
+- Replace the Back-button headers in browse, groups, statistics, options.
 
 ### [ ] T2.4 🟠 Extract `exercise-form-dialog`
 - New: `frontend/src/views/home/elements/exercise-form-dialog.ts`
 - Moves: `renderEditExercise`, `renderOptionsForType`, `renderOptionsForVisibility`, `handleEditExercise`, `currentType`, `currentVisibility`.
+- New helper `src/utils/form.ts` `validateForm(form)` – also used by the groups create dialog (same loop today).
 - `home-view` keeps only: action bar, list, event wiring. Target < 200 lines.
 
-### [ ] T2.5 🟠 Split `exercise-card`
+### [ ] T2.5 🟠 Split `exercise-card` + shared helpers
 - New: `exercise-timer.ts` (interval, Web Audio, save log) and `rep-counter.ts` (debounced save).
+- New helpers with tests: `src/utils/format.ts` (`formatDuration`, `formatTimeLeft`), `src/utils/exercise.ts` (`isTimeExercise`, `isRepExercise`, `isIncreaseExercise`) – also used by the exercise form.
+- Fix: `_getTimeLeft()` shows negative minutes when less than an hour is left ("-30 Minutes left").
 - Card keeps header/body/footer layout only. Keep `disconnectedCallback` cleanup in the timer.
 
 ### [ ] T2.6 🟠 Typed custom events
@@ -194,6 +207,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 ### [ ] T2.7 🟠 Small cleanups
 - Rename `src/othrSlices/` → `src/shared-slices/` (update imports + CLAUDE.md).
 - `main.ts`: remove duplicate `import '@shoelace-style/shoelace'`, register only needed components or keep autoloader – pick one.
+- Fix: clearing the group search dispatches `{type: 'group/clearSearch'}` – the action is `clearPublicGroupSearch`, so old results stay.
 
 ---
 
@@ -310,6 +324,6 @@ Goal: when a user logs in and there is a changelog entry they have not seen yet,
 |---|---|---|
 | 0 – Bugs & security | 11 | 11 |
 | 1 – Backend | 15 | 15 |
-| 2 – Frontend structure | 7 | 0 |
+| 2 – Frontend structure | 9 | 2 |
 | 3 – Visual | 10 | 0 |
 | 4 – Features | 1 | 0 |
