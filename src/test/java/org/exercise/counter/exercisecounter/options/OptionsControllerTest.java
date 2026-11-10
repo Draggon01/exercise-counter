@@ -37,11 +37,11 @@ class OptionsControllerTest {
 
     @BeforeEach
     void setup() {
-        userOptionsRepository.deleteAll();
-        userRepository.deleteAll();
-
-        User user = new User("testuser", "{noop}password");
-        userRepository.save(user);
+        // only touch our own rows: other test classes share this database
+        userOptionsRepository.deleteById("testuser");
+        if (userRepository.findByUsername("testuser").isEmpty()) {
+            userRepository.save(new User("testuser", "{noop}password"));
+        }
 
         UserDetails userDetails = new org.springframework.security.core.userdetails.User(
                 "testuser", "{noop}password", List.of(new SimpleGrantedAuthority("ROLE_USER")));

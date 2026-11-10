@@ -9,6 +9,7 @@ import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.rest.exercise.ExerciseController;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
 import org.exercise.counter.exercisecounter.web.scheduler.SchedulerService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,14 @@ class SchedulerLifecycleTest {
         exercise.setExerciseValue("10");
         exercise.setVisibility(Visibiltiy.PUBLIC);
         exercise = exerciseRepository.save(exercise);
+    }
+
+    @AfterEach
+    void cleanup() {
+        schedulerService.cancelSchedulerFor(exercise.getExerciseId());
+        if (exerciseRepository.existsById(exercise.getExerciseId())) {
+            exerciseRepository.deleteById(exercise.getExerciseId());
+        }
     }
 
     @Test

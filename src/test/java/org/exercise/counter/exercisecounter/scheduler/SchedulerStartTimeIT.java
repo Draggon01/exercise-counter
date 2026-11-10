@@ -43,12 +43,13 @@ class SchedulerStartTimeIT {
     @BeforeEach
     void setup() {
         exerciseRepository.deleteAll();
-        userRepository.deleteAll();
 
-        User user = new User();
-        user.setUsername("schedtestuser");
-        user.setPassword("{bcrypt}abc123");
-        userRepository.save(user);
+        if (userRepository.findByUsername("schedtestuser").isEmpty()) {
+            User user = new User();
+            user.setUsername("schedtestuser");
+            user.setPassword("{bcrypt}abc123");
+            userRepository.save(user);
+        }
 
         testExercise = new Exercise();
         testExercise.setExerciseTitle("Test");

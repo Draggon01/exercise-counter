@@ -74,13 +74,14 @@ public class StatisticIT {
         periodRepository.deleteAll();
         checkRepository.deleteAll();
         exerciseRepository.deleteAll();
-        userRepository.deleteAll();
 
-        // Create a test user
-        testUser = new User();
-        testUser.setUsername("testuser");
-        testUser.setPassword("{bcrypt}" + "abc123");
-        userRepository.save(testUser);
+        // Create a test user (only touch our own user: other test classes share this database)
+        testUser = userRepository.findByUsername("statisticuser").orElseGet(() -> {
+            User user = new User();
+            user.setUsername("statisticuser");
+            user.setPassword("{bcrypt}" + "abc123");
+            return userRepository.save(user);
+        });
 
         // Create a test exercise
         testExercise = new Exercise();

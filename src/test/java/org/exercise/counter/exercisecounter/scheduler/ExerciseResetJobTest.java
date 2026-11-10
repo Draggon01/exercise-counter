@@ -18,6 +18,7 @@ import org.exercise.counter.exercisecounter.web.data.statistic.PeriodRepository;
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.scheduler.ExerciseResetJob;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,6 +71,13 @@ class ExerciseResetJobTest {
         exercise.setExerciseIncrease("5");
         exercise.setVisibility(Visibiltiy.PUBLIC);
         exercise = exerciseRepository.save(exercise);
+    }
+
+    @AfterEach
+    void cleanup() {
+        checkRepository.deleteAll();
+        exerciseLogRepository.deleteAll();
+        exerciseRepository.deleteById(exercise.getExerciseId()); // cascades to periods + finished users
     }
 
     @Test
