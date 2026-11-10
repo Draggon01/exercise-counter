@@ -61,7 +61,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
   3. `POST /user/invite` → check the inviter is a (non-invited) member of the group, otherwise 403.
 - Done when: `@WebMvcTest`/IT shows a user cannot invite into a foreign group.
 
-### [ ] T0.7 🔴 Set `creator` server-side
+### [x] T0.7 🔴 Set `creator` server-side
 - File: `ExerciseController.addExercise`
 - Steps: ignore `exercise.creator()`; for new exercises use the authenticated username, for existing ones keep the stored creator.
 

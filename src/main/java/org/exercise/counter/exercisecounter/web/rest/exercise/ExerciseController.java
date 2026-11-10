@@ -171,11 +171,14 @@ public class ExerciseController {
     @Transactional
     public ExerciseDto addExercise(@RequestBody ExerciseDto exercise, Authentication authentication) {
         checkExerciseAuthority(exercise.exerciseId(), authentication);
+        // never trust the creator sent by the client; for existing exercises
+        // checkExerciseAuthority already guarantees the stored creator is this user
+        String creator = ((UserDetails) authentication.getPrincipal()).getUsername();
         Exercise save = exerciseRepository.save(
                 new Exercise(
                         exercise.exerciseId(),
                         exercise.exerciseTitle(),
-                        exercise.creator(),
+                        creator,
                         exercise.daysRepeat(),
                         LocalTime.parse(exercise.startTime(),
                                 DateTimeFormatter.ofPattern("HH:mm:ss")),
