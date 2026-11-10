@@ -81,7 +81,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
   1. Fix the reuse logic (`> 10` → decide: reuse newest open link or cap at N).
   2. Build the URL with the protocol sent by the frontend (send `window.location.origin` instead of host) or from a config property `app.base-url`.
 
-### [ ] T0.11 🔴 Login shows error only on failure
+### [x] T0.11 🔴 Login shows error only on failure
 - File: `frontend/src/views/login/login-view.ts`
 - Steps: check `saveUserInfo.fulfilled.match(result)`; navigate on success, set `errorMessage` only on failure.
 
@@ -261,7 +261,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 
 | Phase | Tasks | Done |
 |---|---|---|
-| 0 – Bugs & security | 11 | 0 |
+| 0 – Bugs & security | 11 | 11 |
 | 1 – Backend | 15 | 0 |
 | 2 – Frontend structure | 7 | 0 |
 | 3 – Visual | 10 | 0 |

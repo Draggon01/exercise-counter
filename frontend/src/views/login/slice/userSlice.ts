@@ -54,7 +54,7 @@ export const logoutUser = createAsyncThunk<any, void, { rejectValue: any }>(
 
 export const saveUserInfo = createAsyncThunk<any, any, { rejectValue: any }>(
     'user/login', async (data, {rejectWithValue}) => {
-        await fetch("/api/login", {
+        const login = await fetch("/api/login", {
             method: 'POST',
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -62,6 +62,9 @@ export const saveUserInfo = createAsyncThunk<any, any, { rejectValue: any }>(
             body: data,
             credentials: "include"
         });
+        if (!login.ok) {
+            return rejectWithValue({error: "Login failed"});
+        }
 
         const res = await fetch("/api/public/userinfo", {
             method: 'POST',

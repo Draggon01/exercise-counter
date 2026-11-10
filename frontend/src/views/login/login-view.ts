@@ -17,9 +17,13 @@ export class LoginView extends LitElement {
         urlSearchParams.append("username", formData.get("username")!.toString());
         urlSearchParams.append("password", formData.get("password")!.toString());
         (event.target as HTMLFormElement).reset();
-        await store.dispatch(saveUserInfo(urlSearchParams));
-        void CustomRouter.goto("/");
-        this.errorMessage = "Wrong Username or Password";
+        this.errorMessage = "";
+        const result = await store.dispatch(saveUserInfo(urlSearchParams));
+        if (saveUserInfo.fulfilled.match(result)) {
+            void CustomRouter.goto("/");
+        } else {
+            this.errorMessage = "Wrong Username or Password";
+        }
     }
 
     static styles = css`
