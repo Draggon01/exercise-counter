@@ -28,7 +28,9 @@ export const statisticSlice = createSlice({
     extraReducers: builder => {
         builder
             .addCase(loadStatistic.pending, state => {
-                state.statisticStatus = 'initial';
+                state.statisticStatus = 'loading';
+                // never show the previous exercise's numbers while the next one loads
+                state.statistic = {finishedInformation: {}};
             })
             .addCase(loadStatistic.rejected, state => {
                 state.statisticStatus = 'error';
@@ -41,4 +43,5 @@ export const statisticSlice = createSlice({
 });
 
 export const selectStatistic = ((state: SliceProjection) => state.statistic.statistic)
+export const selectStatisticStatus = ((state: SliceProjection) => state.statistic.statisticStatus)
 export const statisticReducer = statisticSlice.reducer as Reducer<SliceState>

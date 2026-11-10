@@ -272,7 +272,7 @@ Reusable pieces are tracked in `frontend/src/components/README.md` – update it
 ### [x] T3.9 🟢 Groups view polish
 - Card list with member count / visibility badge, invite as `sl-dialog` instead of inline inputs, pending invites section on top.
 
-### [ ] T3.10 🟢 Statistics view
+### [x] T3.10 🟢 Statistics view
 - Calendar heatmap (or bar chart via existing `chart.js`) per user instead of the period key list.
 - Summary row: current streak, best streak, completion rate.
 
@@ -352,7 +352,7 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
 - Offline banner when the server is not reachable (status 0 from `src/api/http.ts`).
 
 ### [ ] T5.6 📱 Performance on phones
-- Load chart.js only on the statistics page (dynamic import).
+- ~~Load chart.js only on the statistics page~~ – done in T3.10: chart.js removed (bundle 812 kB → 615 kB).
 - Register only the Shoelace components that are used instead of all (smaller bundle).
 - Lighthouse mobile audit: aim for 90+ in performance and accessibility.
 
@@ -369,6 +369,6 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
 | 0 – Bugs & security | 11 | 11 |
 | 1 – Backend | 15 | 15 |
 | 2 – Frontend structure | 9 | 9 |
-| 3 – Visual | 10 | 8 |
+| 3 – Visual | 10 | 10 |
 | 4 – Features | 1 | 0 |
 | 5 – Mobile / app experience | 7 | 0 |

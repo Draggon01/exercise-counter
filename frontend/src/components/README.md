@@ -13,7 +13,7 @@ Generic UI that is not tied to one feature. Import once (side-effect import) whe
 | `<confirm-dialog>` | `confirm-dialog.ts` | Asking before a destructive or irreversible action (delete, hide, leave) | props: `open`, `label`, `confirmLabel`, `cancelLabel`, `variant` (`danger` \| `warning` \| `primary`); default slot: message; events: `confirm`, `cancel` | home (delete / hide exercise), groups (leave group) | ✅ |
 | `<page-header>` | `page-header.ts` | Title of a page, optional Back button (sub pages only), optional actions | props: `heading`, `backTo` (no Back button if empty); slot `actions` | browse, groups, statistics (with Back), options | ✅ |
 | `<overlay-view>` | `views/overlay/overlay-view.ts` | App shell around every logged-in page: header (brand, nav, user menu), bottom nav on mobile, active section highlighted | add main sections to `NAV_ITEMS`; page goes into slot `main` | lit-router | ✅ |
-| `<empty-state>` | `empty-state.ts` | "Nothing here yet" / "could not load" with icon and optional actions | props: `icon`, `heading`, `text`; default slot: actions (buttons) | home, browse, groups (statistics: T3.10) | ✅ |
+| `<empty-state>` | `empty-state.ts` | "Nothing here yet" / "could not load" with icon and optional actions | props: `icon`, `heading`, `text`; default slot: actions (buttons) | home, browse, groups, statistics | ✅ |
 | `toast(message, variant?, duration?)` | `toast.ts` | Short feedback (`sl-alert` toast stack, same message not stacked twice). **API errors are toasted automatically** by `errorToastMiddleware` – do not add own error UI for failed requests | – | browse (added), groups (created, joined, invited), options (copied), all failed requests | ✅ |
 | `<auth-card>` | `auth-card.ts` | Centered branded card for pages outside the app shell | props: `heading`, `subtitle`; default slot: form; slot `footer` | login, register | ✅ |
 | `<changelog-dialog>` | `changelog-dialog.ts` | Shows unseen changelog entries after login | – | overlay | 🛠 T4.1 |
@@ -42,6 +42,7 @@ Belong to one feature, listed here so they are not built a second time.
 | `validateForm(form)` | `src/utils/form.ts` | Show validation messages of all Shoelace fields and return whether the form is valid (exercise form, create group) | ✅ |
 | `formatDuration(seconds)` | `src/utils/format.ts` | `M:SS` / `H:MM:SS` for time exercises | ✅ |
 | `formatTimeLeft(seconds)`, `isUrgent(seconds)` | `src/utils/format.ts` | "2 Days and 3 Hours left" / "45 Minutes left"; < 6h left | ✅ |
+| `closedPeriods`, `participants`, `summarize` (streaks, completion) | `src/utils/statistics.ts` | Statistics of an exercise from the backend's `finishedInformation` | ✅ |
 | `isTimeExercise(type)` / `isRepExercise(type)` / `isIncreaseExercise(type)` | `src/utils/exercise.ts` | Branching on `ExerciseType` (exercise form, exercise card) | ✅ |
 
 ## Styles
@@ -50,4 +51,5 @@ Belong to one feature, listed here so they are not built a second time.
 |---|---|---|
 | Design tokens: `--app-bg/surface/border/divider`, `--app-text(-muted/-subtle)`, `--app-accent/success/warning/danger(-soft/-strong)`, `--app-space-1..6`, `--app-radius(-sm/-pill)`, `--app-shadow(-raised)`, `--app-font(-mono)`, `--app-page-max-width` | `src/styles/theme.css` | ✅ |
 | Light / dark mode (`getColorScheme`, `setColorScheme`, `initColorScheme`; class `sl-theme-dark` on `<html>`) | `src/styles/color-scheme.ts` | ✅ |
+| Chart colors `--app-chart-done`, `--app-chart-track`, `--app-chart-empty-border` (validated with the dataviz checks; dark mode has its own step) | `src/styles/theme.css` | ✅ |
 | Page layout `pageStyles` (`static styles = [pageStyles, css`...`]` + `<div class="page-container">`, 768px breakpoint) | `src/styles/page.ts` | ✅ |

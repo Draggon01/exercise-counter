@@ -1,73 +1,288 @@
-import {css, html, PropertyValues} from 'lit';
-import {pageStyles} from "../../styles/page";
-import type {SlInput} from "@shoelace-style/shoelace";
-import "../../components/page-header";
+import {css, html, nothing} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from "../../store";
 import {StatisticDto} from "./models/statisticDto";
-import {loadStatistic, selectStatistic} from "./slice/statisticSlice";
-import {createRef, Ref, ref} from "lit/directives/ref.js";
-import {Chart} from "chart.js/auto";
+import {loadStatistic, selectStatistic, selectStatisticStatus} from "./slice/statisticSlice";
+import {selectAllExercises} from "../home/slice/exerciseSlice";
+import {selectCurrentUser} from "../login/slice/userSlice";
+import {AsyncStoreState} from "../../commons";
+import {pageStyles} from "../../styles/page";
+import {closedPeriods, CURRENT_PERIOD, participants, PeriodRow, summarize, UserSummary} from "../../utils/statistics";
+import "../../components/page-header";
+import "../../components/empty-state";
+import type {SlRadioGroup} from "@shoelace-style/shoelace";
 
+type Range = "7" | "30" | "all";
+
+/** Short column label, e.g. "9.11" for 2026-11-09. */
+const dayLabel = (date: string) => {
+    const [, month, day] = date.split("-");
+    return month && day ? `${Number(day)}.${Number(month)}` : date;
+};
+
+/**
+ * Statistics of one exercise: the current user's streaks and completion (KPI row), completion per
+ * person (meter list) and who finished which period (grid; it is a real table, so it doubles as the
+ * table view). Colors come from the --app-chart-* tokens (validated per light / dark mode).
+ */
 @customElement('statistics-view')
 export class StatisticsView extends ConnectedLitElement {
+
     static styles = [pageStyles, css`
+        section {
+            margin-top: var(--app-space-5);
+        }
 
+        .filters + section {
+            margin-top: var(--app-space-3);
+        }
 
-        .statisticItem {
+        h3 {
+            margin: 0 0 var(--app-space-3);
+            font-size: 1rem;
+            color: var(--app-text);
+        }
+
+        .filters {
+            display: flex;
+        }
+
+        /* label only for screen readers */
+        .filters sl-radio-group::part(form-control-label) {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+        }
+
+        /* ---- KPI row */
+        .kpis {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--app-space-3);
+        }
+
+        .tile {
+            padding: var(--app-space-3) var(--app-space-4);
+            border: 1px solid var(--app-border);
+            border-radius: var(--app-radius);
+            background: var(--app-surface);
+        }
+
+        .tile-label {
+            font-size: 0.85em;
+            color: var(--app-text-muted);
+        }
+
+        .tile-value {
+            margin-top: var(--app-space-1);
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--app-text);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .tile-note {
+            font-size: 0.8em;
+            color: var(--app-text-subtle);
+        }
+
+        /* ---- meter list */
+        .meters {
+            display: grid;
+            grid-template-columns: minmax(80px, max-content) 1fr auto;
+            align-items: center;
+            gap: var(--app-space-2) var(--app-space-3);
+        }
+
+        .meter-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .meter-name.me {
+            font-weight: 600;
+        }
+
+        .meter {
+            height: 8px;
+            border-radius: var(--app-radius-pill);
+            background: var(--app-chart-track);
+            overflow: hidden;
+        }
+
+        .meter-fill {
+            height: 100%;
+            border-radius: var(--app-radius-pill);
+            background: var(--app-chart-done);
+        }
+
+        .meter-figure {
+            font-size: 0.9em;
+            color: var(--app-text-muted);
+            font-variant-numeric: tabular-nums;
+            text-align: right;
+        }
+
+        /* ---- grid */
+        .legend {
             display: flex;
             flex-wrap: wrap;
-            align-items: baseline;
-            gap: 5px;
-            margin-bottom: 1rem;
+            gap: var(--app-space-4);
+            margin-bottom: var(--app-space-3);
+            font-size: 0.85em;
+            color: var(--app-text-muted);
         }
 
-        .statisticItem h3 {
-            margin: 0;
-            flex-basis: auto;
-            flex-shrink: 0;
+        .legend span {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--app-space-2);
         }
 
-        .statisticItem .statisticText {
-            flex: 1 1 auto;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
+        .scroller {
+            overflow-x: auto;
+            /* start at the newest (right) end without JavaScript */
+            direction: rtl;
         }
 
-        .chartContainer {
-            width: 100%;
-            height: auto;
-            position: relative;
+        table {
+            direction: ltr;
+            /* left-aligned when it fits; when it overflows, rtl scrolling still starts at the newest end */
+            margin-right: auto;
+            border-collapse: separate;
+            border-spacing: 2px;
         }
 
-        @media (max-width: 768px) {
+        th {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: var(--app-text-subtle);
+            white-space: nowrap;
+        }
 
-            .chartContainer {
-                max-width: 100%;
-                aspect-ratio: 1 / 1.25;
-                max-height: 600px;
+        th[scope="row"] {
+            position: sticky;
+            left: 0;
+            z-index: 1;
+            padding-right: var(--app-space-2);
+            background: var(--app-bg);
+            text-align: left;
+            font-size: 0.85em;
+            color: var(--app-text);
+            max-width: 110px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        th.now {
+            color: var(--app-accent);
+            font-weight: 600;
+        }
+
+        td {
+            padding: 0;
+        }
+
+        /* 24px hit target, 18px mark */
+        .cell {
+            display: grid;
+            place-items: center;
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            border: none;
+            background: none;
+            cursor: default;
+        }
+
+        .mark {
+            box-sizing: border-box;
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+        }
+
+        .mark.done {
+            background: var(--app-chart-done);
+        }
+
+        .mark.missed {
+            border: 1.5px solid var(--app-chart-empty-border);
+        }
+
+        .mark.open {
+            border: 1.5px dashed var(--app-chart-empty-border);
+        }
+
+        .cell:hover .mark, .cell:focus-visible .mark {
+            outline: 2px solid var(--app-text);
+            outline-offset: 1px;
+        }
+
+        .tooltip {
+            position: fixed;
+            z-index: 10;
+            pointer-events: none;
+            padding: var(--app-space-2) var(--app-space-3);
+            border-radius: var(--app-radius-sm);
+            background: var(--sl-tooltip-background-color);
+            color: var(--sl-tooltip-color);
+            font-size: 0.85em;
+            box-shadow: var(--app-shadow-raised);
+            white-space: nowrap;
+        }
+
+        .tooltip strong {
+            display: block;
+        }
+
+        .skeleton {
+            --border-radius: var(--app-radius);
+            height: 90px;
+            margin-top: var(--app-space-3);
+        }
+
+        @media (max-width: 480px) {
+            .kpis {
+                gap: var(--app-space-2);
             }
-        }
 
-        .statistic-key {
-            margin: 0;
+            .tile {
+                padding: var(--app-space-2) var(--app-space-3);
+            }
+
+            .tile-value {
+                font-size: 1.4rem;
+            }
         }
     `];
 
+    /** From the route /statistics/:id. */
     @property()
     exerciseId: string = "";
 
     @state()
-    statistic: StatisticDto = {} as StatisticDto;
+    private statistic: StatisticDto = {finishedInformation: {}};
 
     @state()
-    statisticCanvas: Ref<HTMLCanvasElement> = createRef();
+    private status: AsyncStoreState = "initial";
 
     @state()
-    showLastXEntries: number = -1;
+    private exerciseTitle = "";
 
-    chart?: Chart;
+    @state()
+    private me = "";
+
+    @state()
+    private range: Range = "30";
+
+    /** Tooltip of the hovered / focused grid cell. */
+    @state()
+    private tip?: { status: string, detail: string, x: number, y: number };
 
     connectedCallback() {
         super.connectedCallback();
@@ -76,184 +291,148 @@ export class StatisticsView extends ConnectedLitElement {
 
     stateChanged(state: RootState) {
         this.statistic = selectStatistic(state);
-        if (this.statistic && this.statistic.finishedInformation && this.showLastXEntries === -1) {
-            this.showLastXEntries = Object.keys(this.statistic.finishedInformation).length < 10 ?
-                Object.keys(this.statistic.finishedInformation).length : 10;
-        }
-    }
-
-    protected updated(_changedProperties: PropertyValues) {
-        super.updated(_changedProperties);
-        if (this.statisticCanvas.value) {
-            this.createGraph();
-        }
-    }
-
-    private createGraph() {
-        if (this.chart) {
-            this.chart.destroy();
-        }
-        const isMobile = window.innerWidth < 768;
-
-        this.chart = new Chart(
-            this.statisticCanvas.value!,
-            {
-                type: 'bar',
-                data: this.generateData(),
-                options: {
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Exercise Completions'
-                        },
-                        legend: {
-                            position: isMobile ? 'bottom' : 'top',
-                        }
-                    },
-                    responsive: true,
-                    maintainAspectRatio: !isMobile,
-                    scales: {
-                        x: {
-                            stacked: true,
-                            ticks: {
-                                maxRotation: isMobile ? 45 : 0,
-                                minRotation: isMobile ? 45 : 0,
-                            }
-                        },
-                        y: {
-                            stacked: true
-                        }
-                    }
-                }
-            }
-        );
+        this.status = selectStatisticStatus(state);
+        this.me = selectCurrentUser(state)?.username ?? "";
+        this.exerciseTitle = selectAllExercises(state).find(e => e.exerciseId === this.exerciseId)?.exerciseTitle ?? "";
     }
 
     render() {
         return html`
             <div class="page-container">
-                <page-header heading="Statistics" backTo="/"></page-header>
-                <div>
-                    <sl-input label="Show last x entries" min="0"
-                              .max="${this.statistic && this.statistic.finishedInformation ? Object.keys(this.statistic.finishedInformation).length : 0}"
-                              type="number"
-                              .value="${this.showLastXEntries}"
-                              @sl-change="${this.onShowLastChange}"
-                    ></sl-input>
-                </div>
-                ${this.showStatistics()}
+                <page-header heading="${this.exerciseTitle || "Statistics"}" backTo="/"></page-header>
+                ${this.renderContent()}
             </div>
+            ${this.tip ? html`
+                <div class="tooltip" role="tooltip" style="left: ${this.tip.x}px; top: ${this.tip.y}px">
+                    <strong>${this.tip.status}</strong>${this.tip.detail}
+                </div>` : nothing}
         `;
     }
 
-    /** Clamps "show last x entries" to 0..number of entries and redraws the chart. */
-    private onShowLastChange = (e: Event) => {
-        const input = e.target as SlInput;
-        const max = Object.keys(this.statistic.finishedInformation).length;
-        const value = Math.min(max, Math.max(0, Number(input.value) || 0));
-        input.value = String(value);
-        this.showLastXEntries = value;
-        if (!this.chart) return;
-        this.chart.data = this.generateData();
-        this.chart.update();
-    }
-
-    private showStatistics() {
-        if (this.statistic.finishedInformation === undefined) {
+    private renderContent() {
+        if (this.status === "error") {
             return html`
-                <h3>No Statistics Loaded</h3>
-            `
+                <empty-state icon="cloud-slash" heading="Could not load the statistics">
+                    <sl-button @click="${() => store.dispatch(loadStatistic(this.exerciseId))}">Try again</sl-button>
+                </empty-state>`;
         }
-        let finishedInformation = Object.entries(this.statistic.finishedInformation);
+        if (this.status !== "idle") {
+            return [1, 2, 3].map(() => html`<sl-skeleton effect="pulse" class="skeleton"></sl-skeleton>`);
+        }
+        const info = this.statistic.finishedInformation ?? {};
+        const current = info[CURRENT_PERIOD] ?? [];
+        const allPeriods = closedPeriods(info);
+        if (allPeriods.length === 0) {
+            return html`
+                <empty-state icon="bar-chart" heading="No statistics yet"
+                             text="Finished periods show up here after the first reset.
+                                   ${current.length ? `Done so far in this period: ${current.join(", ")}.` : ""}">
+                </empty-state>`;
+        }
+        const periods = this.range === "all" ? allPeriods : allPeriods.slice(-Number(this.range));
+        const users = participants(info, this.me);
+        const summaries = users.map(user => summarize(user, periods, current));
+        const mine = summaries.find(s => s.username === this.me);
         return html`
-
-            <div class="chartContainer">
-                <canvas id="statistic" ${ref(this.statisticCanvas)}></canvas>
+            <div class="filters">
+                <sl-radio-group size="small" label="Time range" .value="${this.range}"
+                                @sl-change="${(e: Event) => this.range = (e.target as SlRadioGroup).value as Range}">
+                    <sl-radio-button value="7">7 periods</sl-radio-button>
+                    <sl-radio-button value="30">30 periods</sl-radio-button>
+                    <sl-radio-button value="all">All</sl-radio-button>
+                </sl-radio-group>
             </div>
-
-            ${
-                    finishedInformation.sort(([key1, _], [key2, __]) => {
-                        return key1.localeCompare(key2);
-                    })
-                            .slice(finishedInformation.length - this.showLastXEntries, finishedInformation.length)
-                            .map(([key, value]: [string, string[]]) => {
-                                return html`
-                                    <div class="statisticItem">
-                                        <h3 class="statistic-key">${this.statisticKeyDateResolver(key)} → </h3>
-                                        <div class="statisticText">${value.join(', ')}</div>
-                                    </div>
-                                `
-                            })
-
-            }
+            ${mine ? this.renderKpis(mine) : nothing}
+            <section>
+                <h3>Completion by person</h3>
+                <div class="meters">${[...summaries].sort((a, b) => b.rate - a.rate).map(s => this.renderMeter(s))}</div>
+            </section>
+            <section>
+                <h3>Who finished when</h3>
+                ${this.renderGrid(users, periods, current)}
+            </section>
         `;
     }
 
-    private statisticKeyDateResolver(key: string) {
-        if (!key.includes(":")) {
-            return key;
-        }
-        let strings = key.split(":");
-        if (strings[0] === strings[1]) {
-            return strings[0];
-        } else {
-            return key;
-        }
+    private renderKpis(mine: UserSummary) {
+        return html`
+            <section class="kpis" aria-label="Your numbers">
+                <div class="tile">
+                    <div class="tile-label">Current streak</div>
+                    <div class="tile-value">${mine.currentStreak > 1 ? "🔥 " : ""}${mine.currentStreak}</div>
+                    <div class="tile-note">${mine.doneNow ? "incl. this period" : "periods in a row"}</div>
+                </div>
+                <div class="tile">
+                    <div class="tile-label">Best streak</div>
+                    <div class="tile-value">${mine.bestStreak}</div>
+                    <div class="tile-note">periods in a row</div>
+                </div>
+                <div class="tile">
+                    <div class="tile-label">Completion</div>
+                    <div class="tile-value">${Math.round(mine.rate * 100)}%</div>
+                    <div class="tile-note">${mine.done} of ${mine.total} periods</div>
+                </div>
+            </section>
+        `;
     }
 
-    private generateData() {
-        let sortedInfo = Object.entries(this.statistic.finishedInformation).sort(([key1, _], [key2, __]) => {
-            return key1.localeCompare(key2);
-        });
+    private renderMeter(summary: UserSummary) {
+        const percent = Math.round(summary.rate * 100);
+        return html`
+            <span class="meter-name ${summary.username === this.me ? "me" : ""}">${summary.username}</span>
+            <div class="meter" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}"
+                 aria-label="${summary.username}: ${percent}% completed">
+                <div class="meter-fill" style="width: ${percent}%"></div>
+            </div>
+            <span class="meter-figure">${percent}% · ${summary.done}/${summary.total}</span>
+        `;
+    }
 
-        sortedInfo = sortedInfo.slice(sortedInfo.length - this.showLastXEntries, sortedInfo.length);
+    private renderGrid(users: string[], periods: PeriodRow[], current: string[]) {
+        const labelEvery = periods.length > 14 ? 7 : 1;
+        return html`
+            <div class="legend" aria-hidden="true">
+                <span><span class="mark done"></span>Done</span>
+                <span><span class="mark missed"></span>Missed</span>
+                <span><span class="mark open"></span>Not done yet (this period)</span>
+            </div>
+            <div class="scroller">
+                <table>
+                    <thead>
+                    <tr>
+                        <td></td>
+                        ${periods.map((p, i) => html`
+                            <th scope="col" title="${p.date}">
+                                ${(periods.length - 1 - i) % labelEvery === 0 ? dayLabel(p.date) : ""}
+                            </th>`)}
+                        <th scope="col" class="now">Now</th>
+                    </tr>
+                    </thead>
+                    <tbody @pointerleave="${() => this.tip = undefined}" @focusout="${() => this.tip = undefined}">
+                    ${users.map(user => html`
+                        <tr>
+                            <th scope="row" title="${user}">${user}</th>
+                            ${periods.map(p => this.renderCell(user, p.date, p.finishers.includes(user) ? "done" : "missed"))}
+                            ${this.renderCell(user, "this period", current.includes(user) ? "done" : "open")}
+                        </tr>
+                    `)}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
 
-        let userDataSets: Record<string, (number | null)[]> = {};
-        let labels = sortedInfo.map(([key, finishers]: [string, string[]]) => {
-            finishers.forEach(user => {
-                if (userDataSets[user] === undefined) {
-                    userDataSets[user] = [];
-                }
-            });
-            return this.statisticKeyDateResolver(key);
-        })
-        let users = Object.keys(userDataSets);
-
-        sortedInfo.forEach(([_, finishers]: [string, string[]]) => {
-            users.forEach(user => {
-                finishers.includes(user) ? userDataSets[user].push(1) : userDataSets[user].push(null);
-            })
-        })
-
-
-        let map = Object.entries(userDataSets)
-            .map(([key, value]: [string, (number | null)[]], index) => {
-                return {
-                    label: key,
-                    data: value,
-                    backgroundColor: this.colors[index % 8]
-                }
-            });
-
-
-        return {
-            labels: labels,
-            datasets: map
+    private renderCell(user: string, date: string, state: "done" | "missed" | "open") {
+        const status = state === "done" ? "Done" : state === "missed" ? "Missed" : "Not done yet";
+        const show = (e: Event) => {
+            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            this.tip = {status, detail: `${user} · ${date}`, x: rect.left + rect.width / 2 + 8, y: rect.bottom + 6};
         };
-    }
-
-    private colors: string[] = [
-        "rgb(188, 182, 217)",
-        "rgb(45, 59, 134)",
-        "rgb(196, 232, 253)",
-        "rgb(8, 132, 196)",
-        "rgb(129, 207,251)",
-        "rgb(87, 60, 145)",
-        "rgb(184, 212, 249)",
-        "rgb(7, 48, 74)"
-    ]
-
-    private randomColor() {
-        return "rgb(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ")";
+        return html`
+            <td>
+                <button class="cell" aria-label="${user}, ${date}: ${status}" @pointerenter="${show}" @focus="${show}">
+                    <span class="mark ${state}"></span>
+                </button>
+            </td>`;
     }
 }

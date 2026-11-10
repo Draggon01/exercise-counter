@@ -14,7 +14,6 @@
     "@lit-labs/router": "^0.1.4",
     "@reduxjs/toolkit": "^2.14.0",
     "@shoelace-style/shoelace": "^2.20.1",
-    "chart.js": "^4.6.1",
     "lit": "^3.3.3",
     "pwa-helpers": "^0.9.1",
     "urlpattern-polyfill": "^10.0.0",

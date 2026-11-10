@@ -30,6 +30,11 @@
     --app-danger: var(--sl-color-danger-600);
     --app-danger-soft: var(--sl-color-danger-50);
 
+    /* charts – validated with the dataviz palette checks (contrast, lightness band) per mode */
+    --app-chart-done: var(--sl-color-sky-600);   /* light #0284c7 */
+    --app-chart-track: var(--sl-color-sky-100);  /* meter track: lighter step of the same ramp */
+    --app-chart-empty-border: var(--sl-color-neutral-300);
+
     /* shape + spacing */
     --app-radius: 12px;
     --app-radius-sm: 8px;
@@ -48,6 +53,11 @@
     --app-font-mono: var(--sl-font-mono);
     --app-page-max-width: 800px;
     --app-header-height: 56px;
+}
+
+/* dark mode uses its own validated step (sky-600 is too light for the dark lightness band) */
+:root.sl-theme-dark {
+    --app-chart-done: var(--sl-color-sky-500);   /* dark #119ee2 */
 }
 
 html, body {
