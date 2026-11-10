@@ -260,11 +260,49 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 
 ---
 
+## Phase 4 – Features
+
+### [ ] T4.1 ✨ Show the newest changelog after login
+Goal: when a user logs in and there is a changelog entry they have not seen yet, show it once in a dialog.
+
+- Open question (decide before starting): should brand-new users see the current changelog on their
+  first login, or start with everything marked as seen? Default below: new users see nothing old.
+
+**Backend**
+1. Changelog source: `src/main/resources/changelog.json` – list of entries, newest first:
+   ```json
+   [{ "version": "2026.11.1", "date": "2026-11-10", "title": "…", "items": ["…", "…"] }]
+   ```
+   Load it once at startup in a `ChangelogService` (records `ChangelogEntry(String version, LocalDate date, String title, List<String> items)`).
+2. New migration `V<date>_001__add_last_seen_changelog.sql`:
+   `ALTER TABLE options ADD COLUMN last_seen_changelog VARCHAR(32);` + field in `UserOptions`
+   (no Lombok – plain getter/setter).
+3. On registration (`UserController.register`) store the current newest version as seen (see open question).
+4. `ChangelogController` (`/api/changelog`):
+   - `GET /unseen` → entries newer than the user's `last_seen_changelog` (empty list if none)
+   - `POST /seen` → sets `last_seen_changelog` to the newest version
+   - `GET` → full changelog (for an optional "What's new" page later)
+5. Tests: unseen entries for null / old / current version; `seen` updates the options row.
+
+**Frontend**
+6. `src/othrSlices/changelog/changelogSlice.ts` (register in `store.ts`): thunks `loadUnseenChangelog`, `markChangelogSeen`.
+7. Dispatch `loadUnseenChangelog` after a successful login and on app start when already logged in
+   (listener on `saveUserInfo.fulfilled` / `readUserInfo.fulfilled` in a listener middleware – no fetch in components).
+8. `src/components/changelog-dialog.ts`: `sl-dialog` showing title, date and items of the unseen entries
+   (newest first); closing it dispatches `markChangelogSeen`. Render it once in `overlay-view`.
+9. Optional: "What's new" entry in the user dropdown that opens the full changelog.
+
+**Process**
+10. Add a "Changelog" section to CLAUDE.md: every user-facing change adds an entry to `changelog.json`.
+
+---
+
 ## Progress
 
 | Phase | Tasks | Done |
 |---|---|---|
 | 0 – Bugs & security | 11 | 11 |
-| 1 – Backend | 15 | 0 |
+| 1 – Backend | 15 | 1 |
 | 2 – Frontend structure | 7 | 0 |
 | 3 – Visual | 10 | 0 |
+| 4 – Features | 1 | 0 |
