@@ -63,6 +63,32 @@ class DevUserLoginTest {
         }
 
         @Test
+        void devUserCanSaveData() throws Exception {
+            try (HttpClient client = HttpClient.newBuilder().cookieHandler(new CookieManager()).build()) {
+                client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/login"))
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .POST(HttpRequest.BodyPublishers.ofString("username=user&password=password"))
+                        .build(), HttpResponse.BodyHandlers.discarding());
+
+                HttpResponse<String> created = client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/exercises"))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString("{\"exerciseTitle\":\"Dev\",\"daysRepeat\":1,"
+                                + "\"startTime\":\"12:00:00\",\"utcOffset\":0,\"exerciseType\":\"NUMBERREPEAT\","
+                                + "\"exerciseValue\":\"5\",\"visibility\":\"PRIVATE\",\"groups\":[]}"))
+                        .build(), HttpResponse.BodyHandlers.ofString());
+                assertEquals(201, created.statusCode(), created.body());
+
+                HttpResponse<String> options = client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/options"))
+                        .GET().build(), HttpResponse.BodyHandlers.ofString());
+                assertEquals(200, options.statusCode(), options.body());
+
+                String id = created.body().replaceAll(".*\"exerciseId\":\"([^\"]+)\".*", "$1");
+                client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/exercises/" + id))
+                        .DELETE().build(), HttpResponse.BodyHandlers.discarding());
+            }
+        }
+
+        @Test
         void anonymousUserInfoHasNoPrincipal() throws Exception {
             try (HttpClient client = HttpClient.newHttpClient()) {
                 HttpResponse<String> info = client.send(
