@@ -5,7 +5,7 @@ import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from "../../store";
 import {StatisticDto} from "./models/statisticDto";
 import {loadStatistic, selectStatistic, selectStatisticStatus} from "./slice/statisticSlice";
-import {selectAllExercises} from "../home/slice/exerciseSlice";
+import {listExercisesSelected, selectAllExercises, selectExercisesStatus} from "../home/slice/exerciseSlice";
 import {selectCurrentUser} from "../login/slice/userSlice";
 import {AsyncStoreState} from "../../commons";
 import {pageStyles} from "../../styles/page";
@@ -295,6 +295,10 @@ export class StatisticsView extends ConnectedLitElement {
     connectedCallback() {
         super.connectedCallback();
         store.dispatch(loadStatistic(this.exerciseId));
+        // the exercise name comes from the home list – load it when the page is opened directly
+        if (selectExercisesStatus(store.getState()) !== "idle") {
+            store.dispatch(listExercisesSelected());
+        }
     }
 
     stateChanged(state: RootState) {
