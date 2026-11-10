@@ -27,6 +27,7 @@ import {
 import {listUserMappings, selectUserMappingByUser} from "../groups/slice/groupSlice";
 import {CustomRouter} from "../../index";
 import {loadOptions} from "../options/slice/optionsSlice";
+import {loadExerciseMeta, selectExerciseTypes, selectVisibilities} from "../../othrSlices/meta/metaSlice";
 
 
 @customElement("home-view")
@@ -140,21 +141,12 @@ export class HomeView extends ConnectedLitElement {
         store.dispatch(listChecksPerExercise());
         store.dispatch(listUserMappings());
         store.dispatch(loadOptions());
-
-        fetch("/api/exercises/exercisetype", {
-            method: 'GET',
-            credentials: "include"
-        }).then(response => response.json())
-            .then(response => this.exerciseTypes = response)
-
-        fetch("/api/exercises/visibility", {method: 'GET', credentials: "include"})
-            .then(response => response.json())
-            .then(response => {
-                this.visibility = response;
-            })
+        store.dispatch(loadExerciseMeta());
     }
 
     stateChanged(state: RootState) {
+        this.exerciseTypes = selectExerciseTypes(state);
+        this.visibility = selectVisibilities(state);
         if (state.checks.checks.status === "idle") {
             this.listChecks = selectAllChecks(state);
         }

@@ -5,7 +5,7 @@ import {store} from "../../store";
 import {registerUser} from "../login/slice/userSlice";
 import {RegisterDto} from "./model/registerDto";
 import {navigate} from "../../lit-router";
-import {validateRegisterId} from "./slice/registerSlice";
+import {checkUsernameAvailable, validateRegisterId} from "./slice/registerSlice";
 
 @customElement('register-view')
 export class RegisterView extends LitElement {
@@ -32,21 +32,12 @@ export class RegisterView extends LitElement {
         this.validating = false;
     }
 
-    private async userExists(username: string | undefined): Promise<boolean> {
-        if(!username || username === ""){
+    private async isUsernameAvailable(username: string | undefined): Promise<boolean> {
+        if (!username) {
             return false;
         }
-
-        const res = await fetch("/api/public/checkUser", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({username}),
-            credentials: "include"
-        });
-
-        return res.json();
+        const result = await store.dispatch(checkUsernameAvailable(username));
+        return checkUsernameAvailable.fulfilled.match(result) && result.payload;
     }
 
     private async _register(event: SubmitEvent) {
@@ -54,7 +45,7 @@ export class RegisterView extends LitElement {
         let target = event.target as HTMLFormElement;
         const formData = new FormData(target);
 
-        if (!(await this.userExists(formData.get("username")?.toString()))) {
+        if (!(await this.isUsernameAvailable(formData.get("username")?.toString()))) {
             this.errorMessage = "Username already exists or is not valid, try another one"
             return;
         }

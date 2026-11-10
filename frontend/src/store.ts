@@ -8,6 +8,7 @@ import {authReducer} from "./othrSlices/auth/authSlice";
 import {authMiddleware} from "./othrSlices/auth/authMiddleware";
 import {optionsReducer} from "./views/options/slice/optionsSlice";
 import {registerReducer} from "./views/register/slice/registerSlice";
+import {metaReducer} from "./othrSlices/meta/metaSlice";
 
 const rootReducer = combineReducers({
     user: userReducer,
@@ -17,7 +18,8 @@ const rootReducer = combineReducers({
     group: groupReducer,
     auth: authReducer,
     options: optionsReducer,
-    register: registerReducer
+    register: registerReducer,
+    meta: metaReducer
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

@@ -19,6 +19,10 @@ type SliceProjection = {
 export const validateRegisterId = apiThunk<boolean, string>(
     'register/validateId', registerId => apiPost("/api/public/isInviteLinkValid", {registerId}));
 
+/** true if nobody uses the username yet. */
+export const checkUsernameAvailable = apiThunk<boolean, string>(
+    'register/checkUsername', username => apiPost("/api/public/checkUser", {username}));
+
 const registerSlice = createSlice({
     name: 'register',
     initialState,

@@ -49,22 +49,7 @@ export class LitRouter extends ConnectedLitElement {
             render: (params) => html`
                 <register-view .registerId="${params["id"]}"></register-view>
             `,
-            enter: async (params) => {
-                let x = await (await fetch("/api/public/isInviteLinkValid", {
-                    method: 'POST',
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({registerId: params["id"]})
-                })).json();
-
-                if(x){
-                    return true;
-                } else {
-                    navigate("/");
-                    return false;
-                }
-            }
+            // the invite link is validated by register-view itself (via registerSlice)
         },
         {
             path: '*',

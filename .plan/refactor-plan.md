@@ -171,7 +171,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
   (always `credentials: "include"`, JSON headers, throws/returns typed error, handles empty bodies).
 - Refactor all slices to use it (`exerciseSlice`, `checkSlice`, `groupSlice`, `userSlice`, `optionsSlice`, `registerSlice`, `statisticSlice`, `authSlice`).
 
-### [ ] T2.2 🟠 Remove direct fetches from components
+### [x] T2.2 🟠 Remove direct fetches from components
 - `home-view.connectedCallback`: `/api/exercises/exercisetype` + `/visibility` → new slice `src/othrSlices/meta/metaSlice.ts` (register in `store.ts`).
 - `lit-router.ts` `/register/:id` enter: `isInviteLinkValid` → thunk in `registerSlice`.
 
