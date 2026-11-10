@@ -29,6 +29,7 @@ For frontend
 npm install             # install dependencies
 npm run dev             # run dev server
 npm run build           # build for production
+npm test                # frontend unit tests (vitest, *.test.ts next to the code)
 ```
 
 ## Database

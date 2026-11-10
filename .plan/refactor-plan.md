@@ -177,7 +177,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 
 Reusable pieces are tracked in `frontend/src/components/README.md` – update it with every task below.
 
-### [ ] T2.9 🟠 Frontend unit tests (vitest) – do first
+### [x] T2.9 🟠 Frontend unit tests (vitest) – do first
 - `npm i -D vitest`, script `"test": "vitest run"`; tests next to the code (`*.test.ts`).
 - First tests: `src/api/http.ts` (body parsing, error messages).
 
