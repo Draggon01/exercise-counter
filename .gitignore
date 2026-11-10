@@ -42,3 +42,7 @@ target
 
 ### env vars ###
 .env
+
+### development ###
+# database dumps contain real user data – never commit them
+development/dump/
