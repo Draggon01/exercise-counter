@@ -14,6 +14,21 @@ public interface PeriodRepository extends JpaRepository<Period, UUID> {
 
     List<Period> findByExerciseExerciseId(UUID exerciseId);
 
+    @Query(value = "SELECT max(upper(time_range)) FROM period WHERE exercise_id = :exerciseId", nativeQuery = true)
+    Object findLatestEndRaw(@Param("exerciseId") UUID exerciseId);
+
+    /**
+     * @return the end of the latest stored period of the exercise, or {@code null} if there is none
+     */
+    default LocalDateTime findLatestEnd(UUID exerciseId) {
+        return switch (findLatestEndRaw(exerciseId)) {
+            case null -> null;
+            case LocalDateTime ldt -> ldt;
+            case java.sql.Timestamp ts -> ts.toLocalDateTime();
+            case Object other -> throw new IllegalStateException("Unexpected type " + other.getClass());
+        };
+    }
+
     @Query(value = "SELECT * FROM periods WHERE exercise_id = :exerciseId " +
             "AND time_range @> CAST(:timestamp AS timestamp)",
             nativeQuery = true)

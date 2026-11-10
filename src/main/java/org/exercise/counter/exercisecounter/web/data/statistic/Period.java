@@ -34,8 +34,13 @@ public class Period {
     private Range<LocalDateTime> timeRange;
 
 
+    /**
+     * Key used by the statistics view. It shows the day the period was closed (the reset day),
+     * which is what the legacy single-point periods always displayed.
+     */
     public String toKeyString() {
-        return FORMAT.format(timeRange.lower()) + ":" + FORMAT.format(timeRange.upper());
+        String end = FORMAT.format(timeRange.upper());
+        return end + ":" + end;
     }
 
 

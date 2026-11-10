@@ -33,7 +33,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 - File: `SchedulerService.java`
 - Steps: `Map<UUID, ScheduledFuture<?>> scheduledExerciseUpdates = new ConcurrentHashMap<>();` and make it `private final`.
 
-### [ ] T0.4 🔴 Make the reset job really transactional + avoid stale entity
+### [x] T0.4 🔴 Make the reset job really transactional + avoid stale entity
 - Files: `SchedulerService.java`, new `web/scheduler/ExerciseResetJob.java`
 - Problem: `@Transactional` on `numberRepeatFunction` / `numberIncreaseFunction` is ignored (self-invocation via lambda, no proxy). The lambda also captures an `Exercise` entity that may be outdated.
 - Steps:
@@ -43,11 +43,15 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
   4. Merge the two functions into one (the only difference is the increase step).
 - Done when: `SchedulerStartTimeIT` passes, plus a new test that runs `ExerciseResetJob.run` and checks checks/logs are cleared and a period is created.
 
-### [ ] T0.5 🔴 Fix the Period time range
+### [x] T0.5 🔴 Fix the Period time range
 - File: `ExerciseResetJob` (from T0.4)
 - Problem: `Range.closed(now, now)` with `systemDefault() + offset` – zero-width and not UTC.
-- Steps: store `[previous lastSchedulerRun (or now - daysRepeat), now)` in UTC.
-- Check `Period.toKeyString()` and the frontend `statisticKeyDateResolver` still display correctly.
+- Steps: store `(previous run, now]` instead of a point.
+- Decision (done): ranges stay in **exercise-local time** (UTC + utcOffset), because all existing rows use
+  that convention and the `period` table has an `EXCLUDE` constraint on overlapping ranges – mixing UTC
+  ranges with old local points would break the reset job. The start is clamped to the end of the latest
+  stored period so ranges never overlap. `toKeyString()` shows the reset day (`end:end`), so the
+  statistics UI is unchanged.
 
 ### [ ] T0.6 🔴 Restrict group endpoints to the current user
 - File: `web/rest/groups/GroupsController.java`

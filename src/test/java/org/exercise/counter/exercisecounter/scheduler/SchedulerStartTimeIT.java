@@ -7,6 +7,7 @@ import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseType;
 import org.exercise.counter.exercisecounter.web.data.exercise.Visibiltiy;
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
+import org.exercise.counter.exercisecounter.web.scheduler.ExerciseResetJob;
 import org.exercise.counter.exercisecounter.web.scheduler.SchedulerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,9 @@ class SchedulerStartTimeIT {
 
     @Autowired
     private SchedulerService schedulerService;
+
+    @Autowired
+    private ExerciseResetJob exerciseResetJob;
 
     @Autowired
     private ExerciseRepository exerciseRepository;
@@ -104,13 +108,12 @@ class SchedulerStartTimeIT {
     }
 
     @Test
-    void afterSchedulerFires_lastSchedulerRunIsPersisted() throws InterruptedException {
+    void afterSchedulerFires_lastSchedulerRunIsPersisted() {
         testExercise.setDaysRepeat(1);
         testExercise.setLastSchedulerRun(null);
         testExercise = exerciseRepository.save(testExercise);
 
-        schedulerService.restartSchedulerForExTest(testExercise);
-        Thread.sleep(1500);
+        exerciseResetJob.run(testExercise.getExerciseId());
 
         Exercise updated = exerciseRepository.findById(testExercise.getExerciseId()).orElseThrow();
         assertNotNull(updated.getLastSchedulerRun(),

@@ -17,7 +17,7 @@ import org.exercise.counter.exercisecounter.web.rest.statistic.StatisticControll
 import org.exercise.counter.exercisecounter.web.rest.statistic.dto.MissedEntryRequestDto;
 import org.exercise.counter.exercisecounter.web.rest.statistic.dto.PeriodDto;
 import org.exercise.counter.exercisecounter.web.rest.statistic.dto.StatisticDto;
-import org.exercise.counter.exercisecounter.web.scheduler.SchedulerService;
+import org.exercise.counter.exercisecounter.web.scheduler.ExerciseResetJob;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +48,7 @@ public class StatisticIT {
     private StatisticController statisticController;
 
     @Autowired
-    private SchedulerService schedulerService;
+    private ExerciseResetJob exerciseResetJob;
 
     @Autowired
     private ExerciseRepository exerciseRepository;
@@ -111,16 +111,8 @@ public class StatisticIT {
         assertTrue(preStatsMap.containsKey("current"));
         assertTrue(preStatsMap.get("current").contains(testUser.getUsername()));
 
-        // 3. Trigger the scheduler explicitly
-        schedulerService.restartSchedulerForExTest(testExercise);
-
-        // Optional: wait a moment for the scheduled task to execute
-        // (as restartSchedulerForExTest delays by 1 second in the SchedulerService)
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        // 3. Run the reset job (what the scheduler executes)
+        exerciseResetJob.run(testExercise.getExerciseId());
 
         // 4. Load statistics AFTER the scheduler has run
         StatisticDto postSchedulerStats = statisticController.loadStatistic(testExercise.getExerciseId().toString());
