@@ -189,7 +189,7 @@ Reusable pieces are tracked in `frontend/src/components/README.md` – update it
 - New: `frontend/src/components/page-header.ts` (Back button + `heading`, `backTo`, slot `actions`).
 - Replace the Back-button headers in browse, groups, statistics, options.
 
-### [ ] T2.4 🟠 Extract `exercise-form-dialog`
+### [x] T2.4 🟠 Extract `exercise-form-dialog`
 - New: `frontend/src/views/home/elements/exercise-form-dialog.ts`
 - Moves: `renderEditExercise`, `renderOptionsForType`, `renderOptionsForVisibility`, `handleEditExercise`, `currentType`, `currentVisibility`.
 - New helper `src/utils/form.ts` `validateForm(form)` – also used by the groups create dialog (same loop today).

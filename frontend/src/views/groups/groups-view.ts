@@ -20,6 +20,7 @@ import {GroupVisibility} from "./models/GroupVisibility";
 import {createRef, ref, Ref} from "lit/directives/ref.js";
 import {SlInput} from "@shoelace-style/shoelace";
 import "../../components/confirm-dialog";
+import {validateForm} from "../../utils/form";
 
 
 @customElement('groups-view')
@@ -344,21 +345,13 @@ export class GroupsView extends ConnectedLitElement {
     }
 
     private handleCreateGroup() {
-        this.formRef.value!.childNodes.forEach(child => {
-            if (Object.prototype.hasOwnProperty.call(child, 'reportValidity') && typeof (child as any).reportValidity === 'function') {
-                (child as any).reportValidity();
-            }
-        });
-
-        if (this.formRef.value!.checkValidity()) {
+        if (validateForm(this.formRef.value!)) {
             let formData = new FormData(this.formRef.value!);
             let groupName = formData!.get("groupName")!.toString();
             store.dispatch(createGroupOnUser({groupName, visibility: this.groupVisibility}))
             this.openGroupDialog = false;
             this.groupName = "";
             this.groupVisibility = "INVITE_ONLY";
-        } else {
-            this.formRef.value!.reportValidity();
         }
     }
 
