@@ -29,10 +29,13 @@ public class InviteService {
 
     private final RegisterRepository registerRepository;
     private final UserRepository userRepository;
+    private final ChangelogService changelogService;
 
-    public InviteService(RegisterRepository registerRepository, UserRepository userRepository) {
+    public InviteService(RegisterRepository registerRepository, UserRepository userRepository,
+                         ChangelogService changelogService) {
         this.registerRepository = registerRepository;
         this.userRepository = userRepository;
+        this.changelogService = changelogService;
     }
 
     /**
@@ -74,6 +77,8 @@ public class InviteService {
         }
         User user = userRepository.save(new User(username, "{bcrypt}" + PASSWORD_ENCODER.encode(password)));
         registerRepository.deleteById(register.getRegisterId());
+        // a new user does not need to read what changed before they joined
+        changelogService.markSeen(username);
         return user;
     }
 

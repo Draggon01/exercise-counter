@@ -280,11 +280,11 @@ Reusable pieces are tracked in `frontend/src/components/README.md` – update it
 
 ## Phase 4 – Features
 
-### [ ] T4.1 ✨ Show the newest changelog after login
+### [x] T4.1 ✨ Show the newest changelog after login
 Goal: when a user logs in and there is a changelog entry they have not seen yet, show it once in a dialog.
 
-- Open question (decide before starting): should brand-new users see the current changelog on their
-  first login, or start with everything marked as seen? Default below: new users see nothing old.
+- Decided: brand-new users start with everything marked as seen; existing users who never saw an
+  entry get only the newest one (not the whole history).
 
 **Backend**
 1. Changelog source: `src/main/resources/changelog.json` – list of entries, newest first:
@@ -370,5 +370,5 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
 | 1 – Backend | 15 | 15 |
 | 2 – Frontend structure | 9 | 9 |
 | 3 – Visual | 10 | 10 |
-| 4 – Features | 1 | 0 |
+| 4 – Features | 1 | 1 |
 | 5 – Mobile / app experience | 7 | 0 |

@@ -86,6 +86,12 @@ npm test                # frontend unit tests (vitest, *.test.ts next to the cod
 
 
 
+## Changelog
+- Every user-facing change adds (or extends) the newest entry in `src/main/resources/changelog.json`
+  (newest first; `version`, `date`, `title`, `items` written for users, not developers)
+- After an update users see the entries they have not seen yet once in the "What's new" dialog
+  (`last_seen_changelog` in `options`); new users start with everything marked as seen
+
 ## Do Not Touch
 nothing distinct for now
 

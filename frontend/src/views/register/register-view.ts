@@ -16,6 +16,10 @@ export class RegisterView extends LitElement {
             gap: var(--app-space-4);
         }
 
+        a {
+            color: var(--app-accent);
+        }
+
         .validating {
             display: flex;
             justify-content: center;

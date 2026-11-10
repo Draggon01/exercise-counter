@@ -28,8 +28,10 @@ class RegistrationTest {
     private static final String EXISTING = "reg-existing";
 
     @Autowired private InviteService inviteService;
+    @Autowired private org.exercise.counter.exercisecounter.web.service.ChangelogService changelogService;
     @Autowired private RegisterRepository registerRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private org.exercise.counter.exercisecounter.web.data.options.UserOptionsRepository userOptionsRepository;
 
     private UUID registerId;
 
@@ -46,6 +48,7 @@ class RegistrationTest {
     @AfterEach
     void cleanup() {
         registerRepository.deleteAll(registerRepository.findByIssuer(ISSUER));
+        userOptionsRepository.findById("reg-new").ifPresent(userOptionsRepository::delete);
         userRepository.findByUsername("reg-new").ifPresent(userRepository::delete);
     }
 
@@ -55,6 +58,7 @@ class RegistrationTest {
 
         assertTrue(userRepository.findByUsername("reg-new").orElseThrow().getPassword().startsWith("{bcrypt}"));
         assertFalse(inviteService.isValid(registerId));
+        assertTrue(changelogService.unseen("reg-new").isEmpty(), "new users do not get old changelog entries");
     }
 
     @Test

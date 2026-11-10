@@ -5,6 +5,8 @@ import {logoutUser, selectCurrentUser} from "../login/slice/userSlice";
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {UserDto} from "../login/models/userDto";
 import {navigate} from "../../utils/navigation";
+import {ChangelogEntry, markChangelogSeen, selectUnseenChangelog} from "../../shared-slices/changelog/changelogSlice";
+import "../../components/changelog-dialog";
 
 type NavItem = { path: string, label: string, icon: string };
 
@@ -153,6 +155,10 @@ export class OverlayView extends ConnectedLitElement {
     @state()
     private user?: UserDto;
 
+    /** Changelog entries the user has not seen yet ("what's new" dialog). */
+    @state()
+    private unseenChangelog: ChangelogEntry[] = [];
+
     /** Current path, to highlight the active section. */
     @state()
     private path = window.location.pathname;
@@ -173,6 +179,7 @@ export class OverlayView extends ConnectedLitElement {
 
     stateChanged(state: RootState) {
         this.user = selectCurrentUser(state);
+        this.unseenChangelog = selectUnseenChangelog(state);
     }
 
     private async handleLogout() {
@@ -226,6 +233,8 @@ export class OverlayView extends ConnectedLitElement {
                 <slot name="main"></slot>
             </main>
             <nav class="bottom-nav" aria-label="Main">${this.renderLinks(NAV_ITEMS)}</nav>
+            <changelog-dialog .open="${this.unseenChangelog.length > 0}" .entries="${this.unseenChangelog}"
+                              @close="${() => store.dispatch(markChangelogSeen())}"></changelog-dialog>
         `;
     }
 }

@@ -7,6 +7,7 @@ import {groupReducer} from "./views/groups/slice/groupSlice";
 import {authReducer} from "./shared-slices/auth/authSlice";
 import {authMiddleware} from "./shared-slices/auth/authMiddleware";
 import {errorToastMiddleware} from "./shared-slices/notifications/errorToastMiddleware";
+import {changelogMiddleware, changelogReducer} from "./shared-slices/changelog/changelogSlice";
 import {optionsReducer} from "./views/options/slice/optionsSlice";
 import {registerReducer} from "./views/register/slice/registerSlice";
 
@@ -18,7 +19,8 @@ const rootReducer = combineReducers({
     group: groupReducer,
     auth: authReducer,
     options: optionsReducer,
-    register: registerReducer
+    register: registerReducer,
+    changelog: changelogReducer
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
@@ -28,5 +30,5 @@ export const store = configureStore({
     middleware: getDefaultMiddleware => getDefaultMiddleware({
         immutableCheck: true,
         serializableCheck: true
-    }).prepend(authMiddleware.middleware, errorToastMiddleware.middleware)
+    }).prepend(authMiddleware.middleware, errorToastMiddleware.middleware, changelogMiddleware.middleware)
 });

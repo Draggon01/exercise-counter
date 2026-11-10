@@ -16,7 +16,8 @@ Generic UI that is not tied to one feature. Import once (side-effect import) whe
 | `<empty-state>` | `empty-state.ts` | "Nothing here yet" / "could not load" with icon and optional actions | props: `icon`, `heading`, `text`; default slot: actions (buttons) | home, browse, groups, statistics | ✅ |
 | `toast(message, variant?, duration?)` | `toast.ts` | Short feedback (`sl-alert` toast stack, same message not stacked twice). **API errors are toasted automatically** by `errorToastMiddleware` – do not add own error UI for failed requests | – | browse (added), groups (created, joined, invited), options (copied), all failed requests | ✅ |
 | `<auth-card>` | `auth-card.ts` | Centered branded card for pages outside the app shell | props: `heading`, `subtitle`; default slot: form; slot `footer` | login, register | ✅ |
-| `<changelog-dialog>` | `changelog-dialog.ts` | Shows unseen changelog entries after login | – | overlay | 🛠 T4.1 |
+| `<changelog-dialog>` | `changelog-dialog.ts` | "What's new" dialog with unseen changelog entries | props: `open`, `entries`; event `close` (parent marks them seen) | overlay | ✅ |
+| `<changelog-entries>` | `changelog-entries.ts` | List of changelog entries (version, title, date, items) | prop: `entries` | changelog-dialog, options | ✅ |
 
 ## Feature elements — `src/views/<feature>/elements/`
 

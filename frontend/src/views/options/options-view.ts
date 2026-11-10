@@ -1,6 +1,8 @@
 import {css, html} from 'lit';
 import {pageStyles} from "../../styles/page";
 import {toast} from "../../components/toast";
+import "../../components/changelog-entries";
+import {ChangelogEntry, loadChangelog, selectChangelog} from "../../shared-slices/changelog/changelogSlice";
 import type {SlSelect, SlSwitch} from "@shoelace-style/shoelace";
 import {ColorScheme, getColorScheme, setColorScheme} from "../../styles/color-scheme";
 import "../../components/page-header";
@@ -146,33 +148,10 @@ export class OptionsView extends ConnectedLitElement {
             width: 100%;
         }
 
-        .changelog-entry {
-            padding: 0.5rem 0;
-            border-bottom: 1px solid var(--sl-color-neutral-100);
-        }
 
-        .changelog-entry:last-child {
-            border-bottom: none;
-        }
 
-        .changelog-version {
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--sl-color-primary-700);
-        }
 
-        .changelog-date {
-            font-size: 0.8rem;
-            color: var(--sl-color-neutral-500);
-            margin-left: 8px;
-        }
 
-        .changelog-items {
-            margin: 0.25rem 0 0 1rem;
-            padding: 0;
-            list-style: disc;
-            font-size: 0.875rem;
-        }
 
     `];
 
@@ -207,6 +186,7 @@ export class OptionsView extends ConnectedLitElement {
         super.connectedCallback();
         store.dispatch(listExercises());
         store.dispatch(loadOptions());
+        store.dispatch(loadChangelog());
     }
 
     stateChanged(state: RootState) {
@@ -214,6 +194,7 @@ export class OptionsView extends ConnectedLitElement {
         this.inviteLinkStatus = selectInviteLinkStatus(state);
         this.exercises = selectVisibleExercises(state);
         this.autoCollapse = selectAutoCollapse(state);
+        this.changelog = selectChangelog(state);
         this.unfinishedPeriods = selectUnfinishedPeriods(state);
         this.unfinishedPeriodsStatus = selectUnfinishedPeriodsStatus(state);
         this.missedEntryStatus = selectMissedEntryStatus(state);
@@ -222,6 +203,9 @@ export class OptionsView extends ConnectedLitElement {
     /** Device-local display preference, stored in localStorage (see styles/color-scheme.ts). */
     @state()
     private colorScheme: ColorScheme = getColorScheme();
+
+    @state()
+    private changelog: ChangelogEntry[] = [];
 
     private handleColorScheme = (e: Event) => {
         this.colorScheme = (e.target as SlSelect).value as ColorScheme;
@@ -413,40 +397,7 @@ export class OptionsView extends ConnectedLitElement {
 
                     <sl-tab-panel name="changelog">
                         <div class="tab-content">
-                            <div class="changelog-entry">
-                                <span class="changelog-version">v0.6</span>
-                                <span class="changelog-date">2026-05-07</span>
-                                <ul class="changelog-items">
-                                    <li>implemented missed entry option entry</li>
-                                    <li>fix bug in edit exercises where groups were not shown correctly</li>
-                                </ul>
-                            </div>
-                            <div class="changelog-entry">
-                                <span class="changelog-version">v0.5</span>
-                                <span class="changelog-date">2026-04-06</span>
-                                <ul class="changelog-items">
-                                    <li>Added Options page with invite link generation</li>
-                                    <li>Burger menu now links to Options</li>
-                                </ul>
-                            </div>
-                            <div class="changelog-entry">
-                                <span class="changelog-version">v0.4</span>
-                                <span class="changelog-date">2025</span>
-                                <ul class="changelog-items">
-                                    <li>Exercise card collapse/expand on check</li>
-                                    <li>Timer exercises with Web Audio finish sound</li>
-                                    <li>Responsive layout improvements (360 px screens)</li>
-                                </ul>
-                            </div>
-                            <div class="changelog-entry">
-                                <span class="changelog-version">v0.3</span>
-                                <span class="changelog-date">2025</span>
-                                <ul class="changelog-items">
-                                    <li>Groups with invite-only and public visibility</li>
-                                    <li>Exercise statistics view</li>
-                                    <li>Browse &amp; add public exercises</li>
-                                </ul>
-                            </div>
+                            <changelog-entries .entries="${this.changelog}"></changelog-entries>
                         </div>
                     </sl-tab-panel>
                 </sl-tab-group>

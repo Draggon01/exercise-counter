@@ -1,0 +1,55 @@
+[
+  {
+    "version": "0.7",
+    "date": "2026-11-10",
+    "title": "A fresh new look",
+    "items": [
+      "New design with light and dark mode (Options → Appearance)",
+      "Navigation bar – on phones at the bottom of the screen",
+      "Exercise cards show goal, time left, progress and your streak at a glance",
+      "Simpler form for new exercises with a real time picker",
+      "Statistics with your streaks, completion per person and who finished when",
+      "Groups show their members; accept or decline invitations right away",
+      "What's new is shown once after an update – like this",
+      "Fixed: creating exercises, the back button, a timer that finished immediately and the time left below one hour"
+    ]
+  },
+  {
+    "version": "0.6",
+    "date": "2026-05-07",
+    "title": "Missed entries",
+    "items": [
+      "Add a missed entry for a period you finished but forgot to track",
+      "Fixed: groups were not shown when editing an exercise"
+    ]
+  },
+  {
+    "version": "0.5",
+    "date": "2026-04-06",
+    "title": "Options and invite links",
+    "items": [
+      "Options page with invite link generation",
+      "The user menu links to Options"
+    ]
+  },
+  {
+    "version": "0.4",
+    "date": "2025",
+    "title": "Timers",
+    "items": [
+      "Exercise cards collapse when you mark them as done",
+      "Timer exercises with a sound when the time is up",
+      "Better layout on small screens"
+    ]
+  },
+  {
+    "version": "0.3",
+    "date": "2025",
+    "title": "Groups and statistics",
+    "items": [
+      "Groups that are invite-only or public",
+      "Statistics for every exercise",
+      "Browse and add public exercises"
+    ]
+  }
+]

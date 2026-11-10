@@ -45,6 +45,7 @@ class RequestBodyContractTest {
     @Autowired private ExerciseRepository exerciseRepository;
     @Autowired private GroupRepository groupRepository;
     @Autowired private RegisterRepository registerRepository;
+    @Autowired private org.exercise.counter.exercisecounter.web.data.options.UserOptionsRepository userOptionsRepository;
 
     private HttpClient client;
     private Exercise exercise;
@@ -78,6 +79,7 @@ class RequestBodyContractTest {
         groupRepository.deleteAll(groupRepository.findByGroupName(GROUP));
         groupRepository.deleteAll(groupRepository.findByGroupName(GROUP + " two"));
         registerRepository.deleteAll(registerRepository.findByIssuer(USER));
+        userOptionsRepository.deleteById(USER);
     }
 
     @Test
@@ -178,6 +180,13 @@ class RequestBodyContractTest {
         assertEquals("[]", json("GET", "/api/statistic/" + id + "/unfinished-periods", null).body());
         assertEquals(404, json("POST", "/api/statistic/" + id + "/missed-entries",
                 "{\"periodId\":\"" + UUID.randomUUID() + "\"}").statusCode());
+    }
+
+    @Test
+    void changelog_unseen_and_markSeen() throws Exception {
+        assertTrue(json("GET", "/api/changelog", null).body().contains("\"version\""));
+        json("PUT", "/api/changelog/seen", null);
+        assertEquals("[]", json("GET", "/api/changelog/unseen", null).body());
     }
 
     @Test
