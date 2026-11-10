@@ -4,6 +4,7 @@ import org.exercise.counter.exercisecounter.web.data.checks.CheckRepository;
 import org.exercise.counter.exercisecounter.web.data.statistic.FinishedUser;
 import org.exercise.counter.exercisecounter.web.data.statistic.FinishedUserRepository;
 import org.exercise.counter.exercisecounter.web.data.statistic.Period;
+import org.exercise.counter.exercisecounter.web.data.statistic.PeriodFinisher;
 import org.exercise.counter.exercisecounter.web.data.statistic.PeriodRepository;
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
@@ -19,6 +20,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Who finished which period of an exercise, and back-filling missed entries.
@@ -50,12 +52,11 @@ public class StatisticService {
      */
     @Transactional(readOnly = true)
     public StatisticDto load(UUID exerciseId) {
+        Map<UUID, List<String>> finishers = finishersByPeriod(exerciseId);
         Map<String, List<String>> statistics = new HashMap<>();
         for (Period period : periodRepository.findByExerciseExerciseId(exerciseId)) {
-            List<String> finishers = finishedUserRepository.findByPeriod_PeriodId(period.getPeriodId()).stream()
-                    .map(finishedUser -> finishedUser.getUsername().getUsername())
-                    .toList();
-            statistics.merge(period.toKeyString(), finishers, StatisticService::union);
+            statistics.merge(period.toKeyString(), finishers.getOrDefault(period.getPeriodId(), List.of()),
+                    StatisticService::union);
         }
         statistics.put(CURRENT_PERIOD_KEY, checkRepository.findCheckByCheckIdExerciseId(exerciseId).stream()
                 .map(check -> check.getCheckId().getUsername())
@@ -66,11 +67,18 @@ public class StatisticService {
     /** Closed periods of the exercise the user did not finish. */
     @Transactional(readOnly = true)
     public List<PeriodDto> unfinishedPeriods(UUID exerciseId, String username) {
-        User user = findUser(username);
+        Map<UUID, List<String>> finishers = finishersByPeriod(exerciseId);
         return periodRepository.findByExerciseExerciseId(exerciseId).stream()
-                .filter(period -> !finishedUserRepository.existsByPeriod_PeriodIdAndUsername(period.getPeriodId(), user))
+                .filter(period -> !finishers.getOrDefault(period.getPeriodId(), List.of()).contains(username))
                 .map(period -> new PeriodDto(period.getPeriodId(), period.toKeyString()))
                 .toList();
+    }
+
+    /** period id → usernames that finished it, loaded in one query. */
+    private Map<UUID, List<String>> finishersByPeriod(UUID exerciseId) {
+        return finishedUserRepository.findFinishersByExerciseIds(List.of(exerciseId)).stream()
+                .collect(Collectors.groupingBy(PeriodFinisher::periodId,
+                        Collectors.mapping(PeriodFinisher::username, Collectors.toList())));
     }
 
     /** Marks a past period of the exercise as finished by the user (idempotent). */

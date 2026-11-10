@@ -12,6 +12,11 @@ public interface UserSelectionRepository extends JpaRepository<UserSelection, Us
 
     List<UserSelection> findByUserSelectionId_UsernameOrderByPositionAsc(String username);
 
+    /** Like {@link #findByUserSelectionId_UsernameOrderByPositionAsc} but loads the exercises in the same query. */
+    @Query("select s from show_exercise_for_user s join fetch s.exercise "
+            + "where s.userSelectionId.username = :username order by s.position asc")
+    List<UserSelection> findWithExerciseByUsername(@Param("username") String username);
+
     @Query("SELECT MAX(u.position) FROM show_exercise_for_user u WHERE u.userSelectionId.username = :username")
     Optional<Integer> findMaxPositionByUsername(@Param("username") String username);
 }

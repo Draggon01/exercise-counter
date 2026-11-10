@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -13,6 +14,8 @@ import java.util.UUID;
 public interface PeriodRepository extends JpaRepository<Period, UUID> {
 
     List<Period> findByExerciseExerciseId(UUID exerciseId);
+
+    List<Period> findByExerciseExerciseIdIn(Collection<UUID> exerciseIds);
 
     @Query(value = "SELECT max(upper(time_range)) FROM period WHERE exercise_id = :exerciseId", nativeQuery = true)
     Object findLatestEndRaw(@Param("exerciseId") UUID exerciseId);

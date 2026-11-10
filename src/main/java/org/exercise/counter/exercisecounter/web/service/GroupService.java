@@ -41,7 +41,7 @@ public class GroupService {
     @Transactional(readOnly = true)
     public List<ExerciseGroupMappingDto> listExerciseGroups(String username) {
         Set<UUID> memberGroupIds = memberGroupIds(username);
-        return exerciseGroupMappingRepository.findAll().stream()
+        return exerciseGroupMappingRepository.findAllWithGroup().stream()
                 .filter(mapping -> memberGroupIds.contains(mapping.getGroup().getGroupId()))
                 .collect(Collectors.groupingBy(
                         mapping -> mapping.getExerciseGroupMappingId().getExerciseId(),
@@ -54,7 +54,7 @@ public class GroupService {
     /** The user's memberships and pending invitations. */
     @Transactional(readOnly = true)
     public UserGroupMappingDto userGroups(String username) {
-        return new UserGroupMappingDto(username, userGroupMappingRepository.findByUserGroupMappingId_Username(username)
+        return new UserGroupMappingDto(username, userGroupMappingRepository.findWithGroupByUsername(username)
                 .stream()
                 .map(mapping -> new GroupInformationDto(
                         mapping.getGroup() == null ? null : mapping.getGroup().getGroupName(),
@@ -156,7 +156,7 @@ public class GroupService {
     }
 
     private Optional<UserGroupMapping> membership(String groupName, String username) {
-        return userGroupMappingRepository.findByUserGroupMappingId_Username(username).stream()
+        return userGroupMappingRepository.findWithGroupByUsername(username).stream()
                 .filter(mapping -> mapping.getGroup().getGroupName().equals(groupName))
                 .findFirst();
     }
@@ -167,7 +167,7 @@ public class GroupService {
 
     /** Ids of the groups the user has joined (pending invitations do not count). */
     private Set<UUID> memberGroupIds(String username) {
-        return userGroupMappingRepository.findByUserGroupMappingId_Username(username).stream()
+        return userGroupMappingRepository.findWithGroupByUsername(username).stream()
                 .filter(mapping -> !isInvitation(mapping))
                 .map(mapping -> mapping.getUserGroupMappingId().getGroupId())
                 .collect(Collectors.toSet());

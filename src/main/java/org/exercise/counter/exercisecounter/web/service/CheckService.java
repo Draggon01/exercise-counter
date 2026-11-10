@@ -5,17 +5,22 @@ import org.exercise.counter.exercisecounter.web.data.checks.CheckId;
 import org.exercise.counter.exercisecounter.web.data.checks.CheckRepository;
 import org.exercise.counter.exercisecounter.web.data.statistic.FinishedUserRepository;
 import org.exercise.counter.exercisecounter.web.data.statistic.Period;
+import org.exercise.counter.exercisecounter.web.data.statistic.PeriodFinisher;
 import org.exercise.counter.exercisecounter.web.data.statistic.PeriodRepository;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
 import org.exercise.counter.exercisecounter.web.rest.check.dto.CheckDto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * "Finished" checks for the current period and the streaks derived from past periods.
@@ -52,15 +57,21 @@ public class CheckService {
     /** For every exercise on the user's home page: who has checked it, with their streak. */
     @Transactional(readOnly = true)
     public Map<UUID, List<CheckDto>> listPerSelectedExercise(String username) {
+        List<UUID> exerciseIds = userSelectionRepository.findWithExerciseByUsername(username).stream()
+                .map(selection -> selection.getUserSelectionId().getExerciseId())
+                .toList();
         Map<UUID, List<CheckDto>> result = new LinkedHashMap<>();
-        userSelectionRepository.findByUserSelectionId_UsernameOrderByPositionAsc(username)
-                .forEach(selection -> {
-                    UUID exerciseId = selection.getUserSelectionId().getExerciseId();
-                    result.put(exerciseId, checkRepository.findCheckByCheckIdExerciseId(exerciseId).stream()
-                            .map(check -> new CheckDto(exerciseId, check.getCheckId().getUsername(),
-                                    streak(exerciseId, check.getCheckId().getUsername())))
-                            .toList());
-                });
+        exerciseIds.forEach(id -> result.put(id, new ArrayList<>()));
+        if (exerciseIds.isEmpty()) {
+            return result;
+        }
+
+        StreakCalculator streaks = new StreakCalculator(exerciseIds);
+        for (Check check : checkRepository.findByCheckIdExerciseIdIn(exerciseIds)) {
+            UUID exerciseId = check.getCheckId().getExerciseId();
+            String checker = check.getCheckId().getUsername();
+            result.get(exerciseId).add(new CheckDto(exerciseId, checker, streaks.streak(exerciseId, checker)));
+        }
         return result;
     }
 
@@ -80,19 +91,36 @@ public class CheckService {
      */
     @Transactional(readOnly = true)
     public int streak(UUID exerciseId, String username) {
-        List<Period> newestFirst = periodRepository.findByExerciseExerciseId(exerciseId).stream()
-                .sorted(Comparator.comparing((Period p) -> p.getTimeRange().lower()).reversed())
-                .toList();
+        return new StreakCalculator(List.of(exerciseId)).streak(exerciseId, username);
+    }
 
-        int streak = 1;
-        for (Period period : newestFirst) {
-            boolean finished = finishedUserRepository.findByPeriod_PeriodId(period.getPeriodId()).stream()
-                    .anyMatch(fu -> fu.getUsername().getUsername().equals(username));
-            if (!finished) {
-                break;
-            }
-            streak++;
+    /**
+     * Loads periods and finishers of several exercises with two queries and computes streaks in memory.
+     */
+    private final class StreakCalculator {
+
+        private final Map<UUID, List<UUID>> periodIdsNewestFirst;
+        private final Map<UUID, Set<String>> finishersByPeriod;
+
+        StreakCalculator(Collection<UUID> exerciseIds) {
+            periodIdsNewestFirst = periodRepository.findByExerciseExerciseIdIn(exerciseIds).stream()
+                    .sorted(Comparator.comparing((Period p) -> p.getTimeRange().lower()).reversed())
+                    .collect(Collectors.groupingBy(p -> p.getExercise().getExerciseId(),
+                            Collectors.mapping(Period::getPeriodId, Collectors.toList())));
+            finishersByPeriod = finishedUserRepository.findFinishersByExerciseIds(exerciseIds).stream()
+                    .collect(Collectors.groupingBy(PeriodFinisher::periodId,
+                            Collectors.mapping(PeriodFinisher::username, Collectors.toSet())));
         }
-        return streak;
+
+        int streak(UUID exerciseId, String username) {
+            int streak = 1;
+            for (UUID periodId : periodIdsNewestFirst.getOrDefault(exerciseId, List.of())) {
+                if (!finishersByPeriod.getOrDefault(periodId, Set.of()).contains(username)) {
+                    break;
+                }
+                streak++;
+            }
+            return streak;
+        }
     }
 }

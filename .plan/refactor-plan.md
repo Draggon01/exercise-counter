@@ -137,7 +137,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
   - `/log/{id}` response → `ExerciseLogDto(Long value)`
 - ⚠️ Update matching thunks in the frontend slices in the same commit.
 
-### [ ] T1.11 🟠 Remove N+1 queries
+### [x] T1.11 🟠 Remove N+1 queries
 - `CheckService.getStreak`: one repository query that returns the user's finished periods for an exercise ordered by date desc (JPQL join `Period`/`FinishedUser`), compute streak in memory.
 - `ExerciseService.available`: load all `ExerciseGroupMapping`s for the user's groups once, not per exercise.
 - `StatisticService.loadStatistic`: one query for all finished users of an exercise, group in memory.

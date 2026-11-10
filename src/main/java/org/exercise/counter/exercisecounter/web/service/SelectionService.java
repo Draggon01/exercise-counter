@@ -51,7 +51,7 @@ public class SelectionService {
     }
 
     private void compactPositions(String username) {
-        List<UserSelection> selections = userSelectionRepository.findByUserSelectionId_UsernameOrderByPositionAsc(username);
+        List<UserSelection> selections = userSelectionRepository.findWithExerciseByUsername(username);
         for (int position = 0; position < selections.size(); position++) {
             UserSelection selection = selections.get(position);
             if (!Integer.valueOf(position).equals(selection.getPosition())) {

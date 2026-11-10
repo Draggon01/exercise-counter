@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -52,9 +53,10 @@ public class ExerciseService {
     @Transactional(readOnly = true)
     public List<ExerciseDto> listVisible(String username) {
         Set<String> memberGroups = memberGroupNames(username);
+        Map<UUID, List<String>> groupsByExercise = groupNamesByExercise();
         return exerciseRepository.findAll().stream()
-                .filter(exercise -> isVisibleTo(exercise, username, memberGroups))
-                .map(exercise -> toDto(exercise, null))
+                .filter(exercise -> isVisibleTo(exercise, username, memberGroups, groupsByExercise))
+                .map(exercise -> toDto(exercise, null, groupsByExercise))
                 .toList();
     }
 
@@ -63,8 +65,9 @@ public class ExerciseService {
      */
     @Transactional(readOnly = true)
     public List<ExerciseDto> listSelected(String username) {
-        return userSelectionRepository.findByUserSelectionId_UsernameOrderByPositionAsc(username).stream()
-                .map(selection -> toDto(selection.getExercise(), selection.getPosition()))
+        Map<UUID, List<String>> groupsByExercise = groupNamesByExercise();
+        return userSelectionRepository.findWithExerciseByUsername(username).stream()
+                .map(selection -> toDto(selection.getExercise(), selection.getPosition(), groupsByExercise))
                 .toList();
     }
 
@@ -74,13 +77,14 @@ public class ExerciseService {
     @Transactional(readOnly = true)
     public List<ExerciseDto> listAvailable(String username) {
         Set<String> memberGroups = memberGroupNames(username);
-        Set<UUID> selected = userSelectionRepository.findByUserSelectionId_Username(username).stream()
+        Map<UUID, List<String>> groupsByExercise = groupNamesByExercise();
+        Set<UUID> selected = userSelectionRepository.findWithExerciseByUsername(username).stream()
                 .map(selection -> selection.getUserSelectionId().getExerciseId())
                 .collect(Collectors.toSet());
         return exerciseRepository.findAll().stream()
                 .filter(exercise -> !selected.contains(exercise.getExerciseId()))
-                .filter(exercise -> isVisibleTo(exercise, username, memberGroups))
-                .map(exercise -> toDto(exercise, null))
+                .filter(exercise -> isVisibleTo(exercise, username, memberGroups, groupsByExercise))
+                .map(exercise -> toDto(exercise, null, groupsByExercise))
                 .toList();
     }
 
@@ -97,7 +101,7 @@ public class ExerciseService {
         replaceGroupMappings(exerciseId, dto.groups(), username);
         userSelectionRepository.save(new UserSelection(new UserSelectionId(username, exerciseId), dto.position()));
         schedulerService.restartSchedulerFor(saved);
-        return toDto(saved, dto.position());
+        return toDto(saved, dto.position(), Map.of(exerciseId, groupNames(exerciseId)));
     }
 
     /**
@@ -133,7 +137,7 @@ public class ExerciseService {
         if (groupNames == null) {
             return;
         }
-        List<UserGroupMapping> memberships = userGroupMappingRepository.findByUserGroupMappingId_Username(username);
+        List<UserGroupMapping> memberships = userGroupMappingRepository.findWithGroupByUsername(username);
         for (String groupName : groupNames) {
             memberships.stream()
                     .filter(mapping -> mapping.getGroup().getGroupName().equals(groupName))
@@ -144,20 +148,30 @@ public class ExerciseService {
         }
     }
 
-    private boolean isVisibleTo(Exercise exercise, String username, Set<String> memberGroups) {
+    private static boolean isVisibleTo(Exercise exercise, String username, Set<String> memberGroups,
+                                       Map<UUID, List<String>> groupsByExercise) {
         return switch (exercise.getVisibility()) {
             case PUBLIC -> true;
             case PRIVATE -> username.equals(exercise.getCreator());
-            case GROUPS -> groupNames(exercise.getExerciseId()).stream().anyMatch(memberGroups::contains);
+            case GROUPS -> groupsByExercise.getOrDefault(exercise.getExerciseId(), List.of()).stream()
+                    .anyMatch(memberGroups::contains);
         };
     }
 
     /** Names of the groups the user has joined (pending invitations do not count). */
     private Set<String> memberGroupNames(String username) {
-        return userGroupMappingRepository.findByUserGroupMappingId_Username(username).stream()
+        return userGroupMappingRepository.findWithGroupByUsername(username).stream()
                 .filter(mapping -> !Boolean.TRUE.equals(mapping.getIsInvited()))
                 .map(mapping -> mapping.getGroup().getGroupName())
                 .collect(Collectors.toSet());
+    }
+
+    /** Group names of every exercise, loaded in one query. */
+    private Map<UUID, List<String>> groupNamesByExercise() {
+        return exerciseGroupMappingRepository.findAllWithGroup().stream()
+                .collect(Collectors.groupingBy(
+                        mapping -> mapping.getExerciseGroupMappingId().getExerciseId(),
+                        Collectors.mapping(mapping -> mapping.getGroup().getGroupName(), Collectors.toList())));
     }
 
     private List<String> groupNames(UUID exerciseId) {
@@ -166,8 +180,9 @@ public class ExerciseService {
                 .toList();
     }
 
-    private ExerciseDto toDto(Exercise exercise, Integer position) {
-        return ExerciseMapper.toDto(exercise, groupNames(exercise.getExerciseId()),
-                schedulerService.getTimeLeftSeconds(exercise.getExerciseId()), position);
+    private ExerciseDto toDto(Exercise exercise, Integer position, Map<UUID, List<String>> groupsByExercise) {
+        UUID id = exercise.getExerciseId();
+        return ExerciseMapper.toDto(exercise, groupsByExercise.getOrDefault(id, List.of()),
+                schedulerService.getTimeLeftSeconds(id), position);
     }
 }
