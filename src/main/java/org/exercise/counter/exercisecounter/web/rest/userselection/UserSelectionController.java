@@ -1,5 +1,6 @@
 package org.exercise.counter.exercisecounter.web.rest.userselection;
 
+import org.exercise.counter.exercisecounter.web.rest.userselection.dto.ExerciseIdRequest;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
 import org.exercise.counter.exercisecounter.web.service.ExerciseService;
 import org.exercise.counter.exercisecounter.web.service.SelectionService;
@@ -26,19 +27,19 @@ public class UserSelectionController {
     }
 
     @PostMapping("/select")
-    public void select(@RequestBody String exerciseId, @AuthenticationPrincipal UserDetails user) {
-        selectionService.select(UUID.fromString(exerciseId), user.getUsername());
+    public void select(@RequestBody ExerciseIdRequest request, @AuthenticationPrincipal UserDetails user) {
+        selectionService.select(request.exerciseId(), user.getUsername());
     }
 
     @PostMapping("/unselect")
-    public void unselect(@RequestBody String exerciseId, @AuthenticationPrincipal UserDetails user) {
-        selectionService.unselect(UUID.fromString(exerciseId), user.getUsername());
+    public void unselect(@RequestBody ExerciseIdRequest request, @AuthenticationPrincipal UserDetails user) {
+        selectionService.unselect(request.exerciseId(), user.getUsername());
     }
 
     /** Saves the new order and returns the user's exercises in that order. */
     @PostMapping("/reorder")
-    public List<ExerciseDto> reorder(@RequestBody List<String> exerciseIds, @AuthenticationPrincipal UserDetails user) {
-        selectionService.reorder(exerciseIds.stream().map(UUID::fromString).toList(), user.getUsername());
+    public List<ExerciseDto> reorder(@RequestBody List<UUID> exerciseIds, @AuthenticationPrincipal UserDetails user) {
+        selectionService.reorder(exerciseIds, user.getUsername());
         return exerciseService.listSelected(user.getUsername());
     }
 }

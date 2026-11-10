@@ -1,5 +1,8 @@
 package org.exercise.counter.exercisecounter.web.rest.user;
 
+import org.exercise.counter.exercisecounter.web.rest.user.dto.UsernameRequest;
+import org.exercise.counter.exercisecounter.web.rest.user.dto.RegisterIdRequest;
+import org.exercise.counter.exercisecounter.web.rest.user.dto.InviteLinkRequest;
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.rest.user.dto.RegisterDto;
@@ -15,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
-import java.util.UUID;
 
 @RestController
 public class UserController {
@@ -38,8 +40,8 @@ public class UserController {
 
     /** @return {@code true} if the username is still free */
     @PostMapping("api/public/checkUser")
-    public Boolean user(@RequestBody String username) {
-        return userRepository.findByUsername(username).isEmpty();
+    public Boolean user(@RequestBody UsernameRequest request) {
+        return userRepository.findByUsername(request.username()).isEmpty();
     }
 
     @PostMapping("api/public/register")
@@ -48,17 +50,14 @@ public class UserController {
         return new UserDto(user.getUsername(), false);
     }
 
-    /**
-     * @param baseUrl origin of the frontend, e.g. {@code https://exercise-counter.de}
-     */
     @PostMapping("api/user/getInviteLink")
-    public String getInviteLink(@RequestBody String baseUrl, @AuthenticationPrincipal UserDetails user) {
-        return inviteService.inviteLink(baseUrl, user.getUsername());
+    public String getInviteLink(@RequestBody InviteLinkRequest request, @AuthenticationPrincipal UserDetails user) {
+        return inviteService.inviteLink(request.baseUrl(), user.getUsername());
     }
 
     @PostMapping("api/public/isInviteLinkValid")
-    public Boolean validateInviteLink(@RequestBody String registerId) {
-        return inviteService.isValid(UUID.fromString(registerId));
+    public Boolean validateInviteLink(@RequestBody RegisterIdRequest request) {
+        return inviteService.isValid(request.registerId());
     }
 
     @GetMapping("/api/auth/check")

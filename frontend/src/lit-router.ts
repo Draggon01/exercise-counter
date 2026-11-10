@@ -55,7 +55,7 @@ export class LitRouter extends ConnectedLitElement {
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: params["id"]
+                    body: JSON.stringify({registerId: params["id"]})
                 })).json();
 
                 if(x){

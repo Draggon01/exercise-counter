@@ -42,7 +42,7 @@ export class RegisterView extends LitElement {
             headers: {
                 "Content-Type": "application/json",
             },
-            body: username,
+            body: JSON.stringify({username}),
             credentials: "include"
         });
 

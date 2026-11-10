@@ -1,5 +1,7 @@
 package org.exercise.counter.exercisecounter.web.rest.groups;
 
+import org.exercise.counter.exercisecounter.web.rest.groups.dto.InviteRequest;
+import org.exercise.counter.exercisecounter.web.rest.groups.dto.GroupNameRequest;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.CreateGroupRequestDto;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.ExerciseGroupMappingDto;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.UserGroupMappingDto;
@@ -9,7 +11,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/groups")
@@ -44,22 +45,22 @@ public class GroupsController {
     }
 
     @PostMapping("/user/join")
-    public UserGroupMappingDto joinPublicGroup(@RequestBody String groupName, @AuthenticationPrincipal UserDetails user) {
-        return groupService.joinPublic(groupName, user.getUsername());
+    public UserGroupMappingDto joinPublicGroup(@RequestBody GroupNameRequest request, @AuthenticationPrincipal UserDetails user) {
+        return groupService.joinPublic(request.groupName(), user.getUsername());
     }
 
     @PostMapping("/user/delete")
-    public UserGroupMappingDto deleteGroupOnUser(@RequestBody String groupName, @AuthenticationPrincipal UserDetails user) {
-        return groupService.leave(groupName, user.getUsername());
+    public UserGroupMappingDto deleteGroupOnUser(@RequestBody GroupNameRequest request, @AuthenticationPrincipal UserDetails user) {
+        return groupService.leave(request.groupName(), user.getUsername());
     }
 
     @PostMapping("/user/accept")
-    public UserGroupMappingDto acceptUserToGroup(@RequestBody String groupName, @AuthenticationPrincipal UserDetails user) {
-        return groupService.acceptInvitation(groupName, user.getUsername());
+    public UserGroupMappingDto acceptUserToGroup(@RequestBody GroupNameRequest request, @AuthenticationPrincipal UserDetails user) {
+        return groupService.acceptInvitation(request.groupName(), user.getUsername());
     }
 
     @PostMapping("/user/invite")
-    public Boolean inviteUserToGroup(@RequestBody Map<String, String> request, @AuthenticationPrincipal UserDetails user) {
-        return groupService.invite(request.get("username"), request.get("groupName"), user.getUsername());
+    public Boolean inviteUserToGroup(@RequestBody InviteRequest request, @AuthenticationPrincipal UserDetails user) {
+        return groupService.invite(request.username(), request.groupName(), user.getUsername());
     }
 }

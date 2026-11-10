@@ -128,7 +128,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 ### [x] T1.9 🟠 Service layer – groups, statistics, invites
 - New: `GroupService`, `StatisticService`, `InviteService` (from `UserController`). Controllers become thin.
 
-### [ ] T1.10 🟠 Typed request DTOs (records)
+### [x] T1.10 🟠 Typed request DTOs (records)
 - Replace raw `String` / `Map` bodies:
   - `/selection/select|unselect` → `ExerciseIdRequest(UUID exerciseId)`
   - `/log/save` → `ExerciseLogRequest(UUID exerciseId, long value)`

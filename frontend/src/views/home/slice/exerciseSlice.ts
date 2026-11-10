@@ -108,7 +108,7 @@ export const selectExercise = createAsyncThunk<string, string, { rejectValue: an
             headers: {
                 "Content-Type": "application/json",
             },
-            body: exerciseId,
+            body: JSON.stringify({exerciseId}),
             credentials: "include"
         });
         if (res.ok) {
@@ -127,7 +127,7 @@ export const unselectExercise = createAsyncThunk<string, string, { rejectValue: 
             headers: {
                 "Content-Type": "application/json",
             },
-            body: exerciseId,
+            body: JSON.stringify({exerciseId}),
             credentials: "include"
         });
         if (res.ok) {

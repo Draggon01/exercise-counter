@@ -109,7 +109,7 @@ export const joinPublicGroup = createAsyncThunk<UserGroupMappingDto, string, { r
             headers: {
                 "Content-Type": "application/json",
             },
-            body: groupName,
+            body: JSON.stringify({groupName}),
             credentials: "include"
         });
         if (res.ok) {
@@ -128,7 +128,7 @@ export const deleteGroupOnUser = createAsyncThunk<UserGroupMappingDto, string, {
             headers: {
                 "Content-Type": "application/json",
             },
-            body: groupName,
+            body: JSON.stringify({groupName}),
             credentials: "include"
         });
         if (res.ok) {
@@ -169,7 +169,7 @@ export const acceptGroupToUser = createAsyncThunk<UserGroupMappingDto, string, {
             headers: {
                 "Content-Type": "application/json",
             },
-            body: group,
+            body: JSON.stringify({groupName: group}),
             credentials: "include"
         });
         if (res.ok) {

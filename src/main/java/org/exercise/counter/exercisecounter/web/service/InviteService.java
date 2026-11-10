@@ -78,14 +78,11 @@ public class InviteService {
     }
 
     /**
-     * Builds {@code <origin>/register/<id>}. Accepts a full origin, a bare host (gets {@code https://})
-     * or a JSON-quoted string; path and query are dropped.
+     * Builds {@code <origin>/register/<id>}. Accepts a full origin or a bare host (gets {@code https://});
+     * path and query are dropped.
      */
     public static String inviteUrl(String baseUrl, UUID registerId) {
         String origin = baseUrl == null ? "" : baseUrl.trim();
-        if (origin.length() >= 2 && origin.startsWith("\"") && origin.endsWith("\"")) {
-            origin = origin.substring(1, origin.length() - 1); // body sent as JSON string
-        }
         if (!origin.contains("://")) {
             origin = "https://" + origin;
         }

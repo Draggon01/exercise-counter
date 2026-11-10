@@ -22,7 +22,7 @@ export const validateRegisterId = createAsyncThunk<boolean, string, { rejectValu
             headers: {
                 "Content-Type": "application/json",
             },
-            body: registerId,
+            body: JSON.stringify({registerId}),
             credentials: "include"
         });
         if (res.ok) {

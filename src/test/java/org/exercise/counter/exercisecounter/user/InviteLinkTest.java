@@ -5,6 +5,7 @@ import org.exercise.counter.exercisecounter.web.data.register.RegisterRepository
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.rest.user.UserController;
+import org.exercise.counter.exercisecounter.web.rest.user.dto.InviteLinkRequest;
 import org.exercise.counter.exercisecounter.web.service.InviteService;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -35,11 +36,6 @@ class InviteLinkTest {
     @Test
     void bareHostFromOldClients_getsHttps() {
         assertEquals("https://exercise-counter.de/register/" + ID, InviteService.inviteUrl("exercise-counter.de", ID));
-    }
-
-    @Test
-    void jsonQuotedBody_isAccepted() {
-        assertEquals("https://exercise-counter.de/register/" + ID, InviteService.inviteUrl("\"https://exercise-counter.de\"", ID));
     }
 
     @Test
@@ -74,7 +70,7 @@ class InviteLinkTest {
 
             Set<String> links = new HashSet<>();
             for (int i = 0; i < 15; i++) {
-                links.add(userController.getInviteLink("https://a.de", auth()));
+                links.add(userController.getInviteLink(new InviteLinkRequest("https://a.de"), auth()));
             }
 
             assertEquals(10, registerRepository.findByIssuer(ISSUER).size());
