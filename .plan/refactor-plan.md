@@ -75,7 +75,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 ### [x] T0.9 🔴 Delete `TestController` and test-only scheduler code
 - Files: `web/rest/test/TestController.java`, `SchedulerService.restartSchedulerForExTest`
 
-### [ ] T0.10 🔴 Fix invite-link generation
+### [x] T0.10 🔴 Fix invite-link generation
 - File: `web/rest/user/UserController.getInviteLink`
 - Steps:
   1. Fix the reuse logic (`> 10` → decide: reuse newest open link or cap at N).

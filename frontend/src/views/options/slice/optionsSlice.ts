@@ -39,9 +39,9 @@ export const generateInviteLink = createAsyncThunk<string, void, { rejectValue: 
         const res = await fetch("/api/user/getInviteLink", {
             method: 'POST',
             headers: {
-                "Content-Type": "application/json",
+                "Content-Type": "text/plain",
             },
-            body: window.location.host,
+            body: window.location.origin,
             credentials: "include"
         });
         if (res.ok) {

@@ -18,8 +18,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -61,17 +63,46 @@ public class UserController {
         return new UserDto(save.getUsername(), false);
     }
 
+    static final int MAX_OPEN_INVITES = 10;
+
+    /**
+     * Returns an invite link for the current user. A user can have at most {@link #MAX_OPEN_INVITES}
+     * unused links; once that is reached an existing one is handed out again.
+     *
+     * @param baseUrl origin of the frontend, e.g. {@code https://exercise-counter.de}
+     *                (a bare host is accepted for older clients and gets {@code https://})
+     */
     @PostMapping("api/user/getInviteLink")
     @Transactional
     public String getInviteLink(@RequestBody String baseUrl, Authentication authenticator) {
         UserDetails principal = (UserDetails) authenticator.getPrincipal();
-        List<Register> byIssuer = registerRepository.findByIssuer(principal.getUsername());
-        if (byIssuer.size() > 10) {
-            byIssuer.getFirst();
-            return "https://" + baseUrl + "/register/" + byIssuer.getFirst().getRegisterId();
+        List<Register> openInvites = registerRepository.findByIssuer(principal.getUsername());
+        Register register = openInvites.size() >= MAX_OPEN_INVITES
+                ? openInvites.getFirst()
+                : registerRepository.save(new Register(null, principal.getUsername()));
+        return inviteUrl(baseUrl, register.getRegisterId());
+    }
+
+    public static String inviteUrl(String baseUrl, UUID registerId) {
+        String origin = baseUrl == null ? "" : baseUrl.trim();
+        if (origin.length() >= 2 && origin.startsWith("\"") && origin.endsWith("\"")) {
+            origin = origin.substring(1, origin.length() - 1); // body sent as JSON string
         }
-        Register reg = registerRepository.save(new Register(null, principal.getUsername()));
-        return "https://" + baseUrl + "/register/" + reg.getRegisterId();
+        if (!origin.contains("://")) {
+            origin = "https://" + origin;
+        }
+        URI uri;
+        try {
+            uri = URI.create(origin);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid base url");
+        }
+        String scheme = uri.getScheme();
+        if (uri.getHost() == null || !("http".equals(scheme) || "https".equals(scheme))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid base url");
+        }
+        String port = uri.getPort() == -1 ? "" : ":" + uri.getPort();
+        return scheme + "://" + uri.getHost() + port + "/register/" + registerId;
     }
 
     @PostMapping("api/public/isInviteLinkValid")
