@@ -18,7 +18,7 @@ const initialState: SliceState = {
 }
 
 export const loadStatistic = apiThunk<StatisticDto, string>(
-    'statistic/load', exerciseId => apiGet(`/api/statistic/load?exerciseId=${encodeURIComponent(exerciseId)}`));
+    'statistic/load', exerciseId => apiGet(`/api/statistic/${exerciseId}`));
 
 
 export const statisticSlice = createSlice({

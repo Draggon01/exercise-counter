@@ -7,7 +7,6 @@ import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseType;
 import org.exercise.counter.exercisecounter.web.data.exercise.Visibility;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.rest.exercise.ExerciseController;
-import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
 import org.exercise.counter.exercisecounter.web.scheduler.SchedulerService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -73,7 +72,7 @@ class SchedulerLifecycleTest {
         schedulerService.restartSchedulerFor(exercise);
         assertTrue(schedulerService.isScheduled(exercise.getExerciseId()));
 
-        exerciseController.deleteExercise(toDto(exercise), auth("lifecycleuser"));
+        exerciseController.delete(exercise.getExerciseId(), auth("lifecycleuser"));
 
         assertFalse(schedulerService.isScheduled(exercise.getExerciseId()),
                 "Scheduler must be cancelled after the exercise was deleted");
@@ -85,11 +84,6 @@ class SchedulerLifecycleTest {
         schedulerService.cancelSchedulerFor(java.util.UUID.randomUUID());
     }
 
-    private static ExerciseDto toDto(Exercise e) {
-        return new ExerciseDto(e.getExerciseId(), e.getExerciseTitle(), e.getCreator(), e.getDaysRepeat(),
-                "00:00:00", e.getUtcOffset(), e.getExerciseType(), e.getExerciseValue(),
-                e.getExerciseIncrease(), e.getVisibility(), List.of(), 0L, null);
-    }
 
     private static UserDetails auth(String username) {
         return new User(username, "{noop}x", List.of(new SimpleGrantedAuthority("ROLE_USER")));

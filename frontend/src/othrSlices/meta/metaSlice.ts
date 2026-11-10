@@ -24,8 +24,8 @@ const initialState: SliceState = {
 export const loadExerciseMeta = apiThunk<{ exerciseTypes: Record<string, string>, visibilities: string[] }>(
     'meta/loadExercise', async () => {
         const [exerciseTypes, visibilities] = await Promise.all([
-            apiGet<Record<string, string>>("/api/exercises/exercisetype"),
-            apiGet<string[]>("/api/exercises/visibility"),
+            apiGet<Record<string, string>>("/api/exercises/types"),
+            apiGet<string[]>("/api/exercises/visibilities"),
         ]);
         return {exerciseTypes, visibilities};
     });

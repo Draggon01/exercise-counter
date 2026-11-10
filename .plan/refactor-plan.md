@@ -157,7 +157,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 ### [x] T1.14 🟠 CORS origins from config
 - Move the list in `SecurityConfig.corsConfigurationSource` to `app.cors.allowed-origins` in `application.properties`.
 
-### [ ] T1.15 ⚠️ RESTful endpoints (optional)
+### [x] T1.15 ⚠️ RESTful endpoints (optional)
 - Deferred: do this right after **T2.1** (API client), so the frontend only changes in `src/api/` + slices once.
 - `POST /api/exercises` (create), `PUT /api/exercises/{id}`, `DELETE /api/exercises/{id}`, `DELETE /api/checks/{exerciseId}` …
 - Do together with T2.1 so only `src/api/` + slices change in the frontend.
@@ -309,7 +309,7 @@ Goal: when a user logs in and there is a changelog entry they have not seen yet,
 | Phase | Tasks | Done |
 |---|---|---|
 | 0 – Bugs & security | 11 | 11 |
-| 1 – Backend | 15 | 14 (T1.15 deferred to after T2.1) |
+| 1 – Backend | 15 | 15 |
 | 2 – Frontend structure | 7 | 0 |
 | 3 – Visual | 10 | 0 |
 | 4 – Features | 1 | 0 |

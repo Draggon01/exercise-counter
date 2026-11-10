@@ -3,7 +3,7 @@ import {createEntityAdapter, createSlice, EntityState, Reducer} from "@reduxjs/t
 import {ExerciseGroupMappingDto} from "../models/ExerciseGroupMappingDto";
 import {UserGroupMappingDto} from "../models/UserGroupMappingDto";
 import {GroupVisibility} from "../models/GroupVisibility";
-import {apiGet, apiPost, apiThunk} from "../../../api/http";
+import {apiDelete, apiGet, apiPost, apiThunk} from "../../../api/http";
 
 type SliceState = {
     exerciseMappings: {
@@ -39,33 +39,36 @@ const initialState: SliceState = {
     }
 }
 
+/** Groups are addressed by (URL-encoded) name. */
+const groupUrl = (groupName: string) => `/api/groups/${encodeURIComponent(groupName)}`;
+
 /** Exercise → group names, limited to the user's groups. */
 export const listExerciseMappings = apiThunk<ExerciseGroupMappingDto[]>(
-    'exerciseMappings/list', () => apiGet("/api/groups/exercises/list"));
+    'exerciseMappings/list', () => apiGet("/api/groups/exercise-mappings"));
 
 /** The current user's memberships and invitations (a list with one entry). */
 export const listUserMappings = apiThunk<UserGroupMappingDto[]>(
-    'userMappings/list', () => apiGet("/api/groups/user/list"));
+    'userMappings/list', () => apiGet("/api/groups/mine"));
 
 export const createGroupOnUser = apiThunk<UserGroupMappingDto, { groupName: string, visibility: GroupVisibility }>(
-    'userMappings/create', group => apiPost("/api/groups/user/create", group));
+    'userMappings/create', group => apiPost("/api/groups", group));
 
 export const searchPublicGroups = apiThunk<string[], string>(
-    'group/searchPublic', query => apiGet(`/api/groups/public/search?query=${encodeURIComponent(query)}`));
+    'group/searchPublic', query => apiGet(`/api/groups/public?query=${encodeURIComponent(query)}`));
 
 export const joinPublicGroup = apiThunk<UserGroupMappingDto, string>(
-    'group/joinPublic', groupName => apiPost("/api/groups/user/join", {groupName}));
+    'group/joinPublic', groupName => apiPost(`${groupUrl(groupName)}/join`));
 
 /** Leave a group or decline an invitation. */
 export const deleteGroupOnUser = apiThunk<UserGroupMappingDto, string>(
-    'userMappings/delete', groupName => apiPost("/api/groups/user/delete", {groupName}));
+    'userMappings/delete', groupName => apiDelete(`${groupUrl(groupName)}/membership`));
 
 /** [username, groupName] → false if the user does not exist or is already in the group. */
 export const inviteUserToGroup = apiThunk<boolean, [string, string]>(
-    'userMappings/invite', ([username, groupName]) => apiPost("/api/groups/user/invite", {username, groupName}));
+    'userMappings/invite', ([username, groupName]) => apiPost(`${groupUrl(groupName)}/invitations`, {username}));
 
 export const acceptGroupToUser = apiThunk<UserGroupMappingDto, string>(
-    'userMappings/accept', groupName => apiPost("/api/groups/user/accept", {groupName}));
+    'userMappings/accept', groupName => apiPost(`${groupUrl(groupName)}/accept`));
 
 export const groupSlice = createSlice({
     name: 'group',

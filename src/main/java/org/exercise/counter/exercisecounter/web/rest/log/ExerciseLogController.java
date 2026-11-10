@@ -5,7 +5,7 @@ import org.exercise.counter.exercisecounter.web.data.log.ExerciseLogId;
 import org.exercise.counter.exercisecounter.web.data.log.ExerciseLogRepository;
 import org.exercise.counter.exercisecounter.web.rest.log.dto.ExerciseLogDto;
 import org.exercise.counter.exercisecounter.web.rest.log.dto.ExerciseLogRequest;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -33,10 +33,11 @@ public class ExerciseLogController {
                 .orElse(new ExerciseLogDto(null));
     }
 
-    @PostMapping("/save")
-    public ResponseEntity<Void> saveLog(@RequestBody ExerciseLogRequest request, @AuthenticationPrincipal UserDetails user) {
-        ExerciseLogId logId = new ExerciseLogId(request.exerciseId(), user.getUsername());
+    @PutMapping("/{exerciseId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveLog(@PathVariable UUID exerciseId, @RequestBody ExerciseLogRequest request,
+                        @AuthenticationPrincipal UserDetails user) {
+        ExerciseLogId logId = new ExerciseLogId(exerciseId, user.getUsername());
         exerciseLogRepository.save(new ExerciseLog(logId, request.value(), LocalDateTime.now()));
-        return ResponseEntity.ok().build();
     }
 }

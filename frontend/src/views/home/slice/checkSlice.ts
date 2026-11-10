@@ -1,7 +1,7 @@
 import {AsyncStoreState} from "../../../commons";
 import {createEntityAdapter, createSlice, EntityState, Reducer} from "@reduxjs/toolkit";
 import {CheckDto} from "../models/checkDto";
-import {apiGet, apiPost, apiThunk} from "../../../api/http";
+import {apiDelete, apiGet, apiPut, apiThunk} from "../../../api/http";
 
 type SliceState = {
     checks: {
@@ -30,16 +30,19 @@ const initialState: SliceState = {
 }
 
 export const listUserChecks = apiThunk<CheckDto[]>(
-    'checks/list', () => apiGet("/api/check/list"));
+    'checks/list', () => apiGet("/api/checks"));
 
 export const listChecksPerExercise = apiThunk<Record<string, CheckDto[]>>(
-    'checks/listPerExercise', () => apiGet("/api/check/list/per/exercise"));
+    'checks/listPerExercise', () => apiGet("/api/checks/per-exercise"));
 
 export const saveCheck = apiThunk<CheckDto, CheckDto>(
-    'checks/save', check => apiPost("/api/check/save", check));
+    'checks/save', check => apiPut(`/api/checks/${check.exerciseId}`));
 
 export const deleteCheck = apiThunk<CheckDto, CheckDto>(
-    'checks/delete', check => apiPost("/api/check/delete", check));
+    'checks/delete', async check => {
+        await apiDelete(`/api/checks/${check.exerciseId}`);
+        return check;
+    });
 
 
 export const checkSlice = createSlice({

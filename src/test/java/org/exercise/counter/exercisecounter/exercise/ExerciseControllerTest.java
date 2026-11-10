@@ -59,7 +59,7 @@ class ExerciseControllerTest {
         ExerciseDto request = new ExerciseDto(null, "Pushups", OTHER, 1, "12:00:00", 0,
                 ExerciseType.NUMBERREPEAT, "10", null, Visibility.PRIVATE, List.of(), null, 0);
 
-        ExerciseDto saved = exerciseController.addExercise(request, auth(OWNER));
+        ExerciseDto saved = exerciseController.create(request, auth(OWNER));
         createdId = saved.exerciseId();
 
         assertEquals(OWNER, saved.creator());

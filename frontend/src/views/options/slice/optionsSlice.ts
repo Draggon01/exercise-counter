@@ -36,7 +36,7 @@ const initialState: SliceState = {
 }
 
 export const generateInviteLink = apiThunk<string>(
-    'options/generateInviteLink', () => apiPost("/api/user/getInviteLink", {baseUrl: window.location.origin}));
+    'options/generateInviteLink', () => apiPost("/api/invites", {baseUrl: window.location.origin}));
 
 export const loadOptions = apiThunk<{ autoCollapse: boolean }>(
     'options/loadOptions', () => apiGet("/api/options"));
@@ -47,10 +47,11 @@ export const setAutoCollapse = apiThunk<boolean, boolean>(
 
 /** Past periods of the exercise the user did not finish. */
 export const loadUnfinishedPeriods = apiThunk<PeriodDto[], string>(
-    'options/loadUnfinishedPeriods', exerciseId => apiGet(`/api/statistic/unfinished-periods/${exerciseId}`));
+    'options/loadUnfinishedPeriods', exerciseId => apiGet(`/api/statistic/${exerciseId}/unfinished-periods`));
 
 export const submitMissedEntry = apiThunk<void, { exerciseId: string; periodId: string }>(
-    'options/submitMissedEntry', entry => apiPost("/api/statistic/add-missed-entry", entry));
+    'options/submitMissedEntry', ({exerciseId, periodId}) =>
+        apiPost(`/api/statistic/${exerciseId}/missed-entries`, {periodId}));
 
 const optionsSlice = createSlice({
     name: 'options',

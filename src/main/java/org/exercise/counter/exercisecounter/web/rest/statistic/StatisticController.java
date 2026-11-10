@@ -1,10 +1,10 @@
 package org.exercise.counter.exercisecounter.web.rest.statistic;
 
-import org.exercise.counter.exercisecounter.web.rest.statistic.dto.MissedEntryRequestDto;
+import org.exercise.counter.exercisecounter.web.rest.statistic.dto.MissedEntryRequest;
 import org.exercise.counter.exercisecounter.web.rest.statistic.dto.PeriodDto;
 import org.exercise.counter.exercisecounter.web.rest.statistic.dto.StatisticDto;
 import org.exercise.counter.exercisecounter.web.service.StatisticService;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/statistic")
+@RequestMapping("/api/statistic/{exerciseId}")
 public class StatisticController {
 
     private final StatisticService statisticService;
@@ -22,19 +22,23 @@ public class StatisticController {
         this.statisticService = statisticService;
     }
 
-    @GetMapping("/load")
-    public StatisticDto loadStatistic(@RequestParam String exerciseId) {
-        return statisticService.load(UUID.fromString(exerciseId));
+    /** Finishers per period plus "current" for the running period. */
+    @GetMapping
+    public StatisticDto load(@PathVariable UUID exerciseId) {
+        return statisticService.load(exerciseId);
     }
 
-    @GetMapping("/unfinished-periods/{exerciseId}")
-    public List<PeriodDto> getUnfinishedPeriods(@PathVariable String exerciseId, @AuthenticationPrincipal UserDetails user) {
-        return statisticService.unfinishedPeriods(UUID.fromString(exerciseId), user.getUsername());
+    /** Past periods the current user did not finish. */
+    @GetMapping("/unfinished-periods")
+    public List<PeriodDto> unfinishedPeriods(@PathVariable UUID exerciseId, @AuthenticationPrincipal UserDetails user) {
+        return statisticService.unfinishedPeriods(exerciseId, user.getUsername());
     }
 
-    @PostMapping("/add-missed-entry")
-    public ResponseEntity<Void> addMissedEntry(@RequestBody MissedEntryRequestDto request, @AuthenticationPrincipal UserDetails user) {
-        statisticService.addMissedEntry(request.exerciseId(), request.periodId(), user.getUsername());
-        return ResponseEntity.ok().build();
+    /** Mark a past period as finished by the current user. */
+    @PostMapping("/missed-entries")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void addMissedEntry(@PathVariable UUID exerciseId, @RequestBody MissedEntryRequest request,
+                               @AuthenticationPrincipal UserDetails user) {
+        statisticService.addMissedEntry(exerciseId, request.periodId(), user.getUsername());
     }
 }

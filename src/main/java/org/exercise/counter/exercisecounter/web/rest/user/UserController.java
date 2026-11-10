@@ -1,10 +1,8 @@
 package org.exercise.counter.exercisecounter.web.rest.user;
 
-import org.exercise.counter.exercisecounter.web.rest.user.dto.UsernameRequest;
-import org.exercise.counter.exercisecounter.web.rest.user.dto.RegisterIdRequest;
-import org.exercise.counter.exercisecounter.web.rest.user.dto.InviteLinkRequest;
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
+import org.exercise.counter.exercisecounter.web.rest.user.dto.InviteLinkRequest;
 import org.exercise.counter.exercisecounter.web.rest.user.dto.RegisterDto;
 import org.exercise.counter.exercisecounter.web.rest.user.dto.UserDto;
 import org.exercise.counter.exercisecounter.web.service.InviteService;
@@ -12,14 +10,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.UUID;
 
+/**
+ * Current user, registration with invite links and the session check.
+ * Login and logout ({@code /api/login}, {@code /api/logout}) are handled by Spring Security.
+ */
 @RestController
+@RequestMapping("/api")
 public class UserController {
 
     private final UserRepository userRepository;
@@ -30,8 +31,9 @@ public class UserController {
         this.inviteService = inviteService;
     }
 
-    @PostMapping("api/public/userinfo")
-    public UserDto user(@AuthenticationPrincipal UserDetails user) {
+    /** The logged-in user, or an anonymous user. */
+    @GetMapping("/public/userinfo")
+    public UserDto userInfo(@AuthenticationPrincipal UserDetails user) {
         if (user != null) {
             return new UserDto(user.getUsername(), false);
         }
@@ -39,29 +41,30 @@ public class UserController {
     }
 
     /** @return {@code true} if the username is still free */
-    @PostMapping("api/public/checkUser")
-    public Boolean user(@RequestBody UsernameRequest request) {
-        return userRepository.findByUsername(request.username()).isEmpty();
+    @GetMapping("/public/username-available")
+    public Boolean isUsernameAvailable(@RequestParam String username) {
+        return userRepository.findByUsername(username).isEmpty();
     }
 
-    @PostMapping("api/public/register")
+    @PostMapping("/public/register")
     public UserDto register(@RequestBody RegisterDto registerDto) {
         User user = inviteService.register(registerDto.username(), registerDto.password(), registerDto.registerId());
         return new UserDto(user.getUsername(), false);
     }
 
-    @PostMapping("api/user/getInviteLink")
-    public String getInviteLink(@RequestBody InviteLinkRequest request, @AuthenticationPrincipal UserDetails user) {
+    @GetMapping("/public/invites/{registerId}/valid")
+    public Boolean isInviteValid(@PathVariable UUID registerId) {
+        return inviteService.isValid(registerId);
+    }
+
+    /** Returns an invite link of the current user (plain text). */
+    @PostMapping("/invites")
+    public String createInvite(@RequestBody InviteLinkRequest request, @AuthenticationPrincipal UserDetails user) {
         return inviteService.inviteLink(request.baseUrl(), user.getUsername());
     }
 
-    @PostMapping("api/public/isInviteLinkValid")
-    public Boolean validateInviteLink(@RequestBody RegisterIdRequest request) {
-        return inviteService.isValid(request.registerId());
-    }
-
-    @GetMapping("/api/auth/check")
-    public ResponseEntity<?> healthCheck(@AuthenticationPrincipal UserDetails user) {
+    @GetMapping("/auth/check")
+    public ResponseEntity<?> checkSession(@AuthenticationPrincipal UserDetails user) {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }

@@ -2,7 +2,7 @@ import {AsyncStoreState} from "../../../commons";
 import {ExerciseDto} from "../models/exerciseDto";
 import {createEntityAdapter, createSlice, EntityState, Reducer} from "@reduxjs/toolkit";
 import {ExerciseLogDto} from "../models/exerciseLogDto";
-import {apiGet, apiPost, apiThunk} from "../../../api/http";
+import {apiDelete, apiGet, apiPost, apiPut, apiThunk} from "../../../api/http";
 
 type SliceState = {
     exercises: {
@@ -24,31 +24,37 @@ const initialState: SliceState = {
 
 /** All exercises the user may see. */
 export const listExercises = apiThunk<ExerciseDto[]>(
-    'exercise/list', () => apiGet("/api/exercises/list"));
+    'exercise/list', () => apiGet("/api/exercises"));
 
 /** The exercises on the user's home page. */
 export const listExercisesSelected = apiThunk<ExerciseDto[]>(
-    'exercise/list/selected', () => apiGet("/api/exercises/list/selected"));
+    'exercise/list/selected', () => apiGet("/api/exercises/selected"));
 
 /** Visible exercises not yet on the home page (browse view). */
 export const listExercisesAvailable = apiThunk<ExerciseDto[]>(
-    'exercise/list/available', () => apiGet("/api/exercises/list/available"));
+    'exercise/list/available', () => apiGet("/api/exercises/available"));
 
+/** Creates the exercise, or updates it if it has an id. */
 export const saveExercise = apiThunk<ExerciseDto, ExerciseDto>(
-    'exercise/save', exercise => apiPost("/api/exercises/save", exercise));
+    'exercise/save', exercise => exercise.exerciseId
+        ? apiPut(`/api/exercises/${exercise.exerciseId}`, exercise)
+        : apiPost("/api/exercises", exercise));
 
 export const deleteExercise = apiThunk<ExerciseDto, ExerciseDto>(
-    'exercise/delete', exercise => apiPost("/api/exercises/delete", exercise));
+    'exercise/delete', async exercise => {
+        await apiDelete(`/api/exercises/${exercise.exerciseId}`);
+        return exercise;
+    });
 
 export const selectExercise = apiThunk<string, string>(
     'selection/select', async exerciseId => {
-        await apiPost("/api/selection/select", {exerciseId});
+        await apiPut(`/api/selection/${exerciseId}`);
         return exerciseId;
     });
 
 export const unselectExercise = apiThunk<string, string>(
     'selection/unselect', async exerciseId => {
-        await apiPost("/api/selection/unselect", {exerciseId});
+        await apiDelete(`/api/selection/${exerciseId}`);
         return exerciseId;
     });
 
@@ -58,10 +64,10 @@ export const loadExerciseLog = apiThunk<ExerciseLogDto, string>(
 
 /** Saves the new order; returns the home page exercises in that order. */
 export const reorderExercises = apiThunk<ExerciseDto[], string[]>(
-    'selection/reorder', exerciseIds => apiPost("/api/selection/reorder", exerciseIds));
+    'selection/reorder', exerciseIds => apiPut("/api/selection/order", exerciseIds));
 
 export const saveExerciseLog = apiThunk<void, ExerciseLogDto>(
-    'exercise/log/save', log => apiPost("/api/log/save", log));
+    'exercise/log/save', log => apiPut(`/api/log/${log.exerciseId}`, {value: log.value}));
 
 
 export const exerciseSlice = createSlice({

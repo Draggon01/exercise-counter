@@ -14,7 +14,7 @@ import org.exercise.counter.exercisecounter.web.data.statistic.PeriodRepository;
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.rest.statistic.StatisticController;
-import org.exercise.counter.exercisecounter.web.rest.statistic.dto.MissedEntryRequestDto;
+import org.exercise.counter.exercisecounter.web.rest.statistic.dto.MissedEntryRequest;
 import org.exercise.counter.exercisecounter.web.rest.statistic.dto.PeriodDto;
 import org.exercise.counter.exercisecounter.web.rest.statistic.dto.StatisticDto;
 import org.exercise.counter.exercisecounter.web.scheduler.ExerciseResetJob;
@@ -27,7 +27,6 @@ import org.exercise.counter.exercisecounter.TestcontainersConfiguration;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -103,7 +102,7 @@ public class StatisticIT {
         checkRepository.save(check);
 
         // 2. Load statistics BEFORE the scheduler runs
-        StatisticDto preSchedulerStats = statisticController.loadStatistic(testExercise.getExerciseId().toString());
+        StatisticDto preSchedulerStats = statisticController.load(testExercise.getExerciseId());
         Map<String, List<String>> preStatsMap = preSchedulerStats.finishedInformation();
 
         // Assert the user is currently checked for today
@@ -114,7 +113,7 @@ public class StatisticIT {
         exerciseResetJob.run(testExercise.getExerciseId());
 
         // 4. Load statistics AFTER the scheduler has run
-        StatisticDto postSchedulerStats = statisticController.loadStatistic(testExercise.getExerciseId().toString());
+        StatisticDto postSchedulerStats = statisticController.load(testExercise.getExerciseId());
         Map<String, List<String>> postStatsMap = postSchedulerStats.finishedInformation();
 
         // After the scheduler runs:
@@ -149,8 +148,7 @@ public class StatisticIT {
 
         UserDetails auth = buildAuth(testUser.getUsername());
 
-        List<PeriodDto> unfinished = statisticController.getUnfinishedPeriods(
-                testExercise.getExerciseId().toString(), auth);
+        List<PeriodDto> unfinished = statisticController.unfinishedPeriods(testExercise.getExerciseId(), auth);
 
         assertEquals(1, unfinished.size());
         assertEquals(period.getPeriodId(), unfinished.get(0).periodId());
@@ -165,13 +163,9 @@ public class StatisticIT {
 
         UserDetails auth = buildAuth(testUser.getUsername());
 
-        MissedEntryRequestDto request = new MissedEntryRequestDto(
-                testExercise.getExerciseId(), period.getPeriodId());
-        ResponseEntity<Void> response = statisticController.addMissedEntry(request, auth);
+        statisticController.addMissedEntry(testExercise.getExerciseId(), new MissedEntryRequest(period.getPeriodId()), auth);
 
-        assertEquals(200, response.getStatusCode().value());
-        List<PeriodDto> unfinished = statisticController.getUnfinishedPeriods(
-                testExercise.getExerciseId().toString(), auth);
+        List<PeriodDto> unfinished = statisticController.unfinishedPeriods(testExercise.getExerciseId(), auth);
         assertTrue(unfinished.isEmpty(), "Period should no longer be unfinished after adding missed entry");
     }
 

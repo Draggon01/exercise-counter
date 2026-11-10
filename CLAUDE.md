@@ -59,6 +59,8 @@ npm run build           # build for production
 - Do NOT use Lombok (it was removed). Write constructors, getters/setters, `equals`/`hashCode` and loggers (`LoggerFactory.getLogger`) in plain Java; prefer records where possible
 - Follow existing package and naming patterns
 - All endpoints authenticated except `/api/public/**`
+- REST style: resources in the path, HTTP verbs for actions (`GET/POST /api/exercises`, `PUT/DELETE /api/exercises/{id}`); unauthenticated API calls get 401
+- Frontend: every backend call goes through `src/api/http.ts` (`apiGet/apiPost/apiPut/apiDelete`, `apiThunk`) inside a Redux slice — never `fetch` directly
 - Use Records for DTOs, including request bodies — no raw `String` or `Map` request bodies
 - Get the current user with `@AuthenticationPrincipal UserDetails user`, never by casting `authentication.getPrincipal()`
 - Put logic in a service, not in a controller; use Spring's `@Transactional` (`readOnly = true` for reads)
@@ -94,7 +96,7 @@ nothing distinct for now
 - `timeLeftSeconds` in `ExerciseDto` is computed via `SchedulerService.getTimeLeftSeconds()` which calls `ScheduledFuture.getDelay()` — this correctly reflects the actual next-reset time for multi-day exercises (`daysRepeat > 1`). Do NOT recalculate it in `ExerciseService`/controllers using date arithmetic; the scheduler is the authoritative source.
 - `daysRepeat` controls how often the scheduler fires (every N days), not how many days the exercise runs per cycle. `startTime` is the daily clock time of the reset, but the reset only happens every `daysRepeat` days.
 - `exerciseValue` for time exercises (TIMEREPEAT, TIMEINCREASE) is stored as seconds (integer string). Format with `formatTime(secs)` → `M:SS` or `H:MM:SS`.
-- `ExerciseLog` entity (composite key: exerciseId + username) stores one "current period" progress per user per exercise. `value` is seconds-completed for time exercises, or reps-completed for rep exercises. Endpoints: `GET /api/log/{exerciseId}` and `POST /api/log/save`.
+- `ExerciseLog` entity (composite key: exerciseId + username) stores one "current period" progress per user per exercise. `value` is seconds-completed for time exercises, or reps-completed for rep exercises. Endpoints: `GET /api/log/{exerciseId}` and `PUT /api/log/{exerciseId}` (body `{value}`).
 - Timer in `exercise-card.ts` uses `setInterval` (stored as class property, not `@state`) and Web Audio API for finish sound. Clear the interval in `disconnectedCallback`. Load saved log in `updated()` when `item.exerciseId` first becomes valid.
 - Rep counter in `exercise-card.ts` uses a debounced save (500ms) to avoid excessive API calls on rapid +/- clicks.
 - `Exercise.lastSchedulerRun` (UTC `LocalDateTime`, nullable) records when the scheduler last fired. On startup, `SchedulerService.calculateNextRunInstant()` uses it to compute the remaining delay: `lastSchedulerRun + daysRepeat days` at the configured reset time. If that time is past, the task is scheduled immediately. New exercises (null) fall back to the original `generateStartTime` logic.

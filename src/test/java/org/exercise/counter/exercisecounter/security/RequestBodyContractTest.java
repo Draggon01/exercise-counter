@@ -76,22 +76,58 @@ class RequestBodyContractTest {
         client.close();
         exerciseRepository.delete(exercise);
         groupRepository.deleteAll(groupRepository.findByGroupName(GROUP));
+        groupRepository.deleteAll(groupRepository.findByGroupName(GROUP + " two"));
         registerRepository.deleteAll(registerRepository.findByIssuer(USER));
+    }
+
+    @Test
+    void exercises_create_update_delete() throws Exception {
+        String body = "{\"exerciseTitle\":\"Created\",\"daysRepeat\":1,\"startTime\":\"12:00:00\",\"utcOffset\":0,"
+                + "\"exerciseType\":\"NUMBERREPEAT\",\"exerciseValue\":\"5\",\"visibility\":\"PRIVATE\",\"groups\":[],\"position\":0}";
+        HttpResponse<String> created = json("POST", "/api/exercises", body);
+        assertEquals(201, created.statusCode(), created.body());
+        String id = created.body().replaceAll(".*\"exerciseId\":\"([^\"]+)\".*", "$1");
+
+        HttpResponse<String> updated = json("PUT", "/api/exercises/" + id, body.replace("Created", "Updated"));
+        assertEquals(200, updated.statusCode());
+        assertTrue(updated.body().contains("Updated"));
+
+        assertEquals(204, json("DELETE", "/api/exercises/" + id, null).statusCode());
+        assertFalse(json("GET", "/api/exercises", null).body().contains(id));
+    }
+
+    @Test
+    void exerciseMeta() throws Exception {
+        assertTrue(json("GET", "/api/exercises/types", null).body().contains("NUMBERREPEAT"));
+        assertTrue(json("GET", "/api/exercises/visibilities", null).body().contains("GROUPS"));
     }
 
     @Test
     void selection_select_reorder_unselect() throws Exception {
         String id = exercise.getExerciseId().toString();
 
-        assertEquals(200, json("POST", "/api/selection/select", "{\"exerciseId\":\"" + id + "\"}").statusCode());
-        assertTrue(json("GET", "/api/exercises/list/selected", null).body().contains(id));
+        assertEquals(204, json("PUT", "/api/selection/" + id, null).statusCode());
+        assertTrue(json("GET", "/api/exercises/selected", null).body().contains(id));
 
-        HttpResponse<String> reorder = json("POST", "/api/selection/reorder", "[\"" + id + "\"]");
+        HttpResponse<String> reorder = json("PUT", "/api/selection/order", "[\"" + id + "\"]");
         assertEquals(200, reorder.statusCode());
         assertTrue(reorder.body().contains(id));
 
-        assertEquals(200, json("POST", "/api/selection/unselect", "{\"exerciseId\":\"" + id + "\"}").statusCode());
-        assertFalse(json("GET", "/api/exercises/list/selected", null).body().contains(id));
+        assertEquals(204, json("DELETE", "/api/selection/" + id, null).statusCode());
+        assertFalse(json("GET", "/api/exercises/selected", null).body().contains(id));
+    }
+
+    @Test
+    void checks_checkAndUncheck() throws Exception {
+        String id = exercise.getExerciseId().toString();
+
+        HttpResponse<String> checked = json("PUT", "/api/checks/" + id, null);
+        assertEquals(200, checked.statusCode());
+        assertTrue(checked.body().contains(id));
+        assertTrue(json("GET", "/api/checks", null).body().contains(id));
+
+        assertEquals(204, json("DELETE", "/api/checks/" + id, null).statusCode());
+        assertEquals("[]", json("GET", "/api/checks", null).body());
     }
 
     @Test
@@ -99,40 +135,64 @@ class RequestBodyContractTest {
         String id = exercise.getExerciseId().toString();
         assertEquals("{\"value\":null}", json("GET", "/api/log/" + id, null).body());
 
-        assertEquals(200, json("POST", "/api/log/save", "{\"exerciseId\":\"" + id + "\",\"value\":42}").statusCode());
+        assertEquals(204, json("PUT", "/api/log/" + id, "{\"value\":42}").statusCode());
 
         assertEquals("{\"value\":42}", json("GET", "/api/log/" + id, null).body());
     }
 
     @Test
-    void groups_create_invite_leave() throws Exception {
-        assertEquals(200, json("POST", "/api/groups/user/create",
+    void groups_create_invite_join_accept_leave() throws Exception {
+        assertEquals(201, json("POST", "/api/groups",
                 "{\"groupName\":\"" + GROUP + "\",\"visibility\":\"PUBLIC\"}").statusCode());
+        assertTrue(json("GET", "/api/groups/public?query=contract", null).body().contains(GROUP));
+        assertTrue(json("GET", "/api/groups/mine", null).body().contains(GROUP));
 
-        HttpResponse<String> invite = json("POST", "/api/groups/user/invite",
-                "{\"username\":\"does-not-exist\",\"groupName\":\"" + GROUP + "\"}");
+        HttpResponse<String> invite = json("POST", "/api/groups/" + GROUP + "/invitations",
+                "{\"username\":\"does-not-exist\"}");
         assertEquals("false", invite.body());
 
-        assertEquals(200, json("POST", "/api/groups/user/join", "{\"groupName\":\"" + GROUP + "\"}").statusCode());
-        assertEquals(200, json("POST", "/api/groups/user/accept", "{\"groupName\":\"" + GROUP + "\"}").statusCode());
-        assertEquals(200, json("POST", "/api/groups/user/delete", "{\"groupName\":\"" + GROUP + "\"}").statusCode());
+        assertEquals(200, json("POST", "/api/groups/" + GROUP + "/join", null).statusCode());
+        assertEquals(200, json("POST", "/api/groups/" + GROUP + "/accept", null).statusCode());
+        assertEquals(200, json("DELETE", "/api/groups/" + GROUP + "/membership", null).statusCode());
         assertTrue(groupRepository.findByGroupName(GROUP).isEmpty());
     }
 
     @Test
-    void user_publicChecks_andInviteLink() throws Exception {
-        assertEquals("true", json("POST", "/api/public/checkUser", "{\"username\":\"free-name-123\"}").body());
-        assertEquals("false", json("POST", "/api/public/checkUser", "{\"username\":\"" + USER + "\"}").body());
-        assertEquals("false", json("POST", "/api/public/isInviteLinkValid",
-                "{\"registerId\":\"" + UUID.randomUUID() + "\"}").body());
+    void groups_nameWithSpace_isUrlEncoded() throws Exception {
+        String name = GROUP + " two";
+        assertEquals(201, json("POST", "/api/groups", "{\"groupName\":\"" + name + "\"}").statusCode());
 
-        HttpResponse<String> link = json("POST", "/api/user/getInviteLink", "{\"baseUrl\":\"http://localhost:5173\"}");
+        assertEquals(200, json("DELETE", "/api/groups/" + GROUP + "%20two/membership", null).statusCode());
+        assertTrue(groupRepository.findByGroupName(name).isEmpty());
+    }
+
+    @Test
+    void groups_nameWithSlash_isRejected() throws Exception {
+        assertEquals(400, json("POST", "/api/groups", "{\"groupName\":\"a/b\"}").statusCode());
+    }
+
+    @Test
+    void statistic_load_unfinished_missedEntry() throws Exception {
+        String id = exercise.getExerciseId().toString();
+        assertTrue(json("GET", "/api/statistic/" + id, null).body().contains("current"));
+        assertEquals("[]", json("GET", "/api/statistic/" + id + "/unfinished-periods", null).body());
+        assertEquals(404, json("POST", "/api/statistic/" + id + "/missed-entries",
+                "{\"periodId\":\"" + UUID.randomUUID() + "\"}").statusCode());
+    }
+
+    @Test
+    void user_publicChecks_andInviteLink() throws Exception {
+        assertTrue(json("GET", "/api/public/userinfo", null).body().contains(USER));
+        assertEquals("true", json("GET", "/api/public/username-available?username=free-name-123", null).body());
+        assertEquals("false", json("GET", "/api/public/username-available?username=" + USER, null).body());
+        assertEquals("false", json("GET", "/api/public/invites/" + UUID.randomUUID() + "/valid", null).body());
+
+        HttpResponse<String> link = json("POST", "/api/invites", "{\"baseUrl\":\"http://localhost:5173\"}");
         assertEquals(200, link.statusCode());
         assertTrue(link.body().startsWith("http://localhost:5173/register/"), link.body());
 
         String registerId = link.body().substring(link.body().lastIndexOf('/') + 1);
-        assertEquals("true", json("POST", "/api/public/isInviteLinkValid",
-                "{\"registerId\":\"" + registerId + "\"}").body());
+        assertEquals("true", json("GET", "/api/public/invites/" + registerId + "/valid", null).body());
     }
 
     private HttpResponse<String> json(String method, String path, String body) throws Exception {

@@ -4,6 +4,7 @@ import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseType;
 import org.exercise.counter.exercisecounter.web.data.exercise.Visibility;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
 import org.exercise.counter.exercisecounter.web.service.ExerciseService;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -11,9 +12,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/exercises")
 public class ExerciseController {
 
     private final ExerciseService exerciseService;
@@ -23,39 +25,56 @@ public class ExerciseController {
     }
 
     /** All exercises the current user may see. */
-    @GetMapping("/exercises/list")
-    public List<ExerciseDto> getAllExercises(@AuthenticationPrincipal UserDetails user) {
+    @GetMapping
+    public List<ExerciseDto> listVisible(@AuthenticationPrincipal UserDetails user) {
         return exerciseService.listVisible(user.getUsername());
     }
 
-    @GetMapping("/exercises/list/selected")
-    public List<ExerciseDto> getAllExercisesForUser(@AuthenticationPrincipal UserDetails user) {
+    /** The exercises on the user's home page, in their order. */
+    @GetMapping("/selected")
+    public List<ExerciseDto> listSelected(@AuthenticationPrincipal UserDetails user) {
         return exerciseService.listSelected(user.getUsername());
     }
 
-    @GetMapping("/exercises/list/available")
-    public List<ExerciseDto> getAllExercisesAvailableForUser(@AuthenticationPrincipal UserDetails user) {
+    /** Visible exercises not yet on the user's home page. */
+    @GetMapping("/available")
+    public List<ExerciseDto> listAvailable(@AuthenticationPrincipal UserDetails user) {
         return exerciseService.listAvailable(user.getUsername());
     }
 
-    @PostMapping("/exercises/save")
-    public ExerciseDto addExercise(@RequestBody ExerciseDto exercise, @AuthenticationPrincipal UserDetails user) {
-        return exerciseService.save(exercise, user.getUsername());
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public ExerciseDto create(@RequestBody ExerciseDto exercise, @AuthenticationPrincipal UserDetails user) {
+        return exerciseService.save(withId(exercise, null), user.getUsername());
     }
 
-    @PostMapping("/exercises/delete")
-    public ExerciseDto deleteExercise(@RequestBody ExerciseDto exerciseToDelete, @AuthenticationPrincipal UserDetails user) {
-        exerciseService.delete(exerciseToDelete.exerciseId(), user.getUsername());
-        return exerciseToDelete;
+    @PutMapping("/{exerciseId}")
+    public ExerciseDto update(@PathVariable UUID exerciseId, @RequestBody ExerciseDto exercise,
+                              @AuthenticationPrincipal UserDetails user) {
+        return exerciseService.save(withId(exercise, exerciseId), user.getUsername());
     }
 
-    @GetMapping("/exercises/exercisetype")
-    public Map<String, String> getExerciseTypes() {
+    @DeleteMapping("/{exerciseId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable UUID exerciseId, @AuthenticationPrincipal UserDetails user) {
+        exerciseService.delete(exerciseId, user.getUsername());
+    }
+
+    /** Exercise type → description. */
+    @GetMapping("/types")
+    public Map<String, String> types() {
         return ExerciseType.getAllDescriptionsAsMap();
     }
 
-    @GetMapping("/exercises/visibility")
-    public List<String> getExerciseVisibilities() {
+    @GetMapping("/visibilities")
+    public List<String> visibilities() {
         return Arrays.stream(Visibility.values()).map(Enum::toString).toList();
+    }
+
+    /** The id in the URL wins over an id in the body (null for create). */
+    private static ExerciseDto withId(ExerciseDto dto, UUID exerciseId) {
+        return new ExerciseDto(exerciseId, dto.exerciseTitle(), dto.creator(), dto.daysRepeat(), dto.startTime(),
+                dto.utcOffset(), dto.exerciseType(), dto.exerciseValue(), dto.exerciseIncrease(), dto.visibility(),
+                dto.groups(), dto.timeLeftSeconds(), dto.position());
     }
 }

@@ -8,8 +8,7 @@ import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.rest.groups.GroupsController;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.CreateGroupRequestDto;
-import org.exercise.counter.exercisecounter.web.rest.groups.dto.GroupNameRequest;
-import org.exercise.counter.exercisecounter.web.rest.groups.dto.InviteRequest;
+import org.exercise.counter.exercisecounter.web.rest.groups.dto.InvitationRequest;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.UserGroupMappingDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,13 +44,12 @@ class GroupsControllerTest {
                 userRepository.save(new User(name, "{noop}x"));
             }
         }
-        groupsController.createGroupOnUser(new CreateGroupRequestDto(GROUP, GroupVisibility.INVITE_ONLY), auth("grp-alice"));
+        groupsController.create(new CreateGroupRequestDto(GROUP, GroupVisibility.INVITE_ONLY), auth("grp-alice"));
     }
 
     @Test
     void member_canInvite() {
-        Boolean result = groupsController.inviteUserToGroup(
-                new InviteRequest("grp-carol", GROUP), auth("grp-alice"));
+        Boolean result = groupsController.invite(GROUP, new InvitationRequest("grp-carol"), auth("grp-alice"));
 
         assertTrue(result);
     }
@@ -59,40 +57,40 @@ class GroupsControllerTest {
     @Test
     void nonMember_cannotInvite() {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                groupsController.inviteUserToGroup(new InviteRequest("grp-carol", GROUP), auth("grp-bob")));
+                groupsController.invite(GROUP, new InvitationRequest("grp-carol"), auth("grp-bob")));
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
     @Test
     void invitedButNotAccepted_cannotInvite() {
-        groupsController.inviteUserToGroup(new InviteRequest("grp-bob", GROUP), auth("grp-alice"));
+        groupsController.invite(GROUP, new InvitationRequest("grp-bob"), auth("grp-alice"));
 
         assertThrows(ResponseStatusException.class, () ->
-                groupsController.inviteUserToGroup(new InviteRequest("grp-carol", GROUP), auth("grp-bob")));
+                groupsController.invite(GROUP, new InvitationRequest("grp-carol"), auth("grp-bob")));
     }
 
     @Test
     void acceptInvitation_withNullInvitedFlag_doesNotFail() {
-        groupsController.inviteUserToGroup(new InviteRequest("grp-bob", GROUP), auth("grp-alice"));
+        groupsController.invite(GROUP, new InvitationRequest("grp-bob"), auth("grp-alice"));
         userGroupMappingRepository.findByUserGroupMappingId_Username("grp-bob").forEach(m -> {
             m.setIsInvited(null);
             userGroupMappingRepository.save(m);
         });
 
-        assertDoesNotThrow(() -> groupsController.acceptUserToGroup(new GroupNameRequest(GROUP), auth("grp-bob")));
+        assertDoesNotThrow(() -> groupsController.accept(GROUP, auth("grp-bob")));
     }
 
     @Test
     void lastMemberLeaving_deletesGroup() {
-        groupsController.deleteGroupOnUser(new GroupNameRequest(GROUP), auth("grp-alice"));
+        groupsController.leave(GROUP, auth("grp-alice"));
 
         assertTrue(groupRepository.findByGroupName(GROUP).isEmpty());
     }
 
     @Test
     void listUserGroups_returnsOnlyCurrentUser() {
-        List<UserGroupMappingDto> result = groupsController.listUserGroups(auth("grp-bob"));
+        List<UserGroupMappingDto> result = groupsController.listMine(auth("grp-bob"));
 
         assertEquals(1, result.size());
         assertEquals("grp-bob", result.getFirst().username());

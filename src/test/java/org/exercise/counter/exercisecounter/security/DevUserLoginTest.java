@@ -67,7 +67,7 @@ class DevUserLoginTest {
             try (HttpClient client = HttpClient.newHttpClient()) {
                 HttpResponse<String> info = client.send(
                         HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/public/userinfo"))
-                                .POST(HttpRequest.BodyPublishers.noBody()).build(),
+                                .GET().build(),
                         HttpResponse.BodyHandlers.ofString());
 
                 assertEquals(200, info.statusCode());

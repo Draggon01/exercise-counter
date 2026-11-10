@@ -2,7 +2,7 @@ import {AsyncStoreState} from "../../../commons";
 import {createSlice, Reducer} from "@reduxjs/toolkit";
 import {UserDto} from "../models/userDto";
 import {RegisterDto} from "../../register/model/registerDto";
-import {apiPost, apiThunk} from "../../../api/http";
+import {apiGet, apiPost, apiThunk} from "../../../api/http";
 
 type SliceState = {
     status: AsyncStoreState;
@@ -20,7 +20,7 @@ type SliceProjection = {
     user: SliceState
 }
 
-const readCurrentUser = () => apiPost<UserDto>("/api/public/userinfo");
+const readCurrentUser = () => apiGet<UserDto>("/api/public/userinfo");
 
 /** Who is logged in (anonymous user if nobody). */
 export const readUserInfo = apiThunk<UserDto>(

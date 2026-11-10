@@ -70,7 +70,7 @@ class InviteLinkTest {
 
             Set<String> links = new HashSet<>();
             for (int i = 0; i < 15; i++) {
-                links.add(userController.getInviteLink(new InviteLinkRequest("https://a.de"), auth()));
+                links.add(userController.createInvite(new InviteLinkRequest("https://a.de"), auth()));
             }
 
             assertEquals(10, registerRepository.findByIssuer(ISSUER).size());

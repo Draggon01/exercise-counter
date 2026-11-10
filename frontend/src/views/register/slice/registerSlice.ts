@@ -1,6 +1,6 @@
 import {AsyncStoreState} from "../../../commons";
 import {createSlice, Reducer} from "@reduxjs/toolkit";
-import {apiPost, apiThunk} from "../../../api/http";
+import {apiGet, apiThunk} from "../../../api/http";
 
 type SliceState = {
     validationStatus: AsyncStoreState;
@@ -17,11 +17,11 @@ type SliceProjection = {
 }
 
 export const validateRegisterId = apiThunk<boolean, string>(
-    'register/validateId', registerId => apiPost("/api/public/isInviteLinkValid", {registerId}));
+    'register/validateId', registerId => apiGet(`/api/public/invites/${encodeURIComponent(registerId)}/valid`));
 
 /** true if nobody uses the username yet. */
 export const checkUsernameAvailable = apiThunk<boolean, string>(
-    'register/checkUsername', username => apiPost("/api/public/checkUser", {username}));
+    'register/checkUsername', username => apiGet(`/api/public/username-available?username=${encodeURIComponent(username)}`));
 
 const registerSlice = createSlice({
     name: 'register',

@@ -1,19 +1,17 @@
 package org.exercise.counter.exercisecounter.web.rest.userselection;
 
-import org.exercise.counter.exercisecounter.web.rest.userselection.dto.ExerciseIdRequest;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
 import org.exercise.counter.exercisecounter.web.service.ExerciseService;
 import org.exercise.counter.exercisecounter.web.service.SelectionService;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
+/** Which exercises are on the current user's home page, and in which order. */
 @RestController
 @RequestMapping("/api/selection")
 public class UserSelectionController {
@@ -26,18 +24,20 @@ public class UserSelectionController {
         this.exerciseService = exerciseService;
     }
 
-    @PostMapping("/select")
-    public void select(@RequestBody ExerciseIdRequest request, @AuthenticationPrincipal UserDetails user) {
-        selectionService.select(request.exerciseId(), user.getUsername());
+    @PutMapping("/{exerciseId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void select(@PathVariable UUID exerciseId, @AuthenticationPrincipal UserDetails user) {
+        selectionService.select(exerciseId, user.getUsername());
     }
 
-    @PostMapping("/unselect")
-    public void unselect(@RequestBody ExerciseIdRequest request, @AuthenticationPrincipal UserDetails user) {
-        selectionService.unselect(request.exerciseId(), user.getUsername());
+    @DeleteMapping("/{exerciseId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unselect(@PathVariable UUID exerciseId, @AuthenticationPrincipal UserDetails user) {
+        selectionService.unselect(exerciseId, user.getUsername());
     }
 
     /** Saves the new order and returns the user's exercises in that order. */
-    @PostMapping("/reorder")
+    @PutMapping("/order")
     public List<ExerciseDto> reorder(@RequestBody List<UUID> exerciseIds, @AuthenticationPrincipal UserDetails user) {
         selectionService.reorder(exerciseIds, user.getUsername());
         return exerciseService.listSelected(user.getUsername());

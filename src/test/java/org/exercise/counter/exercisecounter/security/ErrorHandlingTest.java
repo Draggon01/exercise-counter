@@ -75,7 +75,7 @@ class ErrorHandlingTest {
 
     @Test
     void malformedUuid_is400() throws Exception {
-        HttpResponse<String> res = send(HttpRequest.newBuilder(uri("/api/statistic/load?exerciseId=not-a-uuid")).GET());
+        HttpResponse<String> res = send(HttpRequest.newBuilder(uri("/api/statistic/not-a-uuid")).GET());
 
         assertEquals(400, res.statusCode());
         assertTrue(res.body().contains("\"error\""), res.body());
@@ -83,10 +83,8 @@ class ErrorHandlingTest {
 
     @Test
     void deletingSomeoneElsesExercise_is403() throws Exception {
-        String body = "{\"exerciseId\":\"" + foreignExercise.getExerciseId() + "\"}";
-        HttpResponse<String> res = send(HttpRequest.newBuilder(uri("/api/exercises/delete"))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(body)));
+        HttpResponse<String> res = send(HttpRequest.newBuilder(uri("/api/exercises/" + foreignExercise.getExerciseId()))
+                .DELETE());
 
         assertEquals(403, res.statusCode());
         assertTrue(res.body().contains("not the creator"), res.body());
@@ -95,10 +93,9 @@ class ErrorHandlingTest {
 
     @Test
     void missingEntity_is404() throws Exception {
-        HttpResponse<String> res = send(HttpRequest.newBuilder(uri("/api/statistic/add-missed-entry"))
+        HttpResponse<String> res = send(HttpRequest.newBuilder(uri("/api/statistic/" + UUID.randomUUID() + "/missed-entries"))
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(
-                        "{\"exerciseId\":\"" + UUID.randomUUID() + "\",\"periodId\":\"" + UUID.randomUUID() + "\"}")));
+                .POST(HttpRequest.BodyPublishers.ofString("{\"periodId\":\"" + UUID.randomUUID() + "\"}")));
 
         assertEquals(404, res.statusCode());
         assertTrue(res.body().contains("\"error\""), res.body());
@@ -109,6 +106,7 @@ class ErrorHandlingTest {
         HttpResponse<String> res = send(HttpRequest.newBuilder(uri("/api/does-not-exist")).GET());
 
         assertEquals(404, res.statusCode());
+        assertTrue(res.body().contains("\"error\""), res.body());
     }
 
     private URI uri(String path) {

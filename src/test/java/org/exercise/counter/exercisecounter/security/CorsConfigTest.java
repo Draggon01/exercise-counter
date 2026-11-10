@@ -44,7 +44,7 @@ class CorsConfigTest {
         HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/public/userinfo"))
                 .method("OPTIONS", HttpRequest.BodyPublishers.noBody())
                 .header("Origin", origin)
-                .header("Access-Control-Request-Method", "POST")
+                .header("Access-Control-Request-Method", "GET")
                 .build();
         try (HttpClient client = HttpClient.newHttpClient()) {
             return client.send(request, HttpResponse.BodyHandlers.discarding());

@@ -2,10 +2,14 @@ package org.exercise.counter.exercisecounter.web.rest.error;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
@@ -37,6 +41,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorDto> handleBadRequest(IllegalArgumentException e) {
         return ResponseEntity.badRequest().body(new ErrorDto("Invalid request"));
+    }
+
+    /**
+     * Spring MVC's own errors (type mismatch, unreadable body, unknown route, ...) keep their status
+     * but use the same {@code {"error": ...}} body as everything else instead of a ProblemDetail.
+     */
+    @Override
+    protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers,
+                                                             HttpStatusCode statusCode, WebRequest request) {
+        String message = body instanceof ProblemDetail problem && problem.getDetail() != null
+                ? problem.getDetail()
+                : statusCode.toString();
+        return ResponseEntity.status(statusCode).body(new ErrorDto(message));
     }
 
     @ExceptionHandler(Exception.class)

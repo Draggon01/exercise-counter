@@ -7,8 +7,10 @@ import org.exercise.counter.exercisecounter.web.rest.error.NotFoundException;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.ExerciseGroupMappingDto;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.GroupInformationDto;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.UserGroupMappingDto;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -73,6 +75,10 @@ public class GroupService {
     /** Creates a group with the user as its first member. */
     @Transactional
     public UserGroupMappingDto create(String groupName, GroupVisibility visibility, String username) {
+        if (groupName == null || groupName.isBlank() || groupName.contains("/") || groupName.contains("\\")) {
+            // names are used in URLs (/api/groups/{groupName}/...), where encoded slashes are rejected
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Group name must not be empty or contain / or \\");
+        }
         Group group = new Group();
         group.setGroupName(groupName);
         group.setVisibility(visibility != null ? visibility : GroupVisibility.INVITE_ONLY);

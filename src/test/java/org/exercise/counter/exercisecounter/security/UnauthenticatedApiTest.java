@@ -31,7 +31,7 @@ class UnauthenticatedApiTest {
 
     @Test
     void protectedEndpoint_withoutSession_is401() throws Exception {
-        assertEquals(401, get("/api/exercises/list/selected").statusCode());
+        assertEquals(401, get("/api/exercises/selected").statusCode());
     }
 
     private HttpResponse<String> get(String path) throws Exception {
