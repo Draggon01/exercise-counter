@@ -1,4 +1,6 @@
 import {customElement, state} from 'lit/decorators.js';
+import {fullscreenDialogStyles} from "../../styles/dialog";
+import "../../components/fab-button";
 import {touchStyles} from "../../styles/touch";
 import {css, html, nothing} from 'lit';
 import {createRef, ref, Ref} from "lit/directives/ref.js";
@@ -41,7 +43,7 @@ const VISIBILITY_HINT: Record<GroupVisibility, string> = {
 @customElement('groups-view')
 export class GroupsView extends ConnectedLitElement {
 
-    static styles = [pageStyles, touchStyles, css`
+    static styles = [pageStyles, touchStyles, fullscreenDialogStyles, css`
         section + section {
             margin-top: var(--app-space-5);
         }
@@ -216,9 +218,14 @@ export class GroupsView extends ConnectedLitElement {
             text-align: center;
         }
 
-        @media (max-width: 480px) {
-            .header-label {
+        @media (max-width: 768px) {
+            /* the floating "+" button takes over on phones */
+            .desktop-only {
                 display: none;
+            }
+
+            .page-container {
+                padding-bottom: 80px;
             }
         }
     `];
@@ -280,11 +287,11 @@ export class GroupsView extends ConnectedLitElement {
                 <page-header heading="Groups">
                     <sl-button slot="actions" @click="${this.openJoin}">
                         <sl-icon slot="prefix" name="search"></sl-icon>
-                        <span class="header-label">Join</span>
+                        Join
                     </sl-button>
-                    <sl-button slot="actions" variant="primary" @click="${this.openCreate}">
+                    <sl-button slot="actions" class="desktop-only" variant="primary" @click="${this.openCreate}">
                         <sl-icon slot="prefix" name="plus-lg"></sl-icon>
-                        <span class="header-label">New group</span>
+                        New group
                     </sl-button>
                 </page-header>
 
@@ -301,6 +308,7 @@ export class GroupsView extends ConnectedLitElement {
                 </section>
             </div>
 
+            <fab-button label="New group" @click="${this.openCreate}"></fab-button>
             ${this.renderCreateDialog()}
             ${this.renderJoinDialog()}
             ${this.renderInviteDialog()}

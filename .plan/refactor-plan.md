@@ -355,11 +355,13 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
   `enterkeyhint` on forms.
 - `viewport-fit=cover` + safe-area padding for header and bottom nav (notch / home indicator).
 
-### [ ] T5.3 📱 Mobile layout
+### [x] T5.3 📱 Mobile layout
 - Floating "+" button (FAB) above the bottom nav for "New exercise" instead of the action bar on mobile.
 - ~~Exercise create/edit as a page~~ – done (feedback F2). Remaining dialogs (confirm, groups) full screen on
   mobile (`sl-dialog` width 100vw / height 100dvh) with the action button reachable.
 - Sticky page header while scrolling long lists.
+- Done: `<fab-button>` on home + groups (desktop keeps the normal buttons), `fullscreenDialogStyles` for the
+  create-group and What's new dialogs (confirm dialogs stay compact on purpose), sticky `<page-header>`.
 
 ### [ ] T5.4 📱 Gestures
 - Reorder exercises by drag & drop with touch (long press) instead of the ↑/↓ edit mode.
@@ -391,4 +393,4 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
 | 2 – Frontend structure | 9 | 9 |
 | 3 – Visual | 10 | 10 |
 | 4 – Features | 1 | 1 |
-| 5 – Mobile / app experience | 7 | 2 |
+| 5 – Mobile / app experience | 7 | 3 |

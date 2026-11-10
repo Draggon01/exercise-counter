@@ -53,6 +53,7 @@
     --app-font-mono: var(--sl-font-mono);
     --app-page-max-width: 800px;
     --app-header-height: 56px;
+    --app-bottom-nav-height: 60px;  /* mobile bottom navigation, without the safe-area inset */
 }
 
 /* dark mode uses its own validated step (sky-600 is too light for the dark lightness band) */

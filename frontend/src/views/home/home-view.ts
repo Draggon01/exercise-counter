@@ -1,4 +1,5 @@
 import {css, html} from 'lit';
+import '../../components/fab-button'
 import {pageStyles} from "../../styles/page";
 import {customElement, state} from "lit/decorators.js";
 import {RootState, store} from '../../store';
@@ -80,6 +81,16 @@ export class HomeView extends ConnectedLitElement {
             .action-bar sl-button {
                 flex: 1;
             }
+
+            /* the floating "+" button takes over on phones */
+            .desktop-only {
+                display: none;
+            }
+
+            /* room for the floating button below the last card */
+            .page-container {
+                padding-bottom: 80px;
+            }
         }
     `];
 
@@ -118,7 +129,7 @@ export class HomeView extends ConnectedLitElement {
         return html`
             <div class="page-container">
             <div class="action-bar">
-                <sl-button variant="primary" @click="${() => this.openForm()}">
+                <sl-button class="desktop-only" variant="primary" @click="${() => this.openForm()}">
                     <sl-icon slot="prefix" name="plus-lg"></sl-icon>
                     New exercise
                 </sl-button>
@@ -132,6 +143,7 @@ export class HomeView extends ConnectedLitElement {
 
             <div class="exercise-list">${this.renderItems()}</div>
             </div>
+            <fab-button label="New exercise" @click="${() => this.openForm()}"></fab-button>
             <confirm-dialog label="Delete exercise" confirmLabel="Delete Exercise" cancelLabel="Close"
                             .open="${this.exerciseToDelete !== undefined}"
                             @confirm="${this.confirmDelete}"

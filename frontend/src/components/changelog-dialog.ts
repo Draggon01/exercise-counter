@@ -1,4 +1,5 @@
 import {html, LitElement} from "lit";
+import {fullscreenDialogStyles} from "../styles/dialog";
 import {customElement, property} from "lit/decorators.js";
 import {ChangelogEntry} from "../shared-slices/changelog/changelogSlice";
 import "./changelog-entries";
@@ -9,6 +10,8 @@ import "./changelog-entries";
  */
 @customElement("changelog-dialog")
 export class ChangelogDialog extends LitElement {
+
+    static styles = fullscreenDialogStyles;
 
     @property({type: Boolean})
     open = false;

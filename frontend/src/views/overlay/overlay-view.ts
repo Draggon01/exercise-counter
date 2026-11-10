@@ -129,6 +129,8 @@ export class OverlayView extends ConnectedLitElement {
             .bottom-nav {
                 display: grid;
                 grid-template-columns: repeat(4, 1fr); /* NAV_ITEMS.length */
+                min-height: var(--app-bottom-nav-height);
+                box-sizing: content-box;
                 background: var(--app-surface);
                 border-top: 1px solid var(--app-border);
                 padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);

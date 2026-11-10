@@ -11,12 +11,13 @@ Generic UI that is not tied to one feature. Import once (side-effect import) whe
 | Tag | File | Use it for | API | Used in | Status |
 |---|---|---|---|---|---|
 | `<confirm-dialog>` | `confirm-dialog.ts` | Asking before a destructive or irreversible action (delete, hide, leave) | props: `open`, `label`, `confirmLabel`, `cancelLabel`, `variant` (`danger` \| `warning` \| `primary`); default slot: message; events: `confirm`, `cancel` | home (delete / hide exercise), groups (leave group) | ✅ |
-| `<page-header>` | `page-header.ts` | Title of a page, optional Back button (sub pages only), optional actions | props: `heading`, `backTo` (no Back button if empty); slot `actions` | browse, groups, statistics (with Back), options | ✅ |
+| `<page-header>` | `page-header.ts` | Title of a page, optional Back button (sub pages only), optional actions | sticky at the top while the page scrolls; props: `heading`, `backTo` (no Back button if empty); slot `actions` | browse, groups, statistics (with Back), options | ✅ |
 | `<overlay-view>` | `views/overlay/overlay-view.ts` | App shell around every logged-in page: header (brand, nav, user menu), bottom nav on mobile, active section highlighted | add main sections to `NAV_ITEMS`; page goes into slot `main` | lit-router | ✅ |
 | `<empty-state>` | `empty-state.ts` | "Nothing here yet" / "could not load" with icon and optional actions | props: `icon`, `heading`, `text`; default slot: actions (buttons) | home, browse, groups, statistics | ✅ |
 | `toast(message, variant?, duration?)` | `toast.ts` | Short feedback (`sl-alert` toast stack, same message not stacked twice). **API errors are toasted automatically** by `errorToastMiddleware` – do not add own error UI for failed requests | – | browse (added), groups (created, joined, invited), options (copied), all failed requests | ✅ |
 | `<auth-card>` | `auth-card.ts` | Centered branded card for pages outside the app shell | props: `heading`, `subtitle`; default slot: form; slot `footer` | login, register | ✅ |
 | `<changelog-dialog>` | `changelog-dialog.ts` | "What's new" dialog with unseen changelog entries | props: `open`, `entries`; event `close` (parent marks them seen) | overlay | ✅ |
+| `<fab-button>` | `fab-button.ts` | Main "create" action on phones: round button fixed above the bottom nav (hidden above 768px – keep a normal button for desktop with class `desktop-only`, and add ~80px bottom padding so it does not cover the last item) | props: `icon` (default `plus-lg`), `label` (accessible name); `click` | home (New exercise), groups (New group) | ✅ |
 | `<changelog-entries>` | `changelog-entries.ts` | List of changelog entries (version, title, date, items) | prop: `entries` | changelog-dialog, options | ✅ |
 
 ## Feature elements — `src/views/<feature>/elements/`
@@ -60,8 +61,9 @@ Belong to one feature, listed here so they are not built a second time.
 
 | What | File | Status |
 |---|---|---|
-| Design tokens: `--app-bg/surface/border/divider`, `--app-text(-muted/-subtle)`, `--app-accent/success/warning/danger(-soft/-strong)`, `--app-space-1..6`, `--app-radius(-sm/-pill)`, `--app-shadow(-raised)`, `--app-font(-mono)`, `--app-page-max-width` | `src/styles/theme.css` | ✅ |
+| Design tokens: `--app-bg/surface/border/divider`, `--app-text(-muted/-subtle)`, `--app-accent/success/warning/danger(-soft/-strong)`, `--app-space-1..6`, `--app-radius(-sm/-pill)`, `--app-shadow(-raised)`, `--app-font(-mono)`, `--app-page-max-width`, `--app-bottom-nav-height` | `src/styles/theme.css` | ✅ |
 | Light / dark mode (`getColorScheme`, `setColorScheme`, `initColorScheme`; class `sl-theme-dark` on `<html>`) | `src/styles/color-scheme.ts` | ✅ |
 | Chart colors `--app-chart-done`, `--app-chart-track`, `--app-chart-empty-border` (validated with the dataviz checks; dark mode has its own step) | `src/styles/theme.css` | ✅ |
 | Touch targets `touchStyles` (44px for icon buttons, switches, checkboxes, radio buttons, tab arrows on touch devices); buttons/inputs via touch tokens in `theme.css` | `src/styles/touch.ts` | ✅ |
+| Full-screen dialogs on phones `fullscreenDialogStyles` (add to `static styles` of the element that renders the `sl-dialog`; small confirm dialogs stay compact) | `src/styles/dialog.ts` | ✅ |
 | Page layout `pageStyles` (`static styles = [pageStyles, css`...`]` + `<div class="page-container">`, 768px breakpoint) | `src/styles/page.ts` | ✅ |

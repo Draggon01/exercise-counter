@@ -14,11 +14,17 @@ import {navigate} from "../utils/navigation";
 export class PageHeader extends LitElement {
 
     static styles = css`
+        /* stays visible while the page scrolls (the scroll container is the app shell's main) */
         :host {
+            position: sticky;
+            top: 0;
+            z-index: 10;
             display: flex;
             align-items: center;
             gap: 20px;
-            margin-bottom: 1rem;
+            margin: calc(-1 * var(--app-space-2)) 0 1rem;
+            padding: var(--app-space-2) 0;
+            background: var(--app-bg);
         }
 
         h2 {
