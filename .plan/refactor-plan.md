@@ -166,7 +166,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 
 ## Phase 2 – Frontend structure
 
-### [ ] T2.1 🟠 Central API client
+### [x] T2.1 🟠 Central API client
 - New: `frontend/src/api/http.ts` with `apiGet<T>`, `apiPost<T>`, `apiPut<T>`, `apiDelete<T>`
   (always `credentials: "include"`, JSON headers, throws/returns typed error, handles empty bodies).
 - Refactor all slices to use it (`exerciseSlice`, `checkSlice`, `groupSlice`, `userSlice`, `optionsSlice`, `registerSlice`, `statisticSlice`, `authSlice`).

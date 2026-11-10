@@ -1,4 +1,4 @@
 export interface ExerciseLogDto {
     exerciseId: string;
-    value: number;
+    value: number | null;
 }

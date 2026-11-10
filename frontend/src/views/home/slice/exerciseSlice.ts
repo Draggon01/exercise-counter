@@ -1,8 +1,8 @@
 import {AsyncStoreState} from "../../../commons";
 import {ExerciseDto} from "../models/exerciseDto";
-import {createAsyncThunk, createEntityAdapter, createSlice, EntityState, Reducer} from "@reduxjs/toolkit";
-import {CheckDto} from "../models/checkDto";
+import {createEntityAdapter, createSlice, EntityState, Reducer} from "@reduxjs/toolkit";
 import {ExerciseLogDto} from "../models/exerciseLogDto";
+import {apiGet, apiPost, apiThunk} from "../../../api/http";
 
 type SliceState = {
     exercises: {
@@ -22,162 +22,46 @@ const initialState: SliceState = {
     }
 }
 
-export const listExercises = createAsyncThunk<ExerciseDto[], void, { rejectValue: any }>(
-    'exercise/list', async (_, {rejectWithValue}) => {
-        const res = await fetch("/api/exercises/list", {
-            method: 'GET',
-            credentials: "include"
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
+/** All exercises the user may see. */
+export const listExercises = apiThunk<ExerciseDto[]>(
+    'exercise/list', () => apiGet("/api/exercises/list"));
+
+/** The exercises on the user's home page. */
+export const listExercisesSelected = apiThunk<ExerciseDto[]>(
+    'exercise/list/selected', () => apiGet("/api/exercises/list/selected"));
+
+/** Visible exercises not yet on the home page (browse view). */
+export const listExercisesAvailable = apiThunk<ExerciseDto[]>(
+    'exercise/list/available', () => apiGet("/api/exercises/list/available"));
+
+export const saveExercise = apiThunk<ExerciseDto, ExerciseDto>(
+    'exercise/save', exercise => apiPost("/api/exercises/save", exercise));
+
+export const deleteExercise = apiThunk<ExerciseDto, ExerciseDto>(
+    'exercise/delete', exercise => apiPost("/api/exercises/delete", exercise));
+
+export const selectExercise = apiThunk<string, string>(
+    'selection/select', async exerciseId => {
+        await apiPost("/api/selection/select", {exerciseId});
+        return exerciseId;
     });
 
-export const listExercisesSelected = createAsyncThunk<ExerciseDto[], void, { rejectValue: any }>(
-    'exercise/list/selected', async (_, {rejectWithValue}) => {
-        const res = await fetch("/api/exercises/list/selected", {
-            method: 'GET',
-            credentials: "include"
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
+export const unselectExercise = apiThunk<string, string>(
+    'selection/unselect', async exerciseId => {
+        await apiPost("/api/selection/unselect", {exerciseId});
+        return exerciseId;
     });
 
-export const listExercisesAvailable = createAsyncThunk<ExerciseDto[], void, { rejectValue: any }>(
-    'exercise/list/available', async (_, {rejectWithValue}) => {
-        const res = await fetch("/api/exercises/list/available", {
-            method: 'GET',
-            credentials: "include"
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    });
+/** Saved progress of the current period ({@code value} is null if nothing was saved). */
+export const loadExerciseLog = apiThunk<ExerciseLogDto, string>(
+    'exercise/log/load', exerciseId => apiGet(`/api/log/${exerciseId}`));
 
-export const saveExercise = createAsyncThunk<ExerciseDto, ExerciseDto, { rejectValue: any }>(
-    'exercise/save', async (ex, {rejectWithValue}) => {
-        const res = await fetch("/api/exercises/save", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(ex),
-            credentials: "include"
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    });
+/** Saves the new order; returns the home page exercises in that order. */
+export const reorderExercises = apiThunk<ExerciseDto[], string[]>(
+    'selection/reorder', exerciseIds => apiPost("/api/selection/reorder", exerciseIds));
 
-export const deleteExercise = createAsyncThunk<ExerciseDto, ExerciseDto, { rejectValue: any }>(
-    'exercise/delete', async (exId, {rejectWithValue}) => {
-        const res = await fetch("/api/exercises/delete", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(exId),
-            credentials: "include"
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    });
-
-
-export const selectExercise = createAsyncThunk<string, string, { rejectValue: any }>(
-    'selection/select', async (exerciseId, {rejectWithValue}) => {
-        const res = await fetch("/api/selection/select", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({exerciseId}),
-            credentials: "include"
-        });
-        if (res.ok) {
-            return exerciseId;
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    }
-)
-
-export const unselectExercise = createAsyncThunk<string, string, { rejectValue: any }>(
-    'selection/unselect', async (exerciseId, {rejectWithValue}) => {
-        const res = await fetch("/api/selection/unselect", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({exerciseId}),
-            credentials: "include"
-        });
-        if (res.ok) {
-            return exerciseId;
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    }
-)
-
-export const loadExerciseLog = createAsyncThunk<ExerciseLogDto, string, { rejectValue: any }>(
-    'exercise/log/load', async (exerciseId, {rejectWithValue}) => {
-        const res = await fetch(`/api/log/${exerciseId}`, {credentials: 'include'});
-        if (res.ok) {
-            return await res.json();
-        } else {
-            return rejectWithValue(await res.json());
-        }
-    });
-
-export const reorderExercises = createAsyncThunk<ExerciseDto[], string[], { rejectValue: any }>(
-    'selection/reorder', async ( exerciseIds, {rejectWithValue}) => {
-        const res = await fetch("/api/selection/reorder", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(exerciseIds),
-            credentials: "include"
-        });
-        if (!res.ok) {
-            return rejectWithValue(await res.json());
-        }
-        return await res.json();
-    }
-)
-
-export const saveExerciseLog = createAsyncThunk<void, ExerciseLogDto, { rejectValue: any }>(
-    'exercise/log/save', async (log, {rejectWithValue}) => {
-        const res = await fetch('/api/log/save', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            credentials: 'include',
-            body: JSON.stringify(log)
-        });
-        if (!res.ok) {
-            return rejectWithValue(await res.json());
-        }
-    });
+export const saveExerciseLog = apiThunk<void, ExerciseLogDto>(
+    'exercise/log/save', log => apiPost("/api/log/save", log));
 
 
 export const exerciseSlice = createSlice({

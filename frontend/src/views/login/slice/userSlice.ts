@@ -1,7 +1,8 @@
 import {AsyncStoreState} from "../../../commons";
-import {createAsyncThunk, createSlice, Reducer} from "@reduxjs/toolkit";
+import {createSlice, Reducer} from "@reduxjs/toolkit";
 import {UserDto} from "../models/userDto";
 import {RegisterDto} from "../../register/model/registerDto";
+import {apiPost, apiThunk} from "../../../api/http";
 
 type SliceState = {
     status: AsyncStoreState;
@@ -19,104 +20,31 @@ type SliceProjection = {
     user: SliceState
 }
 
-export const readUserInfo = createAsyncThunk<any, void, { rejectValue: any }>(
-    'user/data', async (_, {rejectWithValue}) => {
-        const res = await fetch("/api/public/userinfo", {
-            method: 'POST',
-            credentials: 'include'
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
+const readCurrentUser = () => apiPost<UserDto>("/api/public/userinfo");
+
+/** Who is logged in (anonymous user if nobody). */
+export const readUserInfo = apiThunk<UserDto>(
+    'user/data', readCurrentUser);
+
+export const logoutUser = apiThunk<UserDto>(
+    'user/logout', async () => {
+        await apiPost("/api/logout");
+        return readCurrentUser();
     });
 
-export const logoutUser = createAsyncThunk<any, void, { rejectValue: any }>(
-    'user/logout', async (_, {rejectWithValue}) => {
-        await fetch("/api/logout", {
-            method: 'POST',
-            credentials: 'include'
-        });
-
-        const res = await fetch("/api/public/userinfo", {
-            method: 'POST',
-        });
-
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
+/** Logs in with form data (username, password); rejects on wrong credentials. */
+export const saveUserInfo = apiThunk<UserDto, URLSearchParams>(
+    'user/login', async credentials => {
+        await apiPost("/api/login", credentials);
+        return readCurrentUser();
     });
 
-export const saveUserInfo = createAsyncThunk<any, any, { rejectValue: any }>(
-    'user/login', async (data, {rejectWithValue}) => {
-        const login = await fetch("/api/login", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: data,
-            credentials: "include"
-        });
-        if (!login.ok) {
-            return rejectWithValue({error: "Login failed"});
-        }
-
-        const res = await fetch("/api/public/userinfo", {
-            method: 'POST',
-            credentials: 'include'
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    });
-
-export const registerUser = createAsyncThunk<UserDto, RegisterDto, {rejectValue: any}>(
-    'user/register', async (data, {rejectWithValue}) => {
-        const reg = await fetch("/api/public/register", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data),
-            credentials: "include"
-        });
-
-        if(!reg.ok){
-            let errorResponse = await reg.json();
-            return rejectWithValue(errorResponse);
-        }
-
-        let loginData = new URLSearchParams();
-        loginData.append("username", data.username);
-        loginData.append("password", data.password);
-
-        await fetch("/api/login", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: loginData,
-            credentials: "include"
-        });
-
-        const res = await fetch("/api/public/userinfo", {
-            method: 'POST',
-            credentials: 'include'
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
+/** Registers with an invite link and logs the new user in. */
+export const registerUser = apiThunk<UserDto, RegisterDto>(
+    'user/register', async data => {
+        await apiPost("/api/public/register", data);
+        await apiPost("/api/login", new URLSearchParams({username: data.username, password: data.password}));
+        return readCurrentUser();
     });
 
 export const userSlice = createSlice({

@@ -1,5 +1,6 @@
 import {AsyncStoreState} from "../../../commons";
-import {createAsyncThunk, createSlice, Reducer} from "@reduxjs/toolkit";
+import {createSlice, Reducer} from "@reduxjs/toolkit";
+import {apiPost, apiThunk} from "../../../api/http";
 
 type SliceState = {
     validationStatus: AsyncStoreState;
@@ -15,22 +16,8 @@ type SliceProjection = {
     register: SliceState
 }
 
-export const validateRegisterId = createAsyncThunk<boolean, string, { rejectValue: any }>(
-    'register/validateId', async (registerId, {rejectWithValue}) => {
-        const res = await fetch("/api/public/isInviteLinkValid", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({registerId}),
-            credentials: "include"
-        });
-        if (res.ok) {
-            return await res.json() as boolean;
-        } else {
-            return rejectWithValue("Failed to validate registration link");
-        }
-    });
+export const validateRegisterId = apiThunk<boolean, string>(
+    'register/validateId', registerId => apiPost("/api/public/isInviteLinkValid", {registerId}));
 
 const registerSlice = createSlice({
     name: 'register',

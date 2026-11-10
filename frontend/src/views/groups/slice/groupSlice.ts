@@ -1,8 +1,9 @@
 import {AsyncStoreState} from "../../../commons";
-import {createAsyncThunk, createEntityAdapter, createSlice, EntityState, Reducer} from "@reduxjs/toolkit";
+import {createEntityAdapter, createSlice, EntityState, Reducer} from "@reduxjs/toolkit";
 import {ExerciseGroupMappingDto} from "../models/ExerciseGroupMappingDto";
 import {UserGroupMappingDto} from "../models/UserGroupMappingDto";
 import {GroupVisibility} from "../models/GroupVisibility";
+import {apiGet, apiPost, apiThunk} from "../../../api/http";
 
 type SliceState = {
     exerciseMappings: {
@@ -38,148 +39,33 @@ const initialState: SliceState = {
     }
 }
 
-export const listExerciseMappings = createAsyncThunk<ExerciseGroupMappingDto[], void, { rejectValue: any }>(
-    'exerciseMappings/list', async (_, {rejectWithValue}) => {
-        const res = await fetch("/api/groups/exercises/list", {
-            method: 'GET',
-            credentials: "include"
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    }
-)
+/** Exercise → group names, limited to the user's groups. */
+export const listExerciseMappings = apiThunk<ExerciseGroupMappingDto[]>(
+    'exerciseMappings/list', () => apiGet("/api/groups/exercises/list"));
 
-export const listUserMappings = createAsyncThunk<UserGroupMappingDto[], void, { rejectValue: any }>(
-    'userMappings/list', async (_, {rejectWithValue}) => {
-        const res = await fetch("/api/groups/user/list", {
-            method: 'GET',
-            credentials: "include"
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    }
-)
+/** The current user's memberships and invitations (a list with one entry). */
+export const listUserMappings = apiThunk<UserGroupMappingDto[]>(
+    'userMappings/list', () => apiGet("/api/groups/user/list"));
 
-export const createGroupOnUser = createAsyncThunk<UserGroupMappingDto, { groupName: string, visibility: GroupVisibility }, { rejectValue: any }>(
-    'userMappings/create', async ({groupName, visibility}, {rejectWithValue}) => {
-        const res = await fetch("/api/groups/user/create", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({groupName, visibility}),
-            credentials: "include"
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    }
-)
+export const createGroupOnUser = apiThunk<UserGroupMappingDto, { groupName: string, visibility: GroupVisibility }>(
+    'userMappings/create', group => apiPost("/api/groups/user/create", group));
 
-export const searchPublicGroups = createAsyncThunk<string[], string, { rejectValue: any }>(
-    'group/searchPublic', async (query, {rejectWithValue}) => {
-        const res = await fetch(`/api/groups/public/search?query=${encodeURIComponent(query)}`, {
-            method: 'GET',
-            credentials: "include"
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    }
-)
+export const searchPublicGroups = apiThunk<string[], string>(
+    'group/searchPublic', query => apiGet(`/api/groups/public/search?query=${encodeURIComponent(query)}`));
 
-export const joinPublicGroup = createAsyncThunk<UserGroupMappingDto, string, { rejectValue: any }>(
-    'group/joinPublic', async (groupName, {rejectWithValue}) => {
-        const res = await fetch("/api/groups/user/join", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({groupName}),
-            credentials: "include"
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    }
-)
+export const joinPublicGroup = apiThunk<UserGroupMappingDto, string>(
+    'group/joinPublic', groupName => apiPost("/api/groups/user/join", {groupName}));
 
-export const deleteGroupOnUser = createAsyncThunk<UserGroupMappingDto, string, { rejectValue: any }>(
-    'userMappings/delete', async (groupName, {rejectWithValue}) => {
-        const res = await fetch("/api/groups/user/delete", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({groupName}),
-            credentials: "include"
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    }
-)
+/** Leave a group or decline an invitation. */
+export const deleteGroupOnUser = apiThunk<UserGroupMappingDto, string>(
+    'userMappings/delete', groupName => apiPost("/api/groups/user/delete", {groupName}));
 
-export const inviteUserToGroup = createAsyncThunk<boolean, [string, string], { rejectValue: any }>(
-    'userMappings/invite', async ([user, group], {rejectWithValue}) => {
-        const res = await fetch("/api/groups/user/invite", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                username: user,
-                groupName: group
-            }),
-            credentials: "include"
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    }
-)
+/** [username, groupName] → false if the user does not exist or is already in the group. */
+export const inviteUserToGroup = apiThunk<boolean, [string, string]>(
+    'userMappings/invite', ([username, groupName]) => apiPost("/api/groups/user/invite", {username, groupName}));
 
-export const acceptGroupToUser = createAsyncThunk<UserGroupMappingDto, string, { rejectValue: any }>(
-    'userMappings/accept', async (group, {rejectWithValue}) => {
-        const res = await fetch("/api/groups/user/accept", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({groupName: group}),
-            credentials: "include"
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    }
-)
+export const acceptGroupToUser = apiThunk<UserGroupMappingDto, string>(
+    'userMappings/accept', groupName => apiPost("/api/groups/user/accept", {groupName}));
 
 export const groupSlice = createSlice({
     name: 'group',

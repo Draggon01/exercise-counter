@@ -1,7 +1,7 @@
 import {StatisticDto} from "../models/statisticDto";
-import {createAsyncThunk, createSlice, Reducer} from "@reduxjs/toolkit";
-import {checkAdapter, listUserChecks} from "../../home/slice/checkSlice";
+import {createSlice, Reducer} from "@reduxjs/toolkit";
 import {AsyncStoreState} from "../../../commons";
+import {apiGet, apiThunk} from "../../../api/http";
 
 type SliceState = {
     statisticStatus: AsyncStoreState;
@@ -17,20 +17,8 @@ const initialState: SliceState = {
     statistic: {} as StatisticDto,
 }
 
-export const loadStatistic = createAsyncThunk<StatisticDto, string, { rejectValue: any }>(
-    'statistic/load', async (exerciseId, {rejectWithValue}) => {
-        const res = await fetch(`/api/statistic/load?exerciseId=${exerciseId}`, {
-            method: 'GET',
-            credentials: "include"
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    }
-)
+export const loadStatistic = apiThunk<StatisticDto, string>(
+    'statistic/load', exerciseId => apiGet(`/api/statistic/load?exerciseId=${encodeURIComponent(exerciseId)}`));
 
 
 export const statisticSlice = createSlice({

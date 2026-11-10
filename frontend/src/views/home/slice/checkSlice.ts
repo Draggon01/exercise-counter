@@ -1,6 +1,7 @@
 import {AsyncStoreState} from "../../../commons";
-import {createAsyncThunk, createEntityAdapter, createSlice, EntityState, Reducer} from "@reduxjs/toolkit";
+import {createEntityAdapter, createSlice, EntityState, Reducer} from "@reduxjs/toolkit";
 import {CheckDto} from "../models/checkDto";
+import {apiGet, apiPost, apiThunk} from "../../../api/http";
 
 type SliceState = {
     checks: {
@@ -28,73 +29,17 @@ const initialState: SliceState = {
     }
 }
 
-export const listUserChecks = createAsyncThunk<CheckDto[], void, { rejectValue: any }>(
-    'checks/list', async (_, {rejectWithValue}) => {
-        const res = await fetch("/api/check/list", {
-            method: 'GET',
-            credentials: "include"
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    }
-)
+export const listUserChecks = apiThunk<CheckDto[]>(
+    'checks/list', () => apiGet("/api/check/list"));
 
-export const listChecksPerExercise = createAsyncThunk<Record<string, CheckDto[]>, void, { rejectValue: any }>(
-    'checks/listPerExercise', async (_, {rejectWithValue}) => {
-        const res = await fetch("/api/check/list/per/exercise", {
-            method: 'GET',
-            credentials: "include"
-        });
-        if (res.ok) {
-            return await res.json();
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    }
-)
+export const listChecksPerExercise = apiThunk<Record<string, CheckDto[]>>(
+    'checks/listPerExercise', () => apiGet("/api/check/list/per/exercise"));
 
-export const saveCheck = createAsyncThunk<CheckDto, CheckDto, { rejectValue: any }>(
-    'checks/save', async (ck, {rejectWithValue}) => {
-        const res = await fetch("/api/check/save", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(ck),
-            credentials: "include"
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    }
-)
+export const saveCheck = apiThunk<CheckDto, CheckDto>(
+    'checks/save', check => apiPost("/api/check/save", check));
 
-export const deleteCheck = createAsyncThunk<CheckDto, CheckDto, { rejectValue: any }>(
-    'checks/delete', async (ck, {rejectWithValue}) => {
-        const res = await fetch("/api/check/delete", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(ck),
-            credentials: "include"
-        });
-        if (res.ok) {
-            return (await res.json());
-        } else {
-            let errorResponse = await res.json();
-            return rejectWithValue(errorResponse);
-        }
-    }
-)
+export const deleteCheck = apiThunk<CheckDto, CheckDto>(
+    'checks/delete', check => apiPost("/api/check/delete", check));
 
 
 export const checkSlice = createSlice({
@@ -134,10 +79,10 @@ export const checkSlice = createSlice({
                 checkAdapter.removeOne(state.checks, action.payload.exerciseId);
             })
             .addCase(listChecksPerExercise.pending, state => {
-                state.checks.status = 'initial';
+                state.checksPerExercise.status = 'initial';
             })
             .addCase(listChecksPerExercise.rejected, state => {
-                state.checks.status = 'error';
+                state.checksPerExercise.status = 'error';
             })
             .addCase(listChecksPerExercise.fulfilled, (state, action) => {
                 state.checksPerExercise.status = 'idle';

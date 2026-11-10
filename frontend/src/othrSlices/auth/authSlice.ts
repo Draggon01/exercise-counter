@@ -1,7 +1,8 @@
 import {AsyncStoreState} from "../../commons";
 import {UserDto} from "../../views/login/models/userDto";
-import {createAsyncThunk, createSlice, Reducer} from "@reduxjs/toolkit";
+import {createSlice, Reducer} from "@reduxjs/toolkit";
 import {authMiddleware} from "./authMiddleware";
+import {apiGet, apiThunk} from "../../api/http";
 
 type SliceState = {
     status: AsyncStoreState;
@@ -20,22 +21,12 @@ type SliceProjection = {
 }
 
 
-export const checkAuthStatus = createAsyncThunk(
-    'auth/checkStatus',
-    async (_, { rejectWithValue }) => {
-        try {
-            const response = await fetch('/api/auth/check', {
-                credentials: 'include'
-            });
-            if (!response.ok) {
-                return rejectWithValue('Unauthorized');
-            }
-            return { authenticated: true };
-        } catch (error) {
-            return rejectWithValue('Failed to check auth');
-        }
-    }
-);
+/** Rejects when the session is no longer valid. */
+export const checkAuthStatus = apiThunk<{ authenticated: boolean }>(
+    'auth/checkStatus', async () => {
+        await apiGet("/api/auth/check");
+        return {authenticated: true};
+    });
 
 const authSlice = createSlice({
     name: 'auth',
