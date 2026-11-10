@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
 @Service
@@ -32,7 +33,7 @@ public class SchedulerService {
     private final PeriodRepository periodRepository;
     private final FinishedUserRepository finishedUserRepository;
     private final UserRepository userRepository;
-    Map<UUID, ScheduledFuture<?>> scheduledExerciseUpdates = new HashMap<>();
+    private final Map<UUID, ScheduledFuture<?>> scheduledExerciseUpdates = new ConcurrentHashMap<>();
 
     private final ThreadPoolTaskScheduler taskScheduler;
 
@@ -55,16 +56,25 @@ public class SchedulerService {
 
     //only use Transactional Database access inside the runnable functions
     private void addScheduledExerciseUpdate(UUID exerciseId, Runnable runnable, Instant startTime, Duration duration) {
-        if (scheduledExerciseUpdates.containsKey(exerciseId)) {
-            scheduledExerciseUpdates.get(exerciseId).cancel(false);
+        ScheduledFuture<?> previous = scheduledExerciseUpdates.put(
+                exerciseId, taskScheduler.scheduleAtFixedRate(runnable, startTime, duration));
+        if (previous != null) {
+            previous.cancel(false);
         }
-        scheduledExerciseUpdates.put(exerciseId, taskScheduler.scheduleAtFixedRate(runnable, startTime, duration));
     }
 
-    private void removeScheduledExerciseUpdate(UUID exerciseId) {
-        if (scheduledExerciseUpdates.containsKey(exerciseId)) {
-            scheduledExerciseUpdates.get(exerciseId).cancel(false);
+    /**
+     * Stops the scheduled reset for the given exercise, e.g. when the exercise gets deleted.
+     */
+    public void cancelSchedulerFor(UUID exerciseId) {
+        ScheduledFuture<?> future = scheduledExerciseUpdates.remove(exerciseId);
+        if (future != null) {
+            future.cancel(false);
         }
+    }
+
+    public boolean isScheduled(UUID exerciseId) {
+        return scheduledExerciseUpdates.containsKey(exerciseId);
     }
 
     public long getTimeLeftSeconds(UUID exerciseId) {
@@ -75,9 +85,7 @@ public class SchedulerService {
 
     @Transactional
     public void restartSchedulerFor(Exercise exercise) {
-        if (this.scheduledExerciseUpdates.containsKey(exercise.getExerciseId())) {
-            this.removeScheduledExerciseUpdate(exercise.getExerciseId());
-        }
+        cancelSchedulerFor(exercise.getExerciseId());
         Instant nextRun = calculateNextRunInstant(exercise);
         switch (exercise.getExerciseType()) {
             case ExerciseType.NUMBERREPEAT:

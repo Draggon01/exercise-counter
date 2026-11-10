@@ -230,6 +230,7 @@ public class ExerciseController {
         UUID exerciseId = exerciseToDelete.exerciseId();
         checkExerciseAuthority(exerciseId, authentication);
         exerciseRepository.deleteById(exerciseId);
+        schedulerService.cancelSchedulerFor(exerciseId);
         return exerciseToDelete;
     }
 

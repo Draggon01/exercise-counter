@@ -22,14 +22,14 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
   2. If a dev user is needed, create it in a `@Profile("dev")` config instead.
 - Done when: login with `user` / `password` fails; normal users still log in.
 
-### [ ] T0.2 🔴 Cancel scheduler when an exercise is deleted
+### [x] T0.2 🔴 Cancel scheduler when an exercise is deleted
 - Files: `web/scheduler/SchedulerService.java`, `web/rest/exercise/ExerciseController.java`
 - Steps:
   1. Make `removeScheduledExerciseUpdate` public (rename to `cancelSchedulerFor(UUID)`), and also `remove` the key from the map.
   2. Call it in `deleteExercise` after `deleteById`.
 - Done when: deleting an exercise removes its entry from `scheduledExerciseUpdates`; test added.
 
-### [ ] T0.3 🔴 Make scheduler map thread-safe
+### [x] T0.3 🔴 Make scheduler map thread-safe
 - File: `SchedulerService.java`
 - Steps: `Map<UUID, ScheduledFuture<?>> scheduledExerciseUpdates = new ConcurrentHashMap<>();` and make it `private final`.
 
