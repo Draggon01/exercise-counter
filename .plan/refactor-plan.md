@@ -379,10 +379,12 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
 - Done: vibration on "Mark as done"; offline banner in the app shell from `navigator.onLine` + `online`/`offline`
   events (a failed request already shows a toast); back online reloads the page's data (pull-to-refresh loaders).
 
-### [ ] T5.6 📱 Performance on phones
+### [x] T5.6 📱 Performance on phones
 - ~~Load chart.js only on the statistics page~~ – done in T3.10: chart.js removed (bundle 812 kB → 615 kB).
 - Register only the Shoelace components that are used instead of all (smaller bundle).
 - Lighthouse mobile audit: aim for 90+ in performance and accessibility.
+- Done: `src/shoelace.ts` imports the 25 used components → bundle 639 kB → 434 kB (gzip 149 → 105 kB).
+  Lighthouse mobile (login page, production build): performance 99, accessibility 100, best practices 100.
 
 ### [ ] T5.7 📱 Reminders (optional, needs backend work)
 - Web push notification a few hours before the reset if today's exercise is not done yet
@@ -399,4 +401,4 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
 | 2 – Frontend structure | 9 | 9 |
 | 3 – Visual | 10 | 10 |
 | 4 – Features | 1 | 1 |
-| 5 – Mobile / app experience | 7 | 5 |
+| 5 – Mobile / app experience | 7 | 6 |

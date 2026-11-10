@@ -72,7 +72,7 @@ npm test                # frontend unit tests (vitest, *.test.ts next to the cod
 - try to write unit tests for new code/features if it is possible
 - Views are Lit custom elements in `frontend/src/views/<name>/<name>-view.ts`
 - Styles use Lit's `css` tagged template literal (Shadow DOM scoped) or create a `styles.css` file for shared styles
-- Shoelace components (`sl-button`, `sl-input`, `sl-dialog`, etc.) are used throughout the UI
+- Shoelace components (`sl-button`, `sl-input`, `sl-dialog`, etc.) are used throughout the UI; only the ones imported in `frontend/src/shoelace.ts` are bundled – add the import there when using a new `<sl-...>` element
 - State management via Redux slices in each view's `slice/` subfolder
 - Always execute api calls etc. in the redux slice, dont diretly fetch data from the backend
 - Navigation via `navigate(path)` from `frontend/src/utils/navigation.ts` (updates the URL + routers). Do NOT use the router's `goto()` for navigation: it does not update the URL (breaks the back button and deep links)

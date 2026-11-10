@@ -1,7 +1,7 @@
-/** Shoelace: theme + all components (registered globally, so views do not import single components). */
+/** Shoelace: theme + the used components (registered globally, so views do not import single components). */
 import '@shoelace-style/shoelace/dist/themes/light.css';
 import '@shoelace-style/shoelace/dist/themes/dark.css';
-import '@shoelace-style/shoelace/dist/shoelace.js';
+import './shoelace';
 import './styles/theme.css';
 import {initColorScheme} from './styles/color-scheme';
 
