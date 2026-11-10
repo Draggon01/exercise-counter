@@ -15,8 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.server.ResponseStatusException;
@@ -82,9 +80,8 @@ class GroupsControllerTest {
         assertTrue(result.getFirst().groupInformation().isEmpty(), "bob must not see alice's groups");
     }
 
-    private static Authentication auth(String username) {
-        UserDetails user = new org.springframework.security.core.userdetails.User(
+    private static UserDetails auth(String username) {
+        return new org.springframework.security.core.userdetails.User(
                 username, "{noop}x", List.of(new SimpleGrantedAuthority("ROLE_USER")));
-        return new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
     }
 }

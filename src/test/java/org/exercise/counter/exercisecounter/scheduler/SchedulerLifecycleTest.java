@@ -15,8 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -93,8 +91,7 @@ class SchedulerLifecycleTest {
                 e.getExerciseIncrease(), e.getVisibility(), List.of(), 0L, null);
     }
 
-    private static Authentication auth(String username) {
-        UserDetails user = new User(username, "{noop}x", List.of(new SimpleGrantedAuthority("ROLE_USER")));
-        return new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+    private static UserDetails auth(String username) {
+        return new User(username, "{noop}x", List.of(new SimpleGrantedAuthority("ROLE_USER")));
     }
 }

@@ -95,7 +95,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 - Done: all Lombok annotations replaced by plain Java (constructors, accessors, `equals`/`hashCode` via
   `Objects`, SLF4J loggers); dependency, annotation processor and plugin excludes removed from `pom.xml`.
 
-### [ ] T1.2 🟠 Use `@AuthenticationPrincipal`
+### [x] T1.2 🟠 Use `@AuthenticationPrincipal`
 - Replace `((UserDetails) authentication.getPrincipal()).getUsername()` (~20×) with a parameter `@AuthenticationPrincipal UserDetails user`.
 
 ### [x] T1.3 🟠 Use Spring's `@Transactional`

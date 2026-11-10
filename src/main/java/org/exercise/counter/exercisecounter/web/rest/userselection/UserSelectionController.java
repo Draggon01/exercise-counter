@@ -5,7 +5,7 @@ import org.exercise.counter.exercisecounter.web.data.userselection.UserSelection
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
 import org.exercise.counter.exercisecounter.web.rest.exercise.ExerciseController;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,8 +28,7 @@ public class UserSelectionController {
     }
 
     @PostMapping("/select")
-    public void select(@RequestBody String exerciseId, Authentication authentication) {
-        UserDetails user = (UserDetails) authentication.getPrincipal();
+    public void select(@RequestBody String exerciseId, @AuthenticationPrincipal UserDetails user) {
         String username = user.getUsername();
 
         int nextOrder = userSelectionRepository.findMaxPositionByUsername(username)
@@ -41,8 +40,7 @@ public class UserSelectionController {
     }
 
     @PostMapping("/unselect")
-    public void unselect(@RequestBody String exerciseId, Authentication authentication) {
-        UserDetails user = (UserDetails) authentication.getPrincipal();
+    public void unselect(@RequestBody String exerciseId, @AuthenticationPrincipal UserDetails user) {
         String username = user.getUsername();
 
         UserSelectionId userSelectionId = new UserSelectionId(username, UUID.fromString(exerciseId));
@@ -51,8 +49,7 @@ public class UserSelectionController {
     }
 
     @PostMapping("/reorder")
-    public List<ExerciseDto> reorder(@RequestBody List<String> exerciseIds, Authentication authentication) {
-        UserDetails user = (UserDetails) authentication.getPrincipal();
+    public List<ExerciseDto> reorder(@RequestBody List<String> exerciseIds, @AuthenticationPrincipal UserDetails user) {
         String username = user.getUsername();
 
         for (int i = 0; i < exerciseIds.size(); i++) {
@@ -64,7 +61,7 @@ public class UserSelectionController {
                 userSelectionRepository.save(sel);
             });
         }
-        return exerciseController.getAllExercisesForUser(authentication);
+        return exerciseController.getAllExercisesForUser(user);
     }
 
     private void recompactPosition(String username) {

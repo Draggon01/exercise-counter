@@ -16,7 +16,7 @@ import org.exercise.counter.exercisecounter.web.rest.groups.dto.GroupInformation
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.UserGroupMappingDto;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.ExerciseGroupMappingDto;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -42,8 +42,8 @@ public class GroupsController {
      */
     @GetMapping("/exercises/list")
     @Transactional(readOnly = true)
-    public List<ExerciseGroupMappingDto> listExerciseGroups(Authentication authentication) {
-        Set<UUID> memberGroupIds = memberGroupIds(currentUsername(authentication));
+    public List<ExerciseGroupMappingDto> listExerciseGroups(@AuthenticationPrincipal UserDetails user) {
+        Set<UUID> memberGroupIds = memberGroupIds(user.getUsername());
         return exerciseGroupMappingRepository.findAll().stream()
                 .filter(mapping -> memberGroupIds.contains(mapping.getGroup().getGroupId()))
                 .collect(Collectors.groupingBy(
@@ -59,8 +59,8 @@ public class GroupsController {
      */
     @GetMapping("/user/list")
     @Transactional(readOnly = true)
-    public List<UserGroupMappingDto> listUserGroups(Authentication authentication) {
-        return List.of(buildUserMappingDto(currentUsername(authentication)));
+    public List<UserGroupMappingDto> listUserGroups(@AuthenticationPrincipal UserDetails user) {
+        return List.of(buildUserMappingDto(user.getUsername()));
     }
 
     @GetMapping("/public/search")
@@ -74,8 +74,7 @@ public class GroupsController {
 
     @PostMapping("/user/create")
     @Transactional
-    public UserGroupMappingDto createGroupOnUser(@RequestBody CreateGroupRequestDto request, Authentication authentication) {
-        UserDetails user = (UserDetails) authentication.getPrincipal();
+    public UserGroupMappingDto createGroupOnUser(@RequestBody CreateGroupRequestDto request, @AuthenticationPrincipal UserDetails user) {
         String username = user.getUsername();
 
         Group group = new Group();
@@ -91,8 +90,7 @@ public class GroupsController {
 
     @PostMapping("/user/join")
     @Transactional
-    public UserGroupMappingDto joinPublicGroup(@RequestBody String groupName, Authentication authentication) {
-        UserDetails user = (UserDetails) authentication.getPrincipal();
+    public UserGroupMappingDto joinPublicGroup(@RequestBody String groupName, @AuthenticationPrincipal UserDetails user) {
         String username = user.getUsername();
 
         List<Group> byGroupName = groupRepository.findByGroupName(groupName);
@@ -116,8 +114,7 @@ public class GroupsController {
 
     @PostMapping("/user/delete")
     @Transactional
-    public UserGroupMappingDto deleteGroupOnUser(@RequestBody String groupName, Authentication authentication) {
-        UserDetails user = (UserDetails) authentication.getPrincipal();
+    public UserGroupMappingDto deleteGroupOnUser(@RequestBody String groupName, @AuthenticationPrincipal UserDetails user) {
         String username = user.getUsername();
 
         UserGroupMapping userGroupMapping = userGroupMappingRepository.findByUserGroupMappingId_Username(username)
@@ -137,8 +134,7 @@ public class GroupsController {
 
     @PostMapping("/user/accept")
     @Transactional
-    public UserGroupMappingDto acceptUserToGroup(@RequestBody String groupName, Authentication authentication) {
-        UserDetails user = (UserDetails) authentication.getPrincipal();
+    public UserGroupMappingDto acceptUserToGroup(@RequestBody String groupName, @AuthenticationPrincipal UserDetails user) {
         String username = user.getUsername();
 
         Optional<UserGroupMapping> first = userGroupMappingRepository.findByUserGroupMappingId_Username(username)
@@ -155,7 +151,7 @@ public class GroupsController {
 
     @PostMapping("/user/invite")
     @Transactional
-    public Boolean inviteUserToGroup(@RequestBody Map<String, String> request, Authentication authentication) {
+    public Boolean inviteUserToGroup(@RequestBody Map<String, String> request, @AuthenticationPrincipal UserDetails user) {
         String username = request.get("username");
         String groupName = request.get("groupName");
 
@@ -165,7 +161,7 @@ public class GroupsController {
         }
         Group group = byGroupName.getFirst();
 
-        if (!memberGroupIds(currentUsername(authentication)).contains(group.getGroupId())) {
+        if (!memberGroupIds(user.getUsername()).contains(group.getGroupId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only members can invite to a group");
         }
 
@@ -185,10 +181,6 @@ public class GroupsController {
 
         userGroupMappingRepository.save(userGroupMapping);
         return true;
-    }
-
-    private static String currentUsername(Authentication authentication) {
-        return ((UserDetails) authentication.getPrincipal()).getUsername();
     }
 
     /**

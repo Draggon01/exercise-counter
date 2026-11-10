@@ -9,7 +9,7 @@ import org.exercise.counter.exercisecounter.web.rest.statistic.dto.MissedEntryRe
 import org.exercise.counter.exercisecounter.web.rest.statistic.dto.PeriodDto;
 import org.exercise.counter.exercisecounter.web.rest.statistic.dto.StatisticDto;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,8 +53,8 @@ public class StatisticController {
     }
 
     @GetMapping("/statistic/unfinished-periods/{exerciseId}")
-    public List<PeriodDto> getUnfinishedPeriods(@PathVariable String exerciseId, Authentication authentication) {
-        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+    public List<PeriodDto> getUnfinishedPeriods(@PathVariable String exerciseId, @AuthenticationPrincipal UserDetails principal) {
+        String username = principal.getUsername();
         User user = userRepository.findByUsername(username).orElseThrow();
         List<Period> periods = periodRepository.findByExerciseExerciseId(UUID.fromString(exerciseId));
         return periods.stream()
@@ -65,8 +65,8 @@ public class StatisticController {
 
     @PostMapping("/statistic/add-missed-entry")
     @Transactional
-    public ResponseEntity<Void> addMissedEntry(@RequestBody MissedEntryRequestDto request, Authentication authentication) {
-        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+    public ResponseEntity<Void> addMissedEntry(@RequestBody MissedEntryRequestDto request, @AuthenticationPrincipal UserDetails principal) {
+        String username = principal.getUsername();
         User user = userRepository.findByUsername(username).orElseThrow();
         Period period = periodRepository.findById(request.periodId()).orElseThrow();
 

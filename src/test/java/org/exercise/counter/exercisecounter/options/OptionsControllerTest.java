@@ -11,8 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -33,7 +31,7 @@ class OptionsControllerTest {
     @Autowired
     private UserRepository userRepository;
 
-    private Authentication authentication;
+    private UserDetails authentication;
 
     @BeforeEach
     void setup() {
@@ -43,9 +41,8 @@ class OptionsControllerTest {
             userRepository.save(new User("testuser", "{noop}password"));
         }
 
-        UserDetails userDetails = new org.springframework.security.core.userdetails.User(
+        authentication = new org.springframework.security.core.userdetails.User(
                 "testuser", "{noop}password", List.of(new SimpleGrantedAuthority("ROLE_USER")));
-        authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 
     @Test

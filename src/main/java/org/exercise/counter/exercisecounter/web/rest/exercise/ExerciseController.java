@@ -18,7 +18,7 @@ import org.exercise.counter.exercisecounter.web.data.userselection.UserSelection
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.CheckDto;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
 import org.exercise.counter.exercisecounter.web.scheduler.SchedulerService;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
@@ -81,8 +81,7 @@ public class ExerciseController {
 
 
     @GetMapping("/exercises/list/selected")
-    public List<ExerciseDto> getAllExercisesForUser(Authentication authentication) {
-        UserDetails user = (UserDetails) authentication.getPrincipal();
+    public List<ExerciseDto> getAllExercisesForUser(@AuthenticationPrincipal UserDetails user) {
         String username = user.getUsername();
 
         return userSelectionRepository.findByUserSelectionId_UsernameOrderByPositionAsc(username)
@@ -105,8 +104,7 @@ public class ExerciseController {
     }
 
     @GetMapping("/exercises/list/available")
-    public List<ExerciseDto> getAllExercisesAvailableForUser(Authentication authentication) {
-        UserDetails user = (UserDetails) authentication.getPrincipal();
+    public List<ExerciseDto> getAllExercisesAvailableForUser(@AuthenticationPrincipal UserDetails user) {
         String username = user.getUsername();
 
         //get groups from user
@@ -169,11 +167,11 @@ public class ExerciseController {
 
     @PostMapping("/exercises/save")
     @Transactional
-    public ExerciseDto addExercise(@RequestBody ExerciseDto exercise, Authentication authentication) {
-        checkExerciseAuthority(exercise.exerciseId(), authentication);
+    public ExerciseDto addExercise(@RequestBody ExerciseDto exercise, @AuthenticationPrincipal UserDetails user) {
+        checkExerciseAuthority(exercise.exerciseId(), user);
         // never trust the creator sent by the client; for existing exercises
         // checkExerciseAuthority already guarantees the stored creator is this user
-        String creator = ((UserDetails) authentication.getPrincipal()).getUsername();
+        String creator = user.getUsername();
         Exercise save = exerciseRepository.save(
                 new Exercise(
                         exercise.exerciseId(),
@@ -191,7 +189,7 @@ public class ExerciseController {
 
         exerciseGroupMappingRepository.deleteAll(exerciseGroupMappingRepository.findByExerciseGroupMappingId_ExerciseId(save.getExerciseId()));
         List<UserGroupMapping> byUserGroupMappingIdUsername =
-                userGroupMappingRepository.findByUserGroupMappingId_Username(((UserDetails) authentication.getPrincipal()).getUsername());
+                userGroupMappingRepository.findByUserGroupMappingId_Username(user.getUsername());
         for (String group : exercise.groups()) {
             byUserGroupMappingIdUsername
                     .stream()
@@ -206,7 +204,7 @@ public class ExerciseController {
         userSelectionRepository.save(
                 new UserSelection(
                         new UserSelectionId(
-                                ((UserDetails) authentication.getPrincipal()).getUsername(),
+                                user.getUsername(),
                                 save.getExerciseId()), exercise.position()
                 )
         );
@@ -229,21 +227,21 @@ public class ExerciseController {
     }
 
     @PostMapping("/exercises/delete")
-    public ExerciseDto deleteExercise(@RequestBody ExerciseDto exerciseToDelete, Authentication authentication) {
+    public ExerciseDto deleteExercise(@RequestBody ExerciseDto exerciseToDelete, @AuthenticationPrincipal UserDetails user) {
         UUID exerciseId = exerciseToDelete.exerciseId();
-        checkExerciseAuthority(exerciseId, authentication);
+        checkExerciseAuthority(exerciseId, user);
         exerciseRepository.deleteById(exerciseId);
         schedulerService.cancelSchedulerFor(exerciseId);
         return exerciseToDelete;
     }
 
-    private void checkExerciseAuthority(UUID exerciseId, Authentication authentication) {
+    private void checkExerciseAuthority(UUID exerciseId, UserDetails user) {
         if (exerciseId == null) {
             return;
         }
         exerciseRepository.findById(exerciseId)
                 .ifPresent(ex -> {
-                    String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+                    String username = user.getUsername();
                     if (!username.equals(ex.getCreator())) {
                         throw new RuntimeException(username + " tried to edit/delete exercise " + ex.getExerciseId() + " which he did not create!");
                     }
@@ -251,8 +249,7 @@ public class ExerciseController {
     }
 
     @GetMapping("/check/list")
-    public List<CheckDto> getAllChecksForUser(Authentication authentication) {
-        UserDetails user = (UserDetails) authentication.getPrincipal();
+    public List<CheckDto> getAllChecksForUser(@AuthenticationPrincipal UserDetails user) {
         String username = user.getUsername();
         return checkRepository.findCheckByCheckIdUsername(username).stream().map(
                 check -> new CheckDto(check.getCheckId().getExerciseId(), username, -1)
@@ -260,8 +257,8 @@ public class ExerciseController {
     }
 
     @GetMapping("/check/list/per/exercise")
-    public Map<UUID, List<CheckDto>> getAllChecksPerExercise(Authentication authentication) {
-        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+    public Map<UUID, List<CheckDto>> getAllChecksPerExercise(@AuthenticationPrincipal UserDetails user) {
+        String username = user.getUsername();
         List<UUID> selectedExerciseIds = userSelectionRepository
                 .findByUserSelectionId_UsernameOrderByPositionAsc(username)
                 .stream()
@@ -300,8 +297,7 @@ public class ExerciseController {
     }
 
     @PostMapping("/check/save")
-    public CheckDto addCheckForExercise(@RequestBody CheckDto checkDto, Authentication authentication) {
-        UserDetails user = (UserDetails) authentication.getPrincipal();
+    public CheckDto addCheckForExercise(@RequestBody CheckDto checkDto, @AuthenticationPrincipal UserDetails user) {
         String username = user.getUsername();
         Check check = new Check(new CheckId(checkDto.exerciseId(), username));
         checkRepository.save(check);
@@ -309,8 +305,7 @@ public class ExerciseController {
     }
 
     @PostMapping("/check/delete")
-    public CheckDto removeCheckForExercise(@RequestBody CheckDto checkDto, Authentication authentication) {
-        UserDetails user = (UserDetails) authentication.getPrincipal();
+    public CheckDto removeCheckForExercise(@RequestBody CheckDto checkDto, @AuthenticationPrincipal UserDetails user) {
         String username = user.getUsername();
         CheckId checkId = new CheckId(checkDto.exerciseId(), username);
         checkRepository.deleteById(checkId);

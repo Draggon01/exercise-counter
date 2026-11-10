@@ -24,8 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.exercise.counter.exercisecounter.TestcontainersConfiguration;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -149,7 +147,7 @@ public class StatisticIT {
         period.setTimeRange(Range.closed(LocalDateTime.now().minusDays(1), LocalDateTime.now()));
         period = periodRepository.save(period);
 
-        Authentication auth = buildAuth(testUser.getUsername());
+        UserDetails auth = buildAuth(testUser.getUsername());
 
         List<PeriodDto> unfinished = statisticController.getUnfinishedPeriods(
                 testExercise.getExerciseId().toString(), auth);
@@ -165,7 +163,7 @@ public class StatisticIT {
         period.setTimeRange(Range.closed(LocalDateTime.now().minusDays(1), LocalDateTime.now()));
         period = periodRepository.save(period);
 
-        Authentication auth = buildAuth(testUser.getUsername());
+        UserDetails auth = buildAuth(testUser.getUsername());
 
         MissedEntryRequestDto request = new MissedEntryRequestDto(
                 testExercise.getExerciseId(), period.getPeriodId());
@@ -177,11 +175,9 @@ public class StatisticIT {
         assertTrue(unfinished.isEmpty(), "Period should no longer be unfinished after adding missed entry");
     }
 
-    private Authentication buildAuth(String username) {
+    private UserDetails buildAuth(String username) {
         UserDetails userDetails = mock(UserDetails.class);
         when(userDetails.getUsername()).thenReturn(username);
-        Authentication auth = mock(Authentication.class);
-        when(auth.getPrincipal()).thenReturn(userDetails);
-        return auth;
+        return userDetails;
     }
 }

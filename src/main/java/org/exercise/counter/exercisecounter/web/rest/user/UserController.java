@@ -10,7 +10,7 @@ import org.exercise.counter.exercisecounter.web.rest.user.dto.RegisterDto;
 import org.exercise.counter.exercisecounter.web.rest.user.dto.UserDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -40,9 +40,8 @@ public class UserController {
     }
 
     @PostMapping("api/public/userinfo")
-    public UserDto user(Authentication authenticator) {
-        if (authenticator != null) {
-            UserDetails user = (UserDetails) authenticator.getPrincipal();
+    public UserDto user(@AuthenticationPrincipal UserDetails user) {
+        if (user != null) {
             return new UserDto(user.getUsername(), false);
         }
         return new UserDto("", true);
@@ -74,12 +73,11 @@ public class UserController {
      */
     @PostMapping("api/user/getInviteLink")
     @Transactional
-    public String getInviteLink(@RequestBody String baseUrl, Authentication authenticator) {
-        UserDetails principal = (UserDetails) authenticator.getPrincipal();
-        List<Register> openInvites = registerRepository.findByIssuer(principal.getUsername());
+    public String getInviteLink(@RequestBody String baseUrl, @AuthenticationPrincipal UserDetails user) {
+        List<Register> openInvites = registerRepository.findByIssuer(user.getUsername());
         Register register = openInvites.size() >= MAX_OPEN_INVITES
                 ? openInvites.getFirst()
-                : registerRepository.save(new Register(null, principal.getUsername()));
+                : registerRepository.save(new Register(null, user.getUsername()));
         return inviteUrl(baseUrl, register.getRegisterId());
     }
 
@@ -111,16 +109,15 @@ public class UserController {
     }
 
     @GetMapping("/api/auth/check")
-    public ResponseEntity<?> healthCheck(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
+    public ResponseEntity<?> healthCheck(@AuthenticationPrincipal UserDetails user) {
+        if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
         return ResponseEntity.ok().body(Map.of(
                 "authenticated", true,
-                "username", userDetails.getUsername()
+                "username", user.getUsername()
         ));
     }
 }

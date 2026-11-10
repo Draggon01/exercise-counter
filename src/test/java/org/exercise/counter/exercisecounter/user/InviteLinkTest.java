@@ -10,8 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.server.ResponseStatusException;
@@ -83,10 +81,9 @@ class InviteLinkTest {
             registerRepository.deleteAll(registerRepository.findByIssuer(ISSUER));
         }
 
-        private Authentication auth() {
-            UserDetails user = new org.springframework.security.core.userdetails.User(
+        private UserDetails auth() {
+            return new org.springframework.security.core.userdetails.User(
                     ISSUER, "{noop}x", List.of(new SimpleGrantedAuthority("ROLE_USER")));
-            return new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
         }
     }
 }

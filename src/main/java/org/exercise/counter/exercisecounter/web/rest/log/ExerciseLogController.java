@@ -4,7 +4,7 @@ import org.exercise.counter.exercisecounter.web.data.log.ExerciseLog;
 import org.exercise.counter.exercisecounter.web.data.log.ExerciseLogId;
 import org.exercise.counter.exercisecounter.web.data.log.ExerciseLogRepository;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,8 +26,8 @@ public class ExerciseLogController {
     @GetMapping("/{exerciseId}")
     public ResponseEntity<Map<String, Long>> getLog(
             @PathVariable UUID exerciseId,
-            Authentication authentication) {
-        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+            @AuthenticationPrincipal UserDetails user) {
+        String username = user.getUsername();
         Optional<ExerciseLog> log = exerciseLogRepository.findById(new ExerciseLogId(exerciseId, username));
         return log
                 .map(l -> ResponseEntity.ok(Map.of("value", l.getValue())))
@@ -37,8 +37,8 @@ public class ExerciseLogController {
     @PostMapping("/save")
     public ResponseEntity<Void> saveLog(
             @RequestBody Map<String, Object> body,
-            Authentication authentication) {
-        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+            @AuthenticationPrincipal UserDetails user) {
+        String username = user.getUsername();
         UUID exerciseId = UUID.fromString(body.get("exerciseId").toString());
         long value = Long.parseLong(body.get("value").toString());
 
