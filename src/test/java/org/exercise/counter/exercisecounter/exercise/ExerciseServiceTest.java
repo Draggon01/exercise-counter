@@ -104,6 +104,27 @@ class ExerciseServiceTest {
     }
 
     @Test
+    void create_withoutPosition_addsToTheEndOfTheList() {
+        userSelectionRepository.save(new UserSelection(new UserSelectionId(ALICE, publicEx.getExerciseId()), 0));
+        ExerciseDto request = new ExerciseDto(null, "new one", ALICE, 1, "12:00:00", 0,
+                ExerciseType.NUMBERREPEAT, "5", null, Visibility.PRIVATE, List.of(), null, null);
+
+        ExerciseDto created = exerciseService.save(request, ALICE);
+
+        assertEquals(1, created.position());
+        exerciseRepository.deleteById(created.exerciseId());
+    }
+
+    @Test
+    void edit_keepsTheExistingPosition() {
+        userSelectionRepository.save(new UserSelection(new UserSelectionId(ALICE, publicEx.getExerciseId()), 4));
+        ExerciseDto edit = new ExerciseDto(publicEx.getExerciseId(), "renamed", ALICE, 1, "12:00:00", 0,
+                ExerciseType.NUMBERREPEAT, "1", null, Visibility.PUBLIC, List.of(), 0L, 99);
+
+        assertEquals(4, exerciseService.save(edit, ALICE).position());
+    }
+
+    @Test
     void onlyCreatorCanDelete() {
         assertThrows(ForbiddenException.class, () -> exerciseService.delete(privateEx.getExerciseId(), BOB));
         assertTrue(exerciseRepository.existsById(privateEx.getExerciseId()));

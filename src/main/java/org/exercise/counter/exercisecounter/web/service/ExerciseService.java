@@ -34,17 +34,20 @@ public class ExerciseService {
     private final UserGroupMappingRepository userGroupMappingRepository;
     private final UserSelectionRepository userSelectionRepository;
     private final SchedulerService schedulerService;
+    private final SelectionService selectionService;
 
     public ExerciseService(ExerciseRepository exerciseRepository,
                            ExerciseGroupMappingRepository exerciseGroupMappingRepository,
                            UserGroupMappingRepository userGroupMappingRepository,
                            UserSelectionRepository userSelectionRepository,
-                           SchedulerService schedulerService) {
+                           SchedulerService schedulerService,
+                           SelectionService selectionService) {
         this.exerciseRepository = exerciseRepository;
         this.exerciseGroupMappingRepository = exerciseGroupMappingRepository;
         this.userGroupMappingRepository = userGroupMappingRepository;
         this.userSelectionRepository = userSelectionRepository;
         this.schedulerService = schedulerService;
+        this.selectionService = selectionService;
     }
 
     /**
@@ -90,7 +93,8 @@ public class ExerciseService {
 
     /**
      * Creates or updates an exercise. The current user becomes (or must already be) the creator,
-     * the exercise is added to their home page and its reset scheduler is restarted.
+     * the exercise is on their home page afterwards (new ones at the end) and its reset scheduler is restarted.
+     * The position sent by the client is ignored; the order is changed via {@link SelectionService#reorder}.
      */
     @Transactional
     public ExerciseDto save(ExerciseDto dto, String username) {
@@ -99,9 +103,14 @@ public class ExerciseService {
         UUID exerciseId = saved.getExerciseId();
 
         replaceGroupMappings(exerciseId, dto.groups(), username);
-        userSelectionRepository.save(new UserSelection(new UserSelectionId(username, exerciseId), dto.position()));
+        // a new (or hidden) exercise goes to the end of the creator's list; an existing entry keeps its position
+        UserSelectionId selectionId = new UserSelectionId(username, exerciseId);
+        if (!userSelectionRepository.existsById(selectionId)) {
+            selectionService.select(exerciseId, username);
+        }
+        Integer position = userSelectionRepository.findById(selectionId).map(UserSelection::getPosition).orElse(null);
         schedulerService.restartSchedulerFor(saved);
-        return toDto(saved, dto.position(), Map.of(exerciseId, groupNames(exerciseId)));
+        return toDto(saved, position, Map.of(exerciseId, groupNames(exerciseId)));
     }
 
     /**

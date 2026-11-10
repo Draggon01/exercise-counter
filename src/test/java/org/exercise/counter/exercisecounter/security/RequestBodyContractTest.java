@@ -83,7 +83,7 @@ class RequestBodyContractTest {
     @Test
     void exercises_create_update_delete() throws Exception {
         String body = "{\"exerciseTitle\":\"Created\",\"daysRepeat\":1,\"startTime\":\"12:00:00\",\"utcOffset\":0,"
-                + "\"exerciseType\":\"NUMBERREPEAT\",\"exerciseValue\":\"5\",\"visibility\":\"PRIVATE\",\"groups\":[],\"position\":0}";
+                + "\"exerciseType\":\"NUMBERREPEAT\",\"exerciseValue\":\"5\",\"visibility\":\"PRIVATE\",\"groups\":[]}"; // like the frontend: no position
         HttpResponse<String> created = json("POST", "/api/exercises", body);
         assertEquals(201, created.statusCode(), created.body());
         String id = created.body().replaceAll(".*\"exerciseId\":\"([^\"]+)\".*", "$1");
