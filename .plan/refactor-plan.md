@@ -318,6 +318,23 @@ Goal: when a user logs in and there is a changelog entry they have not seen yet,
 
 ---
 
+## Feedback (done)
+
+### [x] F1 Statistics: only relevant people
+- Default: current participants (exercise on their home page) who finished at least one period in the
+  selected range; "Show former participants" adds people without the exercise (also only if active).
+  The current user is always shown. Backend: `StatisticDto.participants`.
+
+### [x] F2 Create / edit exercises on a page
+- `/exercises/new`, `/exercises/:id/edit` (`exercise-edit-view` + `exercise-form`) instead of a dialog;
+  sections, sticky Cancel / Save bar on phones, back button works.
+
+### [x] F3 Large timer
+- Focus view with progress ring and big digits while a timer runs (minimize / reopen), screen wake lock,
+  vibration when finished.
+
+---
+
 ## Phase 5 – Mobile / app experience
 
 The app is mostly used on phones, like an installed app. Check every task on a 390px wide screen
@@ -338,7 +355,8 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
 
 ### [ ] T5.3 📱 Mobile layout
 - Floating "+" button (FAB) above the bottom nav for "New exercise" instead of the action bar on mobile.
-- Dialogs full screen on mobile (`sl-dialog` width 100vw / height 100dvh) with the save button reachable.
+- ~~Exercise create/edit as a page~~ – done (feedback F2). Remaining dialogs (confirm, groups) full screen on
+  mobile (`sl-dialog` width 100vw / height 100dvh) with the action button reachable.
 - Sticky page header while scrolling long lists.
 
 ### [ ] T5.4 📱 Gestures
@@ -347,8 +365,8 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
 - Optional: swipe a card to mark it done.
 
 ### [ ] T5.5 📱 App feel during workouts
-- Keep the screen on while a timer runs (Screen Wake Lock API, released on pause/finish).
-- Short vibration when a timer finishes or an exercise is marked done (`navigator.vibrate`, if supported).
+- ~~Keep the screen on while a timer runs~~ and ~~vibrate when it finishes~~ – done (feedback F3).
+- Short vibration when an exercise is marked done (`navigator.vibrate`, if supported).
 - Offline banner when the server is not reachable (status 0 from `src/api/http.ts`).
 
 ### [ ] T5.6 📱 Performance on phones
