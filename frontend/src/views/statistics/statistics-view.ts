@@ -1,4 +1,5 @@
 import {css, html, nothing} from 'lit';
+import {touchStyles} from "../../styles/touch";
 import {customElement, property, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from "../../store";
@@ -29,7 +30,7 @@ const dayLabel = (date: string) => {
 @customElement('statistics-view')
 export class StatisticsView extends ConnectedLitElement {
 
-    static styles = [pageStyles, css`
+    static styles = [pageStyles, touchStyles, css`
         section {
             margin-top: var(--app-space-5);
         }

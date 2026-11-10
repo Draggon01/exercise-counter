@@ -1,4 +1,5 @@
 import {customElement, state} from 'lit/decorators.js';
+import {touchStyles} from "../../styles/touch";
 import {css, html, nothing} from 'lit';
 import {createRef, ref, Ref} from "lit/directives/ref.js";
 import {ConnectedLitElement} from "../../connectedLitElement";
@@ -40,7 +41,7 @@ const VISIBILITY_HINT: Record<GroupVisibility, string> = {
 @customElement('groups-view')
 export class GroupsView extends ConnectedLitElement {
 
-    static styles = [pageStyles, css`
+    static styles = [pageStyles, touchStyles, css`
         section + section {
             margin-top: var(--app-space-5);
         }

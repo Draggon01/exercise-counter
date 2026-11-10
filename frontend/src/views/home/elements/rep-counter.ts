@@ -49,7 +49,7 @@ export class RepCounter extends LitElement {
     render() {
         return html`
             <div class="rep-section">
-                <sl-input class="rep-input" type="number" size="small" min="0" max="${this.target}" no-spin-buttons
+                <sl-input class="rep-input" type="number" inputmode="numeric" size="small" min="0" max="${this.target}" no-spin-buttons
                           .value="${String(this.value)}"
                           @sl-change="${this.onChange}"></sl-input>
                 <span>/ ${this.target}</span>

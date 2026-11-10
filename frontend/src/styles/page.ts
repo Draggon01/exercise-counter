@@ -10,6 +10,9 @@ export const pageStyles = css`
         display: block;
         box-sizing: border-box;
         padding: var(--app-space-4);
+        /* landscape on phones with a notch (viewport-fit=cover) */
+        padding-left: max(var(--app-space-4), env(safe-area-inset-left));
+        padding-right: max(var(--app-space-4), env(safe-area-inset-right));
     }
 
     .page-container {
@@ -22,6 +25,8 @@ export const pageStyles = css`
     @media (max-width: 768px) {
         :host {
             padding: var(--app-space-3);
+            padding-left: max(var(--app-space-3), env(safe-area-inset-left));
+            padding-right: max(var(--app-space-3), env(safe-area-inset-right));
         }
     }
 `;

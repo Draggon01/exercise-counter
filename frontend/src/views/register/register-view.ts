@@ -97,11 +97,11 @@ export class RegisterView extends LitElement {
                                 <sl-icon slot="icon" name="exclamation-octagon"></sl-icon>
                                 ${this.errorMessage}
                             </sl-alert>` : ""}
-                        <sl-input name="username" label="Username" autocomplete="username" required autofocus></sl-input>
+                        <sl-input name="username" label="Username" autocomplete="username" autocapitalize="off" enterkeyhint="next" required autofocus></sl-input>
                         <sl-input name="password1" type="password" label="Password" autocomplete="new-password"
                                   required password-toggle></sl-input>
                         <sl-input name="password2" type="password" label="Repeat password" autocomplete="new-password"
-                                  required password-toggle></sl-input>
+                                  enterkeyhint="go" required password-toggle></sl-input>
                         <sl-button type="submit" variant="primary" size="large" ?loading="${this.loading}">
                             Create account
                         </sl-button>

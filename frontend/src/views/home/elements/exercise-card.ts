@@ -1,4 +1,5 @@
 import {css, html, nothing, PropertyValues} from 'lit';
+import {touchStyles} from "../../../styles/touch";
 import {customElement, property, state} from 'lit/decorators.js';
 import {ExerciseDto} from "../models/exerciseDto";
 import {ConnectedLitElement} from "../../../connectedLitElement";
@@ -36,7 +37,7 @@ export const ExerciseCardEvents = {
  */
 @customElement("exercise-card")
 export class ExerciseCard extends ConnectedLitElement {
-    static styles = css`
+    static styles = [touchStyles, css`
         :host {
             display: block;
         }
@@ -175,7 +176,7 @@ export class ExerciseCard extends ConnectedLitElement {
                 padding: var(--app-space-3);
             }
         }
-    `;
+    `];
 
     @property({type: Boolean})
     editMode: boolean = false;

@@ -349,7 +349,7 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
 - Done: manifest + icons (lightning bolt, maskable), hand-written `sw.js` (no plugin), offline start screen
   with automatic retry. Verified with Chromium's installability check and an offline reload.
 
-### [ ] T5.2 📱 Touch-friendly controls
+### [x] T5.2 📱 Touch-friendly controls
 - All tap targets at least 44×44px (card menu, collapse chevron, group actions, timer buttons).
 - Inputs at least 16px font size (iOS zooms into smaller inputs), `inputmode="numeric"` for numbers,
   `enterkeyhint` on forms.
@@ -391,4 +391,4 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
 | 2 – Frontend structure | 9 | 9 |
 | 3 – Visual | 10 | 10 |
 | 4 – Features | 1 | 1 |
-| 5 – Mobile / app experience | 7 | 1 |
+| 5 – Mobile / app experience | 7 | 2 |

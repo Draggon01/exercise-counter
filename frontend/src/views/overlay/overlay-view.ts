@@ -27,7 +27,8 @@ export class OverlayView extends ConnectedLitElement {
     static styles = css`
         :host {
             display: grid;
-            grid-template-rows: var(--app-header-height) 1fr auto;
+            /* the header grows by the notch / status bar inset (viewport-fit=cover) */
+            grid-template-rows: calc(var(--app-header-height) + env(safe-area-inset-top)) 1fr auto;
             height: 100vh;
             height: 100dvh;
         }
@@ -36,7 +37,7 @@ export class OverlayView extends ConnectedLitElement {
             display: flex;
             align-items: center;
             gap: var(--app-space-4);
-            padding: 0 var(--app-space-4);
+            padding: env(safe-area-inset-top) max(var(--app-space-4), env(safe-area-inset-right)) 0 max(var(--app-space-4), env(safe-area-inset-left));
             background: var(--app-surface);
             border-bottom: 1px solid var(--app-border);
         }
@@ -50,6 +51,7 @@ export class OverlayView extends ConnectedLitElement {
             color: var(--app-text);
             text-decoration: none;
             white-space: nowrap;
+            min-height: 44px;
         }
 
         .brand sl-icon {
@@ -94,6 +96,7 @@ export class OverlayView extends ConnectedLitElement {
             gap: var(--app-space-2);
             padding: var(--app-space-1) var(--app-space-2);
             border: none;
+            min-height: 44px;
             border-radius: var(--app-radius-pill);
             background: none;
             color: var(--app-text);
@@ -128,7 +131,7 @@ export class OverlayView extends ConnectedLitElement {
                 grid-template-columns: repeat(4, 1fr); /* NAV_ITEMS.length */
                 background: var(--app-surface);
                 border-top: 1px solid var(--app-border);
-                padding-bottom: env(safe-area-inset-bottom);
+                padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
             }
 
             .bottom-nav a {

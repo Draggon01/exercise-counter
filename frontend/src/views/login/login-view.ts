@@ -58,9 +58,9 @@ export class LoginView extends LitElement {
                             <sl-icon slot="icon" name="exclamation-octagon"></sl-icon>
                             ${this.errorMessage}
                         </sl-alert>` : ""}
-                    <sl-input name="username" label="Username" autocomplete="username" required autofocus></sl-input>
+                    <sl-input name="username" label="Username" autocomplete="username" autocapitalize="off" enterkeyhint="next" required autofocus></sl-input>
                     <sl-input ${ref(this.passwordRef)} name="password" type="password" label="Password"
-                              autocomplete="current-password" required password-toggle></sl-input>
+                              autocomplete="current-password" enterkeyhint="go" required password-toggle></sl-input>
                     <sl-button type="submit" variant="primary" size="large" ?loading="${this.loading}">Log in</sl-button>
                 </form>
                 <span slot="footer">No account yet? Ask a friend for an invite link.</span>

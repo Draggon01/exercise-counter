@@ -15,7 +15,8 @@ export class AuthCard extends LitElement {
             min-height: 100vh;
             min-height: 100dvh;
             box-sizing: border-box;
-            padding: var(--app-space-4);
+            padding: max(var(--app-space-4), env(safe-area-inset-top)) max(var(--app-space-4), env(safe-area-inset-right))
+                     max(var(--app-space-4), env(safe-area-inset-bottom)) max(var(--app-space-4), env(safe-area-inset-left));
             background: var(--app-bg);
         }
 

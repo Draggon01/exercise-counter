@@ -60,6 +60,27 @@
     --app-chart-done: var(--sl-color-sky-500);   /* dark #119ee2 */
 }
 
+/*
+ * Touch devices: 44px tap targets and 16px input text (iOS zooms into smaller inputs).
+ * Shoelace reads these tokens inside its shadow DOM, so buttons, inputs and radio buttons all follow.
+ * Icon buttons have no size token – use touchStyles from styles/touch.ts in components that show them.
+ */
+@media (pointer: coarse) {
+    :root {
+        --sl-input-height-small: 2.75rem;
+        --sl-input-height-medium: 2.75rem;
+        --sl-input-font-size-small: 1rem;
+        --sl-input-font-size-medium: 1rem;
+        --sl-button-font-size-small: 0.9375rem;
+        --sl-toggle-size-small: 1.125rem;
+    }
+}
+
+/* Shoelace's toast stack lives in <body>: keep it below the notch */
+.sl-toast-stack {
+    top: env(safe-area-inset-top);
+}
+
 html, body {
     margin: 0;
     background: var(--app-bg);

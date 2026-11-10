@@ -55,7 +55,7 @@ export class ExerciseTimer extends LitElement {
             align-items: center;
             justify-content: center;
             gap: var(--app-space-5);
-            padding: var(--app-space-5) var(--app-space-4) calc(var(--app-space-5) + env(safe-area-inset-bottom));
+            padding: calc(var(--app-space-5) + env(safe-area-inset-top)) var(--app-space-4) calc(var(--app-space-5) + env(safe-area-inset-bottom));
             background: var(--app-bg);
             color: var(--app-text);
         }

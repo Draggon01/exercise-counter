@@ -1,4 +1,5 @@
 import {css, html} from 'lit';
+import {touchStyles} from "../../styles/touch";
 import {pageStyles} from "../../styles/page";
 import {toast} from "../../components/toast";
 import "../../components/changelog-entries";
@@ -15,7 +16,7 @@ import {ExerciseDto} from "../home/models/exerciseDto";
 
 @customElement('options-view')
 export class OptionsView extends ConnectedLitElement {
-    static styles = [pageStyles, css`
+    static styles = [pageStyles, touchStyles, css`
 
 
 

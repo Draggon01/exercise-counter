@@ -6,6 +6,7 @@ import {ExerciseDto} from "../models/exerciseDto";
 import {ExerciseType, isIncreaseExercise, isTimeExercise} from "../../../utils/exercise";
 import {validateForm} from "../../../utils/form";
 import {formatDuration} from "../../../utils/format";
+import {touchStyles} from "../../../styles/touch";
 import type {SlInput, SlRadioGroup, SlSwitch} from "@shoelace-style/shoelace";
 
 type Measure = "reps" | "time";
@@ -31,7 +32,7 @@ export function toExerciseType(measure: Measure, increasing: boolean): ExerciseT
 @customElement("exercise-form")
 export class ExerciseForm extends LitElement {
 
-    static styles = css`
+    static styles = [touchStyles, css`
         :host {
             display: block;
         }
@@ -100,7 +101,7 @@ export class ExerciseForm extends LitElement {
                 flex: 1;
             }
         }
-    `;
+    `];
 
     /** The exercise to edit, or undefined to create a new one. */
     @property({attribute: false})
@@ -172,7 +173,7 @@ export class ExerciseForm extends LitElement {
                 </sl-radio-group>
 
                 <div>
-                    <sl-input name="exerciseValue" type="number" min="1" required
+                    <sl-input name="exerciseValue" type="number" inputmode="numeric" min="1" required
                               label="${time ? "Goal per period (seconds)" : "Goal per period (repetitions)"}"
                               .value="${exercise?.exerciseValue ?? ""}"
                               @sl-input="${(e: Event) => this.durationPreview = Number((e.target as SlInput).value) || 0}"></sl-input>
@@ -185,7 +186,7 @@ export class ExerciseForm extends LitElement {
                     Increase the goal after every period
                 </sl-switch>
                 ${this.increasing ? html`
-                    <sl-input name="exerciseIncrease" type="number" min="1" required
+                    <sl-input name="exerciseIncrease" type="number" inputmode="numeric" min="1" required
                               label="${time ? "Increase by (seconds)" : "Increase by (repetitions)"}"
                               .value="${exercise?.exerciseIncrease ?? ""}"></sl-input>
                 ` : nothing}
@@ -197,7 +198,7 @@ export class ExerciseForm extends LitElement {
                 <div class="row">
                     <sl-input name="startTime" type="time" label="Resets at" required
                               .value="${(exercise?.startTime ?? "23:59:00").slice(0, 5)}"></sl-input>
-                    <sl-input name="daysRepeat" type="number" min="1" label="Every … days" required
+                    <sl-input name="daysRepeat" type="number" inputmode="numeric" min="1" label="Every … days" required
                               .value="${String(exercise?.daysRepeat ?? 1)}"></sl-input>
                 </div>
 
