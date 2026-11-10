@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -64,7 +65,7 @@ class OptionsControllerTest {
 
     @Test
     void saveOptions_persistsChange() {
-        optionsController.saveOptions(new OptionsController.OptionsDto(false), authentication);
+        optionsController.saveOptions(new OptionsController.OptionsDto(false, null), authentication);
 
         UserOptions saved = userOptionsRepository.findById("testuser").orElseThrow();
         assertFalse(saved.isAutoCollapse());
@@ -72,8 +73,32 @@ class OptionsControllerTest {
 
     @Test
     void saveOptions_returnsUpdatedValue() {
-        var result = optionsController.saveOptions(new OptionsController.OptionsDto(false), authentication);
+        var result = optionsController.saveOptions(new OptionsController.OptionsDto(false, null), authentication);
 
         assertFalse(result.autoCollapse());
+    }
+
+    @Test
+    void reminderHours_defaultIsThree() {
+        assertEquals(3, optionsController.getOptions(authentication).reminderHours());
+    }
+
+    @Test
+    void saveOptions_changesOnlyTheGivenField() {
+        optionsController.saveOptions(new OptionsController.OptionsDto(false, null), authentication);
+
+        var result = optionsController.saveOptions(new OptionsController.OptionsDto(null, 6), authentication);
+
+        assertFalse(result.autoCollapse(), "autoCollapse must be kept");
+        assertEquals(6, result.reminderHours());
+        assertEquals(6, userOptionsRepository.findById("testuser").orElseThrow().getReminderHours());
+    }
+
+    @Test
+    void saveOptions_rejectsUnsupportedReminderHours() {
+        var error = assertThrows(ResponseStatusException.class,
+                () -> optionsController.saveOptions(new OptionsController.OptionsDto(null, 5), authentication));
+
+        assertEquals(400, error.getStatusCode().value());
     }
 }

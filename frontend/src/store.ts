@@ -9,6 +9,7 @@ import {authMiddleware} from "./shared-slices/auth/authMiddleware";
 import {errorToastMiddleware} from "./shared-slices/notifications/errorToastMiddleware";
 import {changelogMiddleware, changelogReducer} from "./shared-slices/changelog/changelogSlice";
 import {optionsReducer} from "./views/options/slice/optionsSlice";
+import {pushReducer} from "./views/options/slice/pushSlice";
 import {registerReducer} from "./views/register/slice/registerSlice";
 
 const rootReducer = combineReducers({
@@ -19,6 +20,7 @@ const rootReducer = combineReducers({
     group: groupReducer,
     auth: authReducer,
     options: optionsReducer,
+    push: pushReducer,
     register: registerReducer,
     changelog: changelogReducer
 });

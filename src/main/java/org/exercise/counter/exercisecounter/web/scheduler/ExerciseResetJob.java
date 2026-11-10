@@ -7,6 +7,7 @@ import org.exercise.counter.exercisecounter.web.data.exercise.Exercise;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseRepository;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseType;
 import org.exercise.counter.exercisecounter.web.data.log.ExerciseLogRepository;
+import org.exercise.counter.exercisecounter.web.data.push.PushReminderRepository;
 import org.exercise.counter.exercisecounter.web.data.statistic.FinishedUser;
 import org.exercise.counter.exercisecounter.web.data.statistic.FinishedUserRepository;
 import org.exercise.counter.exercisecounter.web.data.statistic.Period;
@@ -41,6 +42,7 @@ public class ExerciseResetJob {
     private final PeriodRepository periodRepository;
     private final FinishedUserRepository finishedUserRepository;
     private final UserRepository userRepository;
+    private final PushReminderRepository pushReminderRepository;
     private final Clock clock;
 
     @Transactional
@@ -76,6 +78,7 @@ public class ExerciseResetJob {
         List<String> users = checks.stream().map(check -> check.getCheckId().getUsername()).toList();
         checkRepository.deleteAll(checks);
         exerciseLogRepository.deleteAll(exerciseLogRepository.findByLogIdExerciseId(exerciseId));
+        pushReminderRepository.deleteByExerciseId(exerciseId); // new period: remind again
         return users;
     }
 
@@ -124,6 +127,7 @@ public class ExerciseResetJob {
                             PeriodRepository periodRepository,
                             FinishedUserRepository finishedUserRepository,
                             UserRepository userRepository,
+                            PushReminderRepository pushReminderRepository,
                             Clock clock) {
         this.exerciseRepository = exerciseRepository;
         this.checkRepository = checkRepository;
@@ -131,6 +135,7 @@ public class ExerciseResetJob {
         this.periodRepository = periodRepository;
         this.finishedUserRepository = finishedUserRepository;
         this.userRepository = userRepository;
+        this.pushReminderRepository = pushReminderRepository;
         this.clock = clock;
     }
 }

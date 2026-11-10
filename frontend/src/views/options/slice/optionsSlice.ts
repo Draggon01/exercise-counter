@@ -13,6 +13,8 @@ type SliceState = {
         values: string[];
     }
     autoCollapse: boolean;
+    /** reminders come this many hours before the reset (all devices of the user) */
+    reminderHours: number;
     optionsStatus: AsyncStoreState;
     unfinishedPeriods: PeriodDto[];
     unfinishedPeriodsStatus: AsyncStoreState;
@@ -29,6 +31,7 @@ const initialState: SliceState = {
         values: []
     },
     autoCollapse: true,
+    reminderHours: 3,
     optionsStatus: "initial",
     unfinishedPeriods: [],
     unfinishedPeriodsStatus: "initial",
@@ -38,12 +41,18 @@ const initialState: SliceState = {
 export const generateInviteLink = apiThunk<string>(
     'options/generateInviteLink', () => apiPost("/api/invites", {baseUrl: window.location.origin}));
 
-export const loadOptions = apiThunk<{ autoCollapse: boolean }>(
+type OptionsDto = { autoCollapse: boolean, reminderHours: number };
+
+export const loadOptions = apiThunk<OptionsDto>(
     'options/loadOptions', () => apiGet("/api/options"));
 
 export const setAutoCollapse = apiThunk<boolean, boolean>(
     'options/setAutoCollapse', async autoCollapse =>
-        (await apiPut<{ autoCollapse: boolean }>("/api/options", {autoCollapse})).autoCollapse);
+        (await apiPut<OptionsDto>("/api/options", {autoCollapse})).autoCollapse);
+
+export const setReminderHours = apiThunk<number, number>(
+    'options/setReminderHours', async reminderHours =>
+        (await apiPut<OptionsDto>("/api/options", {reminderHours})).reminderHours);
 
 /** Past periods of the exercise the user did not finish. */
 export const loadUnfinishedPeriods = apiThunk<PeriodDto[], string>(
@@ -84,12 +93,16 @@ const optionsSlice = createSlice({
             .addCase(loadOptions.fulfilled, (state, action) => {
                 state.optionsStatus = "idle";
                 state.autoCollapse = action.payload.autoCollapse;
+                state.reminderHours = action.payload.reminderHours;
             })
             .addCase(loadOptions.rejected, (state) => {
                 state.optionsStatus = "error";
             })
             .addCase(setAutoCollapse.fulfilled, (state, action) => {
                 state.autoCollapse = action.payload;
+            })
+            .addCase(setReminderHours.fulfilled, (state, action) => {
+                state.reminderHours = action.payload;
             })
             .addCase(loadUnfinishedPeriods.pending, (state) => {
                 state.unfinishedPeriodsStatus = "loading";
@@ -119,6 +132,7 @@ export const {clearInviteLinks, clearUnfinishedPeriods} = optionsSlice.actions;
 export const selectInviteLinks = (state: SliceProjection) => state.options.inviteLinks.values;
 export const selectInviteLinkStatus = (state: SliceProjection) => state.options.inviteLinks.status;
 export const selectAutoCollapse = (state: SliceProjection) => state.options.autoCollapse;
+export const selectReminderHours = (state: SliceProjection) => state.options.reminderHours;
 export const selectUnfinishedPeriods = (state: SliceProjection) => state.options.unfinishedPeriods;
 export const selectUnfinishedPeriodsStatus = (state: SliceProjection) => state.options.unfinishedPeriodsStatus;
 export const selectMissedEntryStatus = (state: SliceProjection) => state.options.missedEntryStatus;

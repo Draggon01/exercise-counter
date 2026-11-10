@@ -18,6 +18,11 @@ public interface UserSelectionRepository extends JpaRepository<UserSelection, Us
             + "where s.userSelectionId.username = :username order by s.position asc")
     List<UserSelection> findWithExerciseByUsername(@Param("username") String username);
 
+    /** Home lists of several users with their exercises (reminders). */
+    @Query("select s from show_exercise_for_user s join fetch s.exercise "
+            + "where s.userSelectionId.username in :usernames")
+    List<UserSelection> findWithExerciseByUsernameIn(@Param("usernames") java.util.Collection<String> usernames);
+
     /** Users who have the exercise on their home page. */
     @Query("select s.userSelectionId.username from show_exercise_for_user s "
             + "where s.userSelectionId.exerciseId = :exerciseId order by s.userSelectionId.username")

@@ -12,4 +12,6 @@ public interface CheckRepository extends JpaRepository<Check, CheckId> {
     List<Check> findCheckByCheckIdExerciseId(UUID exerciseId);
 
     List<Check> findCheckByCheckIdUsername(String username);
+
+    List<Check> findByCheckIdUsernameIn(Collection<String> usernames);
 }

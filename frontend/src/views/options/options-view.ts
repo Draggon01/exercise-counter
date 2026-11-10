@@ -1,12 +1,14 @@
 import {css, html} from 'lit';
 import {touchStyles} from "../../styles/touch";
 import {pageStyles} from "../../styles/page";
+import {settingStyles} from "../../styles/settings";
 import {toast} from "../../components/toast";
 import "../../components/changelog-entries";
 import {ChangelogEntry, loadChangelog, selectChangelog} from "../../shared-slices/changelog/changelogSlice";
 import type {SlSelect, SlSwitch} from "@shoelace-style/shoelace";
 import {ColorScheme, getColorScheme, setColorScheme} from "../../styles/color-scheme";
 import "../../components/page-header";
+import "./elements/reminder-settings";
 import {customElement, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from '../../store';
@@ -16,7 +18,7 @@ import {ExerciseDto} from "../home/models/exerciseDto";
 
 @customElement('options-view')
 export class OptionsView extends ConnectedLitElement {
-    static styles = [pageStyles, touchStyles, css`
+    static styles = [pageStyles, touchStyles, settingStyles, css`
 
 
 
@@ -114,27 +116,6 @@ export class OptionsView extends ConnectedLitElement {
             gap: 1rem;
         }
 
-        .setting-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-        }
-
-        .setting-label {
-            font-size: 0.9rem;
-        }
-
-        .appearance-select {
-            width: 140px;
-            flex-shrink: 0;
-        }
-
-        .setting-description {
-            font-size: 0.8rem;
-            color: var(--sl-color-neutral-500);
-            margin-top: 2px;
-        }
 
         .timer-sound-form {
             margin-top: 1rem;
@@ -285,7 +266,7 @@ export class OptionsView extends ConnectedLitElement {
                                             Light or dark colors. "System" follows your device setting.
                                         </div>
                                     </div>
-                                    <sl-select class="appearance-select" size="small"
+                                    <sl-select class="setting-control" size="small"
                                                .value="${this.colorScheme}"
                                                @sl-change="${this.handleColorScheme}">
                                         <sl-option value="system">System</sl-option>
@@ -293,6 +274,7 @@ export class OptionsView extends ConnectedLitElement {
                                         <sl-option value="dark">Dark</sl-option>
                                     </sl-select>
                                 </div>
+                                <reminder-settings></reminder-settings>
                             </div>
                         </div>
                     </sl-tab-panel>

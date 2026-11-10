@@ -21,6 +21,12 @@ public class UserOptions {
     @Column(name = "last_seen_changelog")
     private String lastSeenChangelog;
 
+    /** Unfinished exercises are reminded this many hours before their reset (if a device is subscribed). */
+    @Column(name = "reminder_hours", nullable = false)
+    private int reminderHours = DEFAULT_REMINDER_HOURS;
+
+    public static final int DEFAULT_REMINDER_HOURS = 3;
+
     public UserOptions() {
     }
 
@@ -53,22 +59,31 @@ public class UserOptions {
         this.lastSeenChangelog = lastSeenChangelog;
     }
 
+    public int getReminderHours() {
+        return this.reminderHours;
+    }
+
+    public void setReminderHours(int reminderHours) {
+        this.reminderHours = reminderHours;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof UserOptions other)) return false;
         return Objects.equals(isAutoCollapse(), other.isAutoCollapse()) &&
                 Objects.equals(getUsername(), other.getUsername()) &&
-                Objects.equals(getLastSeenChangelog(), other.getLastSeenChangelog());
+                Objects.equals(getLastSeenChangelog(), other.getLastSeenChangelog()) &&
+                getReminderHours() == other.getReminderHours();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(isAutoCollapse(), getUsername(), getLastSeenChangelog());
+        return Objects.hash(isAutoCollapse(), getUsername(), getLastSeenChangelog(), getReminderHours());
     }
 
     @Override
     public String toString() {
-        return "UserOptions(username=" + this.getUsername() + ", autoCollapse=" + this.isAutoCollapse() + ", lastSeenChangelog=" + this.getLastSeenChangelog() + ")";
+        return "UserOptions(username=" + this.getUsername() + ", autoCollapse=" + this.isAutoCollapse() + ", lastSeenChangelog=" + this.getLastSeenChangelog() + ", reminderHours=" + this.getReminderHours() + ")";
     }
 }

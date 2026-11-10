@@ -31,6 +31,7 @@ Belong to one feature, listed here so they are not built a second time.
 | `<exercise-form>` | `views/home/elements/exercise-form.ts` | Create / edit form: "what do you count" + "increase" → type (`toExerciseType`), time picker, sharing; sticky Cancel / Save bar (props `exercise`, `groups`, `saving`; events `save` (ExerciseDto), `cancel`) | ✅ |
 | `<exercise-edit-view>` | `views/exercise-edit/exercise-edit-view.ts` | Page `/exercises/new` and `/exercises/:id/edit` around `<exercise-form>` (loads exercise + groups, saves, toasts) | ✅ |
 | `<exercise-timer>` | `views/home/elements/exercise-timer.ts` | Countdown for time exercises with a large focus view while running (minimize / reopen), keeps the screen on (props `targetSeconds`, `completedSeconds`, `label`; event `progress-changed`) | ✅ |
+| `<reminder-settings>` | `views/options/elements/reminder-settings.ts` | Options → General: reminders on/off for this device, hours before the reset, test notification; hints for iPhone (install first), blocked permission, unsupported browsers. Hidden when the server has no push keys (`pushSlice`) | ✅ |
 | `<rep-counter>` | `views/home/elements/rep-counter.ts` | Reps input for rep exercises (props `target`, `value`; event `progress-changed`, debounced 500ms) | ✅ |
 
 ## Helpers
@@ -49,6 +50,7 @@ Belong to one feature, listed here so they are not built a second time.
 | `closedPeriods`, `participants`, `summarize` (streaks, completion) | `src/utils/statistics.ts` | Statistics of an exercise from the backend's `finishedInformation` | ✅ |
 | `moveItem`, `dropIndex`, `shiftFor` | `src/utils/reorder.ts` | Sorting a list by drag & drop (home edit order: grip handle `data-drag-handle` on the card, pointer events in the view) | ✅ |
 | `onAppRefresh(load)` / `requestAppRefresh()`, `pullDistance` | `src/utils/refresh.ts` | Pull to refresh: pages register their loader in `connectedCallback` (call the returned function in `disconnectedCallback`); the app shell shows the indicator until the loaders are done | ✅ |
+| `pushSupport(env)`, `currentPushEnvironment()`, `base64UrlToBytes`, `REMINDER_HOURS`, `reminderHoursLabel` | `src/utils/push.ts` | Push reminders: what the browser can do, the server key for `pushManager.subscribe` | ✅ |
 | `isTimeExercise(type)` / `isRepExercise(type)` / `isIncreaseExercise(type)` | `src/utils/exercise.ts` | Branching on `ExerciseType` (exercise form, exercise card) | ✅ |
 
 ## App / PWA
@@ -58,6 +60,7 @@ Belong to one feature, listed here so they are not built a second time.
 | Web app manifest | `public/manifest.webmanifest` | name, colors, icons; linked in `index.html` | ✅ |
 | App icons | `public/icons/` | `icon.svg` / `icon-maskable.svg` are the sources; PNGs are rendered from them | ✅ |
 | Service worker | `public/sw.js` | production only (registered in `main.ts`); never caches `/api/**`; bump `CACHE_VERSION` when the caching logic changes | ✅ |
+| Push notifications | `public/sw.js` (`push`, `notificationclick`), `public/icons/badge.svg` → `badge-96.png` | message JSON `{title, body, url, tag}` from the backend; tap focuses / opens the app at `url` (same origin only) | ✅ |
 | Offline start screen | `lit-router.ts` | "Server not reachable" with retry instead of an endless spinner; retries on `online` | ✅ |
 
 ## Styles
@@ -69,4 +72,5 @@ Belong to one feature, listed here so they are not built a second time.
 | Chart colors `--app-chart-done`, `--app-chart-track`, `--app-chart-empty-border` (validated with the dataviz checks; dark mode has its own step) | `src/styles/theme.css` | ✅ |
 | Touch targets `touchStyles` (44px for icon buttons, switches, checkboxes, radio buttons, tab arrows on touch devices); buttons/inputs via touch tokens in `theme.css` | `src/styles/touch.ts` | ✅ |
 | Full-screen dialogs on phones `fullscreenDialogStyles` (add to `static styles` of the element that renders the `sl-dialog`; small confirm dialogs stay compact) | `src/styles/dialog.ts` | ✅ |
+| Setting rows `settingStyles` (`.setting-row`, `.setting-label`, `.setting-description`, `.setting-control`) | `src/styles/settings.ts` | ✅ |
 | Page layout `pageStyles` (`static styles = [pageStyles, css`...`]` + `<div class="page-container">`, 768px breakpoint) | `src/styles/page.ts` | ✅ |

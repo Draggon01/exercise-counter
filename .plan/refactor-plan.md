@@ -386,9 +386,15 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
 - Done: `src/shoelace.ts` imports the 25 used components → bundle 639 kB → 434 kB (gzip 149 → 105 kB).
   Lighthouse mobile (login page, production build): performance 99, accessibility 100, best practices 100.
 
-### [ ] T5.7 📱 Reminders (optional, needs backend work)
+### [x] T5.7 📱 Reminders (optional, needs backend work)
 - Web push notification a few hours before the reset if today's exercise is not done yet
   (opt-in in Options; backend sends via the scheduler).
+- Done: Web Push without extra dependency (`WebPushCrypto`: aes128gcm + VAPID on JDK crypto, RFC 8291 test
+  vector passes; Google's push service accepts the VAPID token – a wrong key gets 403, ours reaches the token
+  check). Tables `push_subscription` / `push_reminder`, `options.reminder_hours` (1/2/3/6/12, default 3),
+  `/api/push/config|subscriptions|test`, host allowlist against SSRF, gone subscriptions are deleted.
+  Options → General: switch per device, hours, "Send test"; hints for iPhone (add to home screen first).
+  Service worker shows the notification and opens the app on tap.
 
 ---
 
@@ -401,4 +407,4 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
 | 2 – Frontend structure | 9 | 9 |
 | 3 – Visual | 10 | 10 |
 | 4 – Features | 1 | 1 |
-| 5 – Mobile / app experience | 7 | 6 |
+| 5 – Mobile / app experience | 7 | 7 |

@@ -8,6 +8,9 @@
  * - Other static files (manifest, app icons): served from cache, refreshed in the background.
  *
  * Bump CACHE_VERSION to drop all caches of older versions.
+ *
+ * Push: reminders from the backend (ReminderService) arrive as JSON {title, body, url, tag} and are
+ * shown as notification; tapping it opens (or focuses) the app at `url`.
  */
 const CACHE_VERSION = "v2";
 const SHELL_CACHE = `shell-${CACHE_VERSION}`;
@@ -97,3 +100,42 @@ async function staleWhileRevalidate(request) {
         .catch(() => cached);
     return cached ?? network;
 }
+
+// ---- reminders (Web Push)
+
+self.addEventListener("push", event => {
+    let message = {};
+    try {
+        message = event.data ? event.data.json() : {};
+    } catch {
+        message = {body: event.data ? event.data.text() : ""};
+    }
+    event.waitUntil(self.registration.showNotification(message.title || "Exercise Counter", {
+        body: message.body || "",
+        icon: "/icons/icon-192.png",
+        badge: "/icons/badge-96.png",
+        tag: message.tag || "reminder",
+        renotify: true,
+        data: {url: message.url || "/"},
+    }));
+});
+
+self.addEventListener("notificationclick", event => {
+    event.notification.close();
+    const target = new URL(event.notification.data?.url || "/", self.location.origin);
+    if (target.origin !== self.location.origin) {
+        return; // only pages of the app
+    }
+    event.waitUntil((async () => {
+        const windows = await self.clients.matchAll({type: "window", includeUncontrolled: true});
+        const open = windows.find(client => new URL(client.url).origin === self.location.origin);
+        if (open) {
+            await open.focus();
+            if (new URL(open.url).pathname !== target.pathname) {
+                await open.navigate(target.href).catch(() => undefined);
+            }
+            return;
+        }
+        await self.clients.openWindow(target.href);
+    })());
+});

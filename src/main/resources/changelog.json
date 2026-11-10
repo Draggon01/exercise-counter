@@ -15,6 +15,7 @@
       "Large timer view while a timer runs – the screen stays on",
       "On phones: a round + button for new exercises and groups, dialogs use the whole screen and page titles stay visible while scrolling",
       "Sort your exercises by dragging them (Edit Order) and pull the page down to refresh it",
+      "Reminders: get a notification when an exercise is not done yet shortly before it resets (Options → General)",
       "The app loads faster (a third less to download)",
       "A note at the top shows when you are offline; your phone vibrates briefly when you mark an exercise as done",
       "New and edited exercises get their own page instead of a small dialog",

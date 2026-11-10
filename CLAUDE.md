@@ -104,6 +104,8 @@ nothing distinct for now
 
 ## Learned
 
+- Push reminders: `ReminderService` (run by `ReminderScheduler` every `app.push.check-interval`, default 10 min) notifies users about home-list exercises not checked yet when the reset (`SchedulerService.getTimeLeftSeconds`) is within `options.reminder_hours`; once per period (`push_reminder`, cleared by `ExerciseResetJob`). Web Push is implemented without a library in `web/service/push/` (`WebPushCrypto` = RFC 8291/8292, tested with the RFC test vector); the server only calls hosts in `app.push.allowed-hosts`. Off unless `APP_PUSH_PUBLIC_KEY`/`APP_PUSH_PRIVATE_KEY` are set (the startup log prints a fresh pair); never change the keys once users subscribed
+
 - Every view uses the shared layout from `frontend/src/styles/page.ts` (`static styles = [pageStyles, css`...`]` + `<div class="page-container">`): centered column of `--app-page-max-width` (800px), mobile breakpoint `@media (max-width: 768px)`
 - Inline styles (`style="color: red"`) should be moved to CSS classes for consistency
 - Colors, spacing, radius, shadows and fonts come from the design tokens in `frontend/src/styles/theme.css` (`var(--app-...)`) — no hard-coded hex colors, so dark mode keeps working
