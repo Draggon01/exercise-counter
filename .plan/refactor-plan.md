@@ -265,7 +265,7 @@ Reusable pieces are tracked in `frontend/src/components/README.md` – update it
 - Empty state on home: "No exercises yet" + Browse / Add buttons.
 - Toast helper `src/components/toast.ts` (`sl-alert` + `toast()`), triggered from a listener middleware on any `*/rejected` action.
 
-### [ ] T3.8 🟢 Login / register polish
+### [x] T3.8 🟢 Login / register polish
 - Shared `auth-card` component (logo, title, slot for form).
 - Inline error via `sl-alert`, submit button with `loading` attribute while the thunk runs.
 

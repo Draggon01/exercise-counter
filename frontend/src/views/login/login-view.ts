@@ -1,116 +1,70 @@
 import {css, html, LitElement} from 'lit';
 import {customElement, state} from 'lit/decorators.js';
+import {createRef, ref, Ref} from "lit/directives/ref.js";
 import {store} from "../../store";
 import {saveUserInfo} from "./slice/userSlice";
 import {navigate} from "../../utils/navigation";
+import "../../components/auth-card";
+import type {SlInput} from "@shoelace-style/shoelace";
 
 @customElement('login-view')
 export class LoginView extends LitElement {
 
+    static styles = css`
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--app-space-4);
+        }
+    `;
+
     @state()
     private errorMessage = "";
+
+    @state()
+    private loading = false;
+
+    private passwordRef: Ref<SlInput> = createRef();
 
     private async _login(event: SubmitEvent) {
         event.preventDefault();
         const formData = new FormData(event.target as HTMLFormElement);
-        let urlSearchParams = new URLSearchParams();
-        urlSearchParams.append("username", formData.get("username")!.toString());
-        urlSearchParams.append("password", formData.get("password")!.toString());
-        (event.target as HTMLFormElement).reset();
         this.errorMessage = "";
-        const result = await store.dispatch(saveUserInfo(urlSearchParams));
+        this.loading = true;
+        const result = await store.dispatch(saveUserInfo(new URLSearchParams({
+            username: formData.get("username")?.toString() ?? "",
+            password: formData.get("password")?.toString() ?? "",
+        })));
+        this.loading = false;
         if (saveUserInfo.fulfilled.match(result)) {
             navigate("/");
         } else {
-            this.errorMessage = "Wrong Username or Password";
+            this.errorMessage = result.payload?.status === 0
+                ? "Server not reachable. Please try again later."
+                : "Wrong username or password.";
+            if (this.passwordRef.value) {
+                this.passwordRef.value.value = "";
+                this.passwordRef.value.focus();
+            }
         }
     }
 
-    static styles = css`
-        :host {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: var(--app-bg);
-        }
-        .login-container {
-            width: 100%;
-            max-width: 400px;
-            padding: 1rem;
-        }
-
-        .login-form {
-            padding: 2rem;
-            border-radius: var(--sl-border-radius-medium);
-            box-shadow: var(--sl-shadow-medium);
-            background: var(--app-surface);
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        h2 {
-            margin: 0 0 0.5rem 0;
-            text-align: center;
-            color: var(--sl-color-neutral-900);
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-        }
-
-        sl-button {
-            width: 100%;
-            margin-top: 0.5rem;
-        }
-
-        .error-message {
-            text-align: center;
-            padding-top: 1rem;
-            color: var(--sl-color-danger-600);
-            font-weight: var(--sl-font-weight-semibold);
-        }
-
-        @media (max-width: 480px) {
-            .login-container {
-                max-width: none;
-            }
-
-            .login-form {
-                padding: 1.5rem;
-                box-shadow: none;
-                border-radius: 0;
-                background: transparent;
-            }
-
-            :host {
-                background-color: var(--app-surface);
-                align-items: flex-start;
-                padding-top: 10vh;
-            }
-        }
-    `;
-
     render() {
         return html`
-            <div class="login-container">
-                <div class="login-form">
-                    <h2>Login</h2>
-                    <form @submit=${this._login}>
-                        <sl-input name="username" label="Username" help-text="Enter your username" required clearable></sl-input>
-                        <sl-input name="password" type="password" label="Password" help-text="Enter your password" required password-toggle></sl-input>
-                        <sl-button type="submit" variant="primary" size="large">Log in</sl-button>
-                    </form>
-                </div>
-                ${this.errorMessage ? html`<div class="error-message">${this.errorMessage}</div>` : ''}
-            </div>
+            <auth-card heading="Welcome back" subtitle="Log in to see today's exercises.">
+                <form @submit=${this._login}>
+                    ${this.errorMessage ? html`
+                        <sl-alert variant="danger" open>
+                            <sl-icon slot="icon" name="exclamation-octagon"></sl-icon>
+                            ${this.errorMessage}
+                        </sl-alert>` : ""}
+                    <sl-input name="username" label="Username" autocomplete="username" required autofocus></sl-input>
+                    <sl-input ${ref(this.passwordRef)} name="password" type="password" label="Password"
+                              autocomplete="current-password" required password-toggle></sl-input>
+                    <sl-button type="submit" variant="primary" size="large" ?loading="${this.loading}">Log in</sl-button>
+                </form>
+                <span slot="footer">No account yet? Ask a friend for an invite link.</span>
+            </auth-card>
         `;
     }
 }

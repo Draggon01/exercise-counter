@@ -7,8 +7,8 @@ import {toast} from "../../components/toast";
  */
 export const errorToastMiddleware = createListenerMiddleware();
 
-/** Failures that are expected and handled elsewhere (session check, login form, initial user info). */
-const SILENT_ACTIONS = new Set(["auth/checkStatus", "user/login", "user/data"]);
+/** Failures that are expected or shown inline elsewhere (session check, login/register forms, initial user info). */
+const SILENT_ACTIONS = new Set(["auth/checkStatus", "user/login", "user/data", "user/register", "register/checkUsername"]);
 
 export function errorMessage(error?: ApiError): string {
     if (!error) return "Something went wrong.";
