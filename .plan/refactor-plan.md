@@ -53,7 +53,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
   stored period so ranges never overlap. `toKeyString()` shows the reset day (`end:end`), so the
   statistics UI is unchanged.
 
-### [ ] T0.6 🔴 Restrict group endpoints to the current user
+### [x] T0.6 🔴 Restrict group endpoints to the current user
 - File: `web/rest/groups/GroupsController.java`
 - Steps:
   1. `GET /user/list` → return only the mapping of the logged-in user (frontend uses `selectUserMappingByUser` anyway; adjust `groupSlice` if needed).

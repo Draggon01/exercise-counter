@@ -3,6 +3,8 @@ package org.exercise.counter.exercisecounter.web.rest.groups;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import jakarta.transaction.Transactional;
@@ -35,10 +37,15 @@ public class GroupsController {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Exercise → group mappings, limited to the groups the current user is a member of.
+     */
     @GetMapping("/exercises/list")
     @Transactional
-    public List<ExerciseGroupMappingDto> listExerciseGroups() {
+    public List<ExerciseGroupMappingDto> listExerciseGroups(Authentication authentication) {
+        Set<UUID> memberGroupIds = memberGroupIds(currentUsername(authentication));
         return exerciseGroupMappingRepository.findAll().stream()
+                .filter(mapping -> memberGroupIds.contains(mapping.getGroup().getGroupId()))
                 .collect(Collectors.groupingBy(
                         mapping -> mapping.getExerciseGroupMappingId().getExerciseId(),
                         Collectors.mapping(mapping -> mapping.getGroup().getGroupName(), Collectors.toList())))
@@ -47,19 +54,13 @@ public class GroupsController {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Group memberships and invitations of the current user only.
+     */
     @GetMapping("/user/list")
     @Transactional
-    public List<UserGroupMappingDto> listUserGroups() {
-        return userGroupMappingRepository.findAll().stream()
-                .collect(Collectors.groupingBy(
-                        mapping -> mapping.getUserGroupMappingId().getUsername(),
-                        Collectors.mapping(mapping -> new GroupInformationDto(
-                                mapping.getGroup().getGroupName(),
-                                mapping.getIsInvited(),
-                                mapping.getGroup().getVisibility()), Collectors.toList())))
-                .entrySet().stream()
-                .map(entry -> new UserGroupMappingDto(entry.getKey(), entry.getValue()))
-                .toList();
+    public List<UserGroupMappingDto> listUserGroups(Authentication authentication) {
+        return List.of(buildUserMappingDto(currentUsername(authentication)));
     }
 
     @GetMapping("/public/search")
@@ -154,31 +155,50 @@ public class GroupsController {
 
     @PostMapping("/user/invite")
     @Transactional
-    public Boolean inviteUserToGroup(@RequestBody Map<String, String> request) {
+    public Boolean inviteUserToGroup(@RequestBody Map<String, String> request, Authentication authentication) {
         String username = request.get("username");
         String groupName = request.get("groupName");
+
+        List<Group> byGroupName = groupRepository.findByGroupName(groupName);
+        if (byGroupName.size() != 1) {
+            return false;
+        }
+        Group group = byGroupName.getFirst();
+
+        if (!memberGroupIds(currentUsername(authentication)).contains(group.getGroupId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only members can invite to a group");
+        }
 
         Optional<User> byUsername = userRepository.findByUsername(username);
         if (byUsername.isEmpty()) {
             return false;
         }
 
-        List<Group> byGroupName = groupRepository.findByGroupName(groupName);
-        if (byGroupName.size() != 1) {
-            return false;
-        }
-
-        Optional<UserGroupMapping> byId = userGroupMappingRepository.findById(new UserGroupMappingId(username, byGroupName.getFirst().getGroupId()));
-        if (byId.isPresent()) {
+        UserGroupMappingId mappingId = new UserGroupMappingId(username, group.getGroupId());
+        if (userGroupMappingRepository.existsById(mappingId)) {
             return false;
         }
 
         UserGroupMapping userGroupMapping = new UserGroupMapping();
-        userGroupMapping.setUserGroupMappingId(new UserGroupMappingId(username, byGroupName.getFirst().getGroupId()));
+        userGroupMapping.setUserGroupMappingId(mappingId);
         userGroupMapping.setIsInvited(true);
 
         userGroupMappingRepository.save(userGroupMapping);
         return true;
+    }
+
+    private static String currentUsername(Authentication authentication) {
+        return ((UserDetails) authentication.getPrincipal()).getUsername();
+    }
+
+    /**
+     * Ids of the groups the user has joined (pending invitations do not count).
+     */
+    private Set<UUID> memberGroupIds(String username) {
+        return userGroupMappingRepository.findByUserGroupMappingId_Username(username).stream()
+                .filter(mapping -> !Boolean.TRUE.equals(mapping.getIsInvited()))
+                .map(mapping -> mapping.getUserGroupMappingId().getGroupId())
+                .collect(Collectors.toSet());
     }
 
     private UserGroupMappingDto buildUserMappingDto(String username) {
