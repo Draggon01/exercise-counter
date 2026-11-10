@@ -23,8 +23,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -62,21 +60,7 @@ public class ExerciseController {
     @GetMapping("/exercises/list")
     public List<ExerciseDto> getAllExercises() {
         return exerciseRepository.findAll().stream()
-                .map(exercise -> new ExerciseDto(
-                        exercise.getExerciseId(),
-                        exercise.getExerciseTitle(),
-                        exercise.getCreator(),
-                        exercise.getDaysRepeat(),
-                        exercise.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")),
-                        exercise.getUtcOffset(),
-                        exercise.getExerciseType(),
-                        exercise.getExerciseValue(),
-                        exercise.getExerciseIncrease(),
-                        exercise.getVisibility(),
-                        this.GroupsForExercise(exercise.getExerciseId()),
-                        this.calculateTimeLeftSeconds(exercise),
-                        null
-                ))
+                .map(exercise -> ExerciseMapper.toDto(exercise, groupsForExercise(exercise.getExerciseId()), timeLeftSeconds(exercise), null))
                 .toList();
     }
 
@@ -87,21 +71,7 @@ public class ExerciseController {
 
         return userSelectionRepository.findByUserSelectionId_UsernameOrderByPositionAsc(username)
                 .stream()
-                .map(selection -> new ExerciseDto(
-                        selection.getExercise().getExerciseId(),
-                        selection.getExercise().getExerciseTitle(),
-                        selection.getExercise().getCreator(),
-                        selection.getExercise().getDaysRepeat(),
-                        selection.getExercise().getStartTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")),
-                        selection.getExercise().getUtcOffset(),
-                        selection.getExercise().getExerciseType(),
-                        selection.getExercise().getExerciseValue(),
-                        selection.getExercise().getExerciseIncrease(),
-                        selection.getExercise().getVisibility(),
-                        this.GroupsForExercise(selection.getExercise().getExerciseId()),
-                        this.calculateTimeLeftSeconds(selection.getExercise()),
-                        selection.getPosition()
-                )).toList();
+                .map(selection -> ExerciseMapper.toDto(selection.getExercise(), groupsForExercise(selection.getExercise().getExerciseId()), timeLeftSeconds(selection.getExercise()), selection.getPosition())).toList();
     }
 
     @GetMapping("/exercises/list/available")
@@ -132,21 +102,7 @@ public class ExerciseController {
                                     .map(groupMapping -> groupMapping.getGroup().getGroupName())
                                     .anyMatch(groups::contains);
                 })
-                .map(exercise -> new ExerciseDto(
-                        exercise.getExerciseId(),
-                        exercise.getExerciseTitle(),
-                        exercise.getCreator(),
-                        exercise.getDaysRepeat(),
-                        exercise.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")),
-                        exercise.getUtcOffset(),
-                        exercise.getExerciseType(),
-                        exercise.getExerciseValue(),
-                        exercise.getExerciseIncrease(),
-                        exercise.getVisibility(),
-                        this.GroupsForExercise(exercise.getExerciseId()),
-                        this.calculateTimeLeftSeconds(exercise),
-                        this.getSorting(exercise, username)
-                )).toList();
+                .map(exercise -> ExerciseMapper.toDto(exercise, groupsForExercise(exercise.getExerciseId()), timeLeftSeconds(exercise), getSorting(exercise, username))).toList();
     }
 
     private Integer getSorting(Exercise exercise, String username) {
@@ -155,11 +111,11 @@ public class ExerciseController {
         return byId.map(UserSelection::getPosition).orElse(null);
     }
 
-    private long calculateTimeLeftSeconds(Exercise exercise) {
+    private long timeLeftSeconds(Exercise exercise) {
         return schedulerService.getTimeLeftSeconds(exercise.getExerciseId());
     }
 
-    private List<String> GroupsForExercise(UUID exerciseId) {
+    private List<String> groupsForExercise(UUID exerciseId) {
         return exerciseGroupMappingRepository.findByExerciseGroupMappingId_ExerciseId(exerciseId)
                 .stream()
                 .map(mapping -> mapping.getGroup().getGroupName())
@@ -173,20 +129,7 @@ public class ExerciseController {
         // never trust the creator sent by the client; for existing exercises
         // checkExerciseAuthority already guarantees the stored creator is this user
         String creator = user.getUsername();
-        Exercise save = exerciseRepository.save(
-                new Exercise(
-                        exercise.exerciseId(),
-                        exercise.exerciseTitle(),
-                        creator,
-                        exercise.daysRepeat(),
-                        LocalTime.parse(exercise.startTime(),
-                                DateTimeFormatter.ofPattern("HH:mm:ss")),
-                        exercise.utcOffset(),
-                        exercise.exerciseType(),
-                        exercise.exerciseValue(),
-                        exercise.exerciseIncrease(),
-                        exercise.visibility(),
-                        null));
+        Exercise save = exerciseRepository.save(ExerciseMapper.toEntity(exercise, creator));
 
         exerciseGroupMappingRepository.deleteAll(exerciseGroupMappingRepository.findByExerciseGroupMappingId_ExerciseId(save.getExerciseId()));
         List<UserGroupMapping> byUserGroupMappingIdUsername =
@@ -210,21 +153,7 @@ public class ExerciseController {
                 )
         );
         schedulerService.restartSchedulerFor(save);
-        return new ExerciseDto(
-                save.getExerciseId(),
-                save.getExerciseTitle(),
-                save.getCreator(),
-                save.getDaysRepeat(),
-                save.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")),
-                save.getUtcOffset(),
-                save.getExerciseType(),
-                save.getExerciseValue(),
-                save.getExerciseIncrease(),
-                save.getVisibility(),
-                this.GroupsForExercise(save.getExerciseId()),
-                this.calculateTimeLeftSeconds(save),
-                exercise.position()
-        );
+        return ExerciseMapper.toDto(save, groupsForExercise(save.getExerciseId()), timeLeftSeconds(save), exercise.position());
     }
 
     @PostMapping("/exercises/delete")
