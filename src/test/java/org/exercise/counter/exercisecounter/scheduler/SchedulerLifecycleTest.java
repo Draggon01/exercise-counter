@@ -4,7 +4,7 @@ import org.exercise.counter.exercisecounter.TestcontainersConfiguration;
 import org.exercise.counter.exercisecounter.web.data.exercise.Exercise;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseRepository;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseType;
-import org.exercise.counter.exercisecounter.web.data.exercise.Visibiltiy;
+import org.exercise.counter.exercisecounter.web.data.exercise.Visibility;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.rest.exercise.ExerciseController;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
@@ -58,7 +58,7 @@ class SchedulerLifecycleTest {
         exercise.setUtcOffset(0);
         exercise.setExerciseType(ExerciseType.NUMBERREPEAT);
         exercise.setExerciseValue("10");
-        exercise.setVisibility(Visibiltiy.PUBLIC);
+        exercise.setVisibility(Visibility.PUBLIC);
         exercise = exerciseRepository.save(exercise);
     }
 

@@ -142,7 +142,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 - `ExerciseService.available`: load all `ExerciseGroupMapping`s for the user's groups once, not per exercise.
 - `StatisticService.loadStatistic`: one query for all finished users of an exercise, group in memory.
 
-### [ ] T1.12 🟠 Rename `Visibiltiy` → `Visibility`
+### [x] T1.12 🟠 Rename `Visibiltiy` → `Visibility`
 - Java enum rename only (DB stores the enum value, not the class name).
 
 ### [ ] T1.13 🟠 Remove legacy JSON statistic model

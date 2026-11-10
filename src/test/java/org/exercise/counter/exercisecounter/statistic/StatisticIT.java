@@ -7,7 +7,7 @@ import org.exercise.counter.exercisecounter.web.data.checks.CheckRepository;
 import org.exercise.counter.exercisecounter.web.data.exercise.Exercise;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseRepository;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseType;
-import org.exercise.counter.exercisecounter.web.data.exercise.Visibiltiy;
+import org.exercise.counter.exercisecounter.web.data.exercise.Visibility;
 import org.exercise.counter.exercisecounter.web.data.statistic.FinishedUserRepository;
 import org.exercise.counter.exercisecounter.web.data.statistic.Period;
 import org.exercise.counter.exercisecounter.web.data.statistic.PeriodRepository;
@@ -93,7 +93,7 @@ public class StatisticIT {
         testExercise.setExerciseType(ExerciseType.NUMBERINCREASE);
         testExercise.setExerciseValue("10");
         testExercise.setExerciseIncrease("2");
-        testExercise.setVisibility(Visibiltiy.PUBLIC);
+        testExercise.setVisibility(Visibility.PUBLIC);
         testExercise = exerciseRepository.save(testExercise);
     }
 

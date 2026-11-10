@@ -4,7 +4,7 @@ import org.exercise.counter.exercisecounter.TestcontainersConfiguration;
 import org.exercise.counter.exercisecounter.web.data.exercise.Exercise;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseRepository;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseType;
-import org.exercise.counter.exercisecounter.web.data.exercise.Visibiltiy;
+import org.exercise.counter.exercisecounter.web.data.exercise.Visibility;
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.scheduler.ExerciseResetJob;
@@ -59,7 +59,7 @@ class SchedulerStartTimeIT {
         testExercise.setUtcOffset(0);
         testExercise.setExerciseType(ExerciseType.NUMBERREPEAT);
         testExercise.setExerciseValue("10");
-        testExercise.setVisibility(Visibiltiy.PUBLIC);
+        testExercise.setVisibility(Visibility.PUBLIC);
     }
 
     @Test

@@ -7,7 +7,7 @@ import org.exercise.counter.exercisecounter.web.data.checks.CheckRepository;
 import org.exercise.counter.exercisecounter.web.data.exercise.Exercise;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseRepository;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseType;
-import org.exercise.counter.exercisecounter.web.data.exercise.Visibiltiy;
+import org.exercise.counter.exercisecounter.web.data.exercise.Visibility;
 import org.exercise.counter.exercisecounter.web.data.groups.*;
 import org.exercise.counter.exercisecounter.web.data.statistic.FinishedUserRepository;
 import org.exercise.counter.exercisecounter.web.data.statistic.Period;
@@ -125,9 +125,9 @@ public class ExerciseController {
                 .stream()
                 .filter(exercise -> !alreadySelectedExercises.contains(exercise.getExerciseId()))
                 .filter(exercise -> switch (exercise.getVisibility()) {
-                    case Visibiltiy.PUBLIC -> true;
-                    case Visibiltiy.PRIVATE -> exercise.getCreator().equals(username);
-                    case Visibiltiy.GROUPS ->
+                    case Visibility.PUBLIC -> true;
+                    case Visibility.PRIVATE -> exercise.getCreator().equals(username);
+                    case Visibility.GROUPS ->
                             exerciseGroupMappingRepository.findByExerciseGroupMappingId_ExerciseId(exercise.getExerciseId())
                                     .stream()
                                     .map(groupMapping -> groupMapping.getGroup().getGroupName())
@@ -324,6 +324,6 @@ public class ExerciseController {
 
     @GetMapping("/exercises/visibility")
     public List<String> getExerciseVisibilities() {
-        return Arrays.stream(Visibiltiy.values()).map(Enum::toString).toList();
+        return Arrays.stream(Visibility.values()).map(Enum::toString).toList();
     }
 }

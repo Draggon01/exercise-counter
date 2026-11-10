@@ -2,7 +2,7 @@ package org.exercise.counter.exercisecounter.web.rest.exercise.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseType;
-import org.exercise.counter.exercisecounter.web.data.exercise.Visibiltiy;
+import org.exercise.counter.exercisecounter.web.data.exercise.Visibility;
 
 import java.util.List;
 import java.util.UUID;
@@ -27,7 +27,7 @@ public record ExerciseDto(
         @JsonProperty("exerciseIncrease")
         String exerciseIncrease,
         @JsonProperty("visibility")
-        Visibiltiy visibility,
+        Visibility visibility,
         @JsonProperty("groups")
         List<String> groups,
         @JsonProperty("timeLeftSeconds")

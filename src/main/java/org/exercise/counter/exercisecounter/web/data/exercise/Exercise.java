@@ -41,7 +41,7 @@ public class Exercise {
 
     @Enumerated(EnumType.STRING)
     @Column
-    private Visibiltiy visibility;
+    private Visibility visibility;
 
     @Column
     private LocalDateTime lastSchedulerRun;
@@ -49,7 +49,7 @@ public class Exercise {
     public Exercise() {
     }
 
-    public Exercise(UUID exerciseId, String exerciseTitle, String creator, Integer daysRepeat, LocalTime startTime, Integer utcOffset, ExerciseType exerciseType, String exerciseValue, String exerciseIncrease, Visibiltiy visibility, LocalDateTime lastSchedulerRun) {
+    public Exercise(UUID exerciseId, String exerciseTitle, String creator, Integer daysRepeat, LocalTime startTime, Integer utcOffset, ExerciseType exerciseType, String exerciseValue, String exerciseIncrease, Visibility visibility, LocalDateTime lastSchedulerRun) {
         this.exerciseId = exerciseId;
         this.exerciseTitle = exerciseTitle;
         this.creator = creator;
@@ -99,7 +99,7 @@ public class Exercise {
         return this.exerciseIncrease;
     }
 
-    public Visibiltiy getVisibility() {
+    public Visibility getVisibility() {
         return this.visibility;
     }
 
@@ -143,7 +143,7 @@ public class Exercise {
         this.exerciseIncrease = exerciseIncrease;
     }
 
-    public void setVisibility(Visibiltiy visibility) {
+    public void setVisibility(Visibility visibility) {
         this.visibility = visibility;
     }
 

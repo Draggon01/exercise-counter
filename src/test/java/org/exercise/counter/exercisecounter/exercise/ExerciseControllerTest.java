@@ -3,7 +3,7 @@ package org.exercise.counter.exercisecounter.exercise;
 import org.exercise.counter.exercisecounter.TestcontainersConfiguration;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseRepository;
 import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseType;
-import org.exercise.counter.exercisecounter.web.data.exercise.Visibiltiy;
+import org.exercise.counter.exercisecounter.web.data.exercise.Visibility;
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.rest.exercise.ExerciseController;
@@ -59,7 +59,7 @@ class ExerciseControllerTest {
     @Test
     void addExercise_ignoresCreatorSentByClient() {
         ExerciseDto request = new ExerciseDto(null, "Pushups", OTHER, 1, "12:00:00", 0,
-                ExerciseType.NUMBERREPEAT, "10", null, Visibiltiy.PRIVATE, List.of(), null, 0);
+                ExerciseType.NUMBERREPEAT, "10", null, Visibility.PRIVATE, List.of(), null, 0);
 
         ExerciseDto saved = exerciseController.addExercise(request, auth(OWNER));
         createdId = saved.exerciseId();

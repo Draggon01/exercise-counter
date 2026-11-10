@@ -1,5 +1,5 @@
 package org.exercise.counter.exercisecounter.web.data.exercise;
 
-public enum Visibiltiy {
+public enum Visibility {
     PUBLIC, PRIVATE, GROUPS
 }
