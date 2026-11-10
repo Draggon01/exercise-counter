@@ -1,4 +1,4 @@
-import {css, html} from 'lit';
+import {css, html, nothing} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 import {ExerciseDto} from "../models/exerciseDto";
 import {ConnectedLitElement} from "../../../connectedLitElement";
@@ -9,7 +9,7 @@ import {CheckDto} from "../models/checkDto";
 import {RootState, store} from "../../../store";
 import {loadExerciseLog, saveExerciseLog} from "../slice/exerciseSlice";
 import {selectAutoCollapse} from "../../options/slice/optionsSlice";
-import type {SlCheckbox} from "@shoelace-style/shoelace";
+import type {SlSelectEvent} from "@shoelace-style/shoelace";
 import {formatDuration, formatTimeLeft, isUrgent} from "../../../utils/format";
 import {isRepExercise, isTimeExercise} from "../../../utils/exercise";
 import "./exercise-timer";
@@ -29,6 +29,11 @@ export const ExerciseCardEvents = {
     checkChanged: "check-changed",
 } as const;
 
+/**
+ * One exercise on the home page: title with goal and time left, progress (timer / reps),
+ * who finished it (with streaks) and the "done" toggle. Cards of finished exercises
+ * collapse automatically if the user enabled it in the options.
+ */
 @customElement("exercise-card")
 export class ExerciseCard extends ConnectedLitElement {
     static styles = css`
@@ -37,180 +42,137 @@ export class ExerciseCard extends ConnectedLitElement {
         }
 
         .card {
-            padding: 12px 14px;
-            box-sizing: border-box;
-            width: 100%;
-            border-radius: 12px;
-            border: 1px solid var(--app-border);
-            background: var(--app-surface);
-            box-shadow: var(--app-shadow);
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: var(--app-space-3);
+            box-sizing: border-box;
+            width: 100%;
+            padding: var(--app-space-3) var(--app-space-4);
+            border: 1px solid var(--app-border);
+            border-left: 4px solid var(--app-border);
+            border-radius: var(--app-radius);
+            background: var(--app-surface);
+            box-shadow: var(--app-shadow);
+            transition: border-color 0.2s;
         }
 
+        .card.done {
+            border-left-color: var(--app-success);
+        }
+
+        /* ---- header */
         .card-header {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
+            align-items: flex-start;
+            gap: var(--app-space-2);
+        }
+
+        .title {
+            flex: 1;
+            min-width: 0;
         }
 
         .headline {
-            font-size: 1.05em;
-            font-weight: 600;
             margin: 0;
-            padding: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            flex: 1;
+            font-size: 1.1em;
+            font-weight: 600;
+            line-height: 1.3;
             color: var(--app-text);
+            overflow-wrap: anywhere;
+        }
+
+        .done .headline {
+            color: var(--app-text-muted);
+        }
+
+        .subtitle {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--app-space-1) var(--app-space-2);
+            margin-top: 2px;
+            font-size: 0.85em;
+            color: var(--app-text-muted);
+        }
+
+        .urgent {
+            color: var(--app-warning);
+            font-weight: 600;
         }
 
         .actions {
             display: flex;
             align-items: center;
-            gap: 2px;
             flex-shrink: 0;
         }
 
-        .card-body {
-            display: grid;
-            grid-template-columns: max-content 1fr;
-            gap: 4px 12px;
-            align-items: center;
-            font-size: 0.9em;
-        }
-
-        .label {
-            color: var(--app-text-muted);
+        .streak {
+            padding: 2px var(--app-space-2);
+            border-radius: var(--app-radius-pill);
+            background: var(--app-warning-soft);
+            color: var(--app-warning);
+            font-size: 0.8em;
+            font-weight: 600;
             white-space: nowrap;
         }
 
-        .value {
-            font-weight: 600;
-        }
-
-        .divider {
-            grid-column: 1 / -1;
-            border: none;
-            border-top: 1px solid var(--app-divider);
-            margin: 2px 0;
-        }
-
-        .time-left {
-            font-size: 0.85em;
+        sl-icon-button {
+            font-size: 1.1rem;
             color: var(--app-text-subtle);
+        }
+
+        .danger-item::part(base) {
+            color: var(--app-danger);
+        }
+
+        /* ---- body */
+        .progress {
+            display: flex;
+            flex-direction: column;
+            gap: var(--app-space-2);
+        }
+
+        sl-progress-bar {
+            --height: 6px;
+            --indicator-color: var(--app-accent);
+        }
+
+        .done sl-progress-bar {
+            --indicator-color: var(--app-success);
+        }
+
+        .finishers {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--app-space-1) var(--app-space-2);
+            font-size: 0.85em;
+            color: var(--app-text-muted);
+        }
+
+        .finisher {
+            padding: 2px var(--app-space-2);
+            border-radius: var(--app-radius-pill);
+            background: var(--app-success-soft);
+            color: var(--app-success-strong);
         }
 
         .no-finisher {
             color: var(--app-text-subtle);
         }
 
-        .time-left.urgent {
-            color: var(--app-warning);
-            font-weight: 600;
-        }
-
-
-
-
-
-
-
+        /* ---- footer */
         .card-footer {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding-top: 6px;
+            gap: var(--app-space-2);
+            padding-top: var(--app-space-3);
             border-top: 1px solid var(--app-divider);
-        }
-
-        .finished-label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.9em;
-            color: var(--app-text-muted);
-        }
-
-        .hide-icon {
-            color: var(--app-accent);
-        }
-
-        .trash-icon {
-            color: var(--app-danger);
-        }
-
-        .stats-btn {
-            padding: 0 4px;
-        }
-
-        .collapse-icon {
-            color: var(--app-text-subtle);
-        }
-
-        .card.collapsed {
-            gap: 0;
-        }
-
-        .sort-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            flex-shrink: 0;
-        }
-
-        @media (max-width: 768px) {
-            .card-body {
-                grid-template-columns: 1fr;
-            }
-
-            .label {
-                color: var(--app-text-subtle);
-                font-size: 0.8em;
-                margin-bottom: 0;
-            }
-
-            .value {
-                margin-bottom: 4px;
-            }
-
-            .divider {
-                grid-column: 1;
-            }
-
-            .card-header {
-                flex-wrap: wrap;
-            }
         }
 
         @media (max-width: 400px) {
             .card {
-                padding: 8px 10px;
-                gap: 6px;
-            }
-
-            .headline {
-                font-size: 0.95em;
-            }
-
-            .card-body {
-                font-size: 0.82em;
-                gap: 3px 8px;
-            }
-
-
-
-
-
-            .card-footer {
-                padding-top: 4px;
-            }
-
-            .finished-label {
-                font-size: 0.82em;
+                padding: var(--app-space-3);
             }
         }
     `;
@@ -218,17 +180,15 @@ export class ExerciseCard extends ConnectedLitElement {
     @property({type: Boolean})
     editMode: boolean = false;
 
-    @property()
-    item: ExerciseDto = {
-        exerciseId: "",
-        exerciseTitle: "",
-        creator: ""
-    } as ExerciseDto
+    @property({attribute: false})
+    item: ExerciseDto = {exerciseId: "", exerciseTitle: "", creator: ""} as ExerciseDto;
 
+    /** The current user finished the exercise in this period. */
     @property({type: Boolean})
     checked: boolean = false;
 
-    @property()
+    /** Everybody who finished it in this period, with their streak. */
+    @property({attribute: false})
     finishedUser: CheckDto[] = [];
 
     @state()
@@ -267,8 +227,8 @@ export class ExerciseCard extends ConnectedLitElement {
         return parseInt(this.item.exerciseValue ?? '0', 10) || 0;
     }
 
-    private _formatTodayValue(): string {
-        if (!this.item.exerciseValue) return 'not Set';
+    private _formatGoal(): string {
+        if (!this.item.exerciseValue) return 'No goal set';
         if (isTimeExercise(this.item.exerciseType)) {
             const secs = parseInt(this.item.exerciseValue, 10);
             return isNaN(secs) ? this.item.exerciseValue : formatDuration(secs);
@@ -277,6 +237,10 @@ export class ExerciseCard extends ConnectedLitElement {
             return `${this.item.exerciseValue} reps`;
         }
         return this.item.exerciseValue;
+    }
+
+    private _myStreak(): number | undefined {
+        return this.finishedUser.find(check => check.user === this.user?.username)?.streak;
     }
 
     private async _loadLog() {
@@ -296,80 +260,124 @@ export class ExerciseCard extends ConnectedLitElement {
     }
 
     render() {
+        const streak = this._myStreak();
         return html`
-            <div class="card ${this._collapsed ? 'collapsed' : ''}">
+            <article class="card ${this.checked ? "done" : ""}">
                 <div class="card-header">
-                    <h2 class="headline">${this.item.exerciseTitle}</h2>
-                    ${this.editMode ? html`
-                        <div class="sort-controls">
-                            <sl-icon-button name="chevron-up" @click="${this._moveUpClick}"></sl-icon-button>
-                            <sl-icon-button name="chevron-down" @click="${this._moveDownClick}"></sl-icon-button>
+                    <div class="title">
+                        <h2 class="headline">${this.item.exerciseTitle}</h2>
+                        <div class="subtitle">
+                            <span>${this._formatGoal()}</span>
+                            <span>·</span>
+                            ${this.checked
+                                    ? html`<span>Done for this period</span>`
+                                    : html`<span class="${isUrgent(this.item.timeLeftSeconds) ? "urgent" : ""}">
+                                        ${formatTimeLeft(this.item.timeLeftSeconds)}</span>`}
                         </div>
-                    ` : html`
-                        <div class="actions">
-                            ${this.user && this.user.username === this.item.creator ? html`
-                                <sl-icon-button name="layer-backward" class="hide-icon"
-                                                @click="${this._hideClick}"></sl-icon-button>
-                                <sl-icon-button name="pencil" @click="${this._editClick}"></sl-icon-button>
-                                <sl-icon-button name="trash" class="trash-icon"
-                                                @click="${this._trashClick}"></sl-icon-button>
-                            ` : html`
-                                <sl-icon-button name="layer-backward" class="hide-icon"
-                                                @click="${this._hideClick}"></sl-icon-button>
-                            `}
-                            ${this._autoCollapse ? html`
-                                <sl-icon-button
-                                        class="collapse-icon"
-                                        name="${this._collapsed ? 'chevron-down' : 'chevron-up'}"
-                                        @click="${this._toggleCollapse}">
-                                </sl-icon-button>
-                            ` : ''}
-                        </div>
-                    `}
+                    </div>
+                    <div class="actions">
+                        ${streak && streak > 1 ? html`<span class="streak" title="Your streak">🔥 ${streak}</span>` : nothing}
+                        ${this.editMode ? this._renderSortControls() : this._renderMenu()}
+                        ${this._autoCollapse && !this.editMode ? html`
+                            <sl-icon-button name="${this._collapsed ? "chevron-down" : "chevron-up"}"
+                                            label="${this._collapsed ? "Expand" : "Collapse"}"
+                                            @click="${this._toggleCollapse}"></sl-icon-button>
+                        ` : nothing}
+                    </div>
                 </div>
-                ${!this._collapsed ? html`
-                    <div class="card-body">
-                        <span class="label">Today's Goal:</span>
-                        <span class="value">${this._formatTodayValue()}</span>
-                        ${isTimeExercise(this.item.exerciseType) ? html`
-                            <span class="label">Timer:</span>
-                            <exercise-timer .targetSeconds="${this._target()}" .completedSeconds="${this._progress}"
-                                            @progress-changed="${this._saveProgress}"></exercise-timer>
-                        ` : isRepExercise(this.item.exerciseType) ? html`
-                            <span class="label">Progress:</span>
-                            <rep-counter .target="${this._target()}" .value="${this._progress}"
-                                         @progress-changed="${this._saveProgress}"></rep-counter>
-                        ` : ''}
-                        <hr class="divider">
-                        <span class="label">Finished by:</span>
-                        <span>
-                            ${this.finishedUser.length === 0
-                                    ? html`<span class="no-finisher">—</span>`
-                                    : this.finishedUser.map((check, idx) =>
-                                            check.user + " {" + check.streak + "}" + (idx < this.finishedUser.length - 1 ? ", " : ""))}
-                        </span>
-                        <span class="label">Time left:</span>
-                        <span class="${isUrgent(this.item.timeLeftSeconds) ? 'time-left urgent' : 'time-left'}">${formatTimeLeft(this.item.timeLeftSeconds)}</span>
-                    </div>
-                    <div class="card-footer">
-                        <sl-button class="stats-btn" variant="primary" size="small"
-                                   @click="${() => navigate('/statistics/' + this.item.exerciseId)}">
-                            Statistics
-                        </sl-button>
-                        <div class="finished-label">
-                            Finished
-                            <sl-checkbox @sl-change="${this._checkChange}" ?checked=${this.checked}
-                                         size="medium"></sl-checkbox>
-                        </div>
-                    </div>
-                ` : ''}
+                ${this._collapsed ? nothing : this._renderBody()}
+            </article>
+        `;
+    }
+
+    private _renderSortControls() {
+        return html`
+            <sl-icon-button name="arrow-up" label="Move up" @click="${this._moveUpClick}"></sl-icon-button>
+            <sl-icon-button name="arrow-down" label="Move down" @click="${this._moveDownClick}"></sl-icon-button>
+        `;
+    }
+
+    private _renderMenu() {
+        const isCreator = this.user?.username === this.item.creator;
+        return html`
+            <sl-dropdown placement="bottom-end">
+                <sl-icon-button slot="trigger" name="three-dots-vertical" label="More actions"></sl-icon-button>
+                <sl-menu @sl-select="${this._menuSelect}">
+                    ${isCreator ? html`
+                        <sl-menu-item value="edit"><sl-icon slot="prefix" name="pencil"></sl-icon>Edit</sl-menu-item>
+                    ` : nothing}
+                    <sl-menu-item value="hide"><sl-icon slot="prefix" name="eye-slash"></sl-icon>Hide from my list</sl-menu-item>
+                    ${isCreator ? html`
+                        <sl-divider></sl-divider>
+                        <sl-menu-item value="delete" class="danger-item">
+                            <sl-icon slot="prefix" name="trash"></sl-icon>Delete
+                        </sl-menu-item>
+                    ` : nothing}
+                </sl-menu>
+            </sl-dropdown>
+        `;
+    }
+
+    private _renderBody() {
+        return html`
+            ${this._renderProgress()}
+            <div class="finishers">
+                <span>Finished by</span>
+                ${this.finishedUser.length === 0
+                        ? html`<span class="no-finisher">nobody yet</span>`
+                        : this.finishedUser.map(check => html`
+                            <span class="finisher">${check.user}${check.streak > 1 ? ` 🔥${check.streak}` : ""}</span>
+                        `)}
+            </div>
+            <div class="card-footer">
+                <sl-button variant="text" size="small" @click="${() => navigate('/statistics/' + this.item.exerciseId)}">
+                    <sl-icon slot="prefix" name="bar-chart"></sl-icon>
+                    Statistics
+                </sl-button>
+                <sl-button variant="${this.checked ? "success" : "default"}" size="small" pill
+                           @click="${this._toggleFinished}">
+                    <sl-icon slot="prefix" name="${this.checked ? "check-circle-fill" : "circle"}"></sl-icon>
+                    ${this.checked ? "Done" : "Mark as done"}
+                </sl-button>
             </div>
         `;
+    }
+
+    private _renderProgress() {
+        if (isTimeExercise(this.item.exerciseType)) {
+            return html`
+                <div class="progress">
+                    <exercise-timer .targetSeconds="${this._target()}" .completedSeconds="${this._progress}"
+                                    @progress-changed="${this._saveProgress}"></exercise-timer>
+                </div>`;
+        }
+        if (isRepExercise(this.item.exerciseType)) {
+            const target = this._target();
+            const percent = target > 0 ? Math.min(100, Math.round(this._progress / target * 100)) : 0;
+            return html`
+                <div class="progress">
+                    <rep-counter .target="${target}" .value="${this._progress}"
+                                 @progress-changed="${this._saveProgress}"></rep-counter>
+                    <sl-progress-bar value="${percent}" label="Progress"></sl-progress-bar>
+                </div>`;
+        }
+        return nothing;
     }
 
     private _toggleCollapse = () => {
         if (!this._autoCollapse) return;
         this._collapsed = !this._collapsed;
+    }
+
+    private _menuSelect = (e: SlSelectEvent) => {
+        switch (e.detail.item.value) {
+            case "edit":
+                return this._emit(ExerciseCardEvents.edit, this.item);
+            case "hide":
+                return this._emit(ExerciseCardEvents.hide, this.item);
+            case "delete":
+                return this._emit(ExerciseCardEvents.delete, this.item);
+        }
     }
 
     private _emit<T>(type: string, detail: T) {
@@ -380,16 +388,17 @@ export class ExerciseCard extends ConnectedLitElement {
 
     private _moveDownClick = () => this._emit(ExerciseCardEvents.moveDown, this.item);
 
-    private _hideClick = () => this._emit(ExerciseCardEvents.hide, this.item);
-
-    private _trashClick = () => this._emit(ExerciseCardEvents.delete, this.item);
-
-    private _editClick = () => this._emit(ExerciseCardEvents.edit, this.item);
-
-    private _checkChange = (e: Event) => {
+    private _toggleFinished = () => {
+        const finished = !this.checked;
         if (this._autoCollapse) {
-            this._collapsed = !this.checked;
+            this._collapsed = finished;
         }
-        this._emit(ExerciseCardEvents.checkChanged, (e.target as SlCheckbox).checked);
+        this._emit(ExerciseCardEvents.checkChanged, finished);
+    }
+}
+
+declare global {
+    interface HTMLElementTagNameMap {
+        "exercise-card": ExerciseCard;
     }
 }

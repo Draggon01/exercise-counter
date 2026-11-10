@@ -249,7 +249,7 @@ Reusable pieces are tracked in `frontend/src/components/README.md` – update it
 - Mobile (< 768px): bottom navigation with icons Home / Browse / Groups / Options; desktop: links in header.
 - Highlight the active route.
 
-### [ ] T3.5 🟢 Exercise card redesign
+### [x] T3.5 🟢 Exercise card redesign
 - Done state: colored left border (`--app-success`) + muted body when checked.
 - Streak badge (`🔥 n`) in the header (data already in `CheckDto.streak`).
 - `sl-progress-bar` for reps/time vs target.
