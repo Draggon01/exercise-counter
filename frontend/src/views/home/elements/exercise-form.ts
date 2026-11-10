@@ -24,13 +24,18 @@ export function toExerciseType(measure: Measure, increasing: boolean): ExerciseT
 }
 
 /**
- * Create / edit an exercise. Emits `save` (detail: {@link ExerciseDto}) when the valid form is
- * submitted and `close` when the user cancels. The parent controls {@link open} and saves.
+ * Create / edit an exercise (used by the exercise edit page). Emits `save` (detail: {@link ExerciseDto})
+ * when the valid form is submitted and `cancel` when the user cancels; the parent saves.
+ * The Cancel / Save bar sticks to the bottom of the scroll area, so Save stays reachable on phones.
  */
-@customElement("exercise-form-dialog")
-export class ExerciseFormDialog extends LitElement {
+@customElement("exercise-form")
+export class ExerciseForm extends LitElement {
 
     static styles = css`
+        :host {
+            display: block;
+        }
+
         form {
             display: flex;
             flex-direction: column;
@@ -58,19 +63,52 @@ export class ExerciseFormDialog extends LitElement {
             flex: 1;
         }
 
+        fieldset {
+            display: flex;
+            flex-direction: column;
+            gap: var(--app-space-4);
+            margin: 0;
+            padding: var(--app-space-4);
+            border: 1px solid var(--app-border);
+            border-radius: var(--app-radius);
+            background: var(--app-surface);
+        }
+
+        legend {
+            padding: 0 var(--app-space-2);
+            font-weight: 600;
+            color: var(--app-text);
+        }
+
+        .actions {
+            position: sticky;
+            bottom: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--app-space-2);
+            padding: var(--app-space-3) 0;
+            background: var(--app-bg);
+            border-top: 1px solid var(--app-divider);
+        }
+
         @media (max-width: 480px) {
             .row {
                 grid-template-columns: 1fr;
             }
+
+            .actions sl-button {
+                flex: 1;
+            }
         }
     `;
-
-    @property({type: Boolean})
-    open = false;
 
     /** The exercise to edit, or undefined to create a new one. */
     @property({attribute: false})
     exercise?: ExerciseDto;
+
+    /** Disables the Save button while the parent saves. */
+    @property({type: Boolean})
+    saving = false;
 
     /** Names of the groups the user can share the exercise with. */
     @property({attribute: false})
@@ -89,13 +127,13 @@ export class ExerciseFormDialog extends LitElement {
     @state()
     private durationPreview = 0;
 
-    /** Incremented on every opening so the form is rebuilt with fresh values. */
+    /** Incremented when another exercise is shown, so the form is rebuilt with its values. */
     private formKey = 0;
 
     private formRef: Ref<HTMLFormElement> = createRef();
 
     protected willUpdate(changed: PropertyValues<this>) {
-        if (changed.has("open") && this.open) {
+        if (changed.has("exercise") || !this.hasUpdated) {
             this.formKey++;
             const type = this.exercise?.exerciseType;
             this.measure = type && isTimeExercise(type) ? "time" : "reps";
@@ -107,13 +145,13 @@ export class ExerciseFormDialog extends LitElement {
 
     render() {
         return html`
-            <sl-dialog label="${this.exercise ? "Edit exercise" : "New exercise"}"
-                       .open="${this.open}"
-                       @sl-request-close="${this.close}">
-                ${this.open ? keyed(this.formKey, this.renderForm()) : nothing}
-                <sl-button slot="footer" variant="default" @click="${this.close}">Cancel</sl-button>
-                <sl-button slot="footer" variant="primary" @click="${this.save}">Save</sl-button>
-            </sl-dialog>
+            ${keyed(this.formKey, this.renderForm())}
+            <div class="actions">
+                <sl-button variant="default" @click="${this.cancel}">Cancel</sl-button>
+                <sl-button variant="primary" ?loading="${this.saving}" @click="${this.save}">
+                    ${this.exercise ? "Save changes" : "Create exercise"}
+                </sl-button>
+            </div>
         `;
     }
 
@@ -121,7 +159,9 @@ export class ExerciseFormDialog extends LitElement {
         const exercise = this.exercise;
         const time = this.measure === "time";
         return html`
-            <form ${ref(this.formRef)} @sl-hide="${(e: Event) => e.stopPropagation()}">
+            <form ${ref(this.formRef)} @submit="${(e: Event) => { e.preventDefault(); this.save(); }}">
+                <fieldset>
+                <legend>Exercise</legend>
                 <sl-input name="exerciseTitle" label="Name" placeholder="e.g. Push-ups" required
                           .value="${exercise?.exerciseTitle ?? ""}"></sl-input>
 
@@ -150,6 +190,10 @@ export class ExerciseFormDialog extends LitElement {
                               .value="${exercise?.exerciseIncrease ?? ""}"></sl-input>
                 ` : nothing}
 
+                </fieldset>
+
+                <fieldset>
+                <legend>Schedule</legend>
                 <div class="row">
                     <sl-input name="startTime" type="time" label="Resets at" required
                               .value="${(exercise?.startTime ?? "23:59:00").slice(0, 5)}"></sl-input>
@@ -157,6 +201,10 @@ export class ExerciseFormDialog extends LitElement {
                               .value="${String(exercise?.daysRepeat ?? 1)}"></sl-input>
                 </div>
 
+                </fieldset>
+
+                <fieldset>
+                <legend>Sharing</legend>
                 <div>
                     <sl-radio-group name="visibility" label="Who can see it?" .value="${this.visibility}"
                                     @sl-change="${(e: Event) => this.visibility = (e.target as SlRadioGroup).value as Visibility}">
@@ -173,6 +221,7 @@ export class ExerciseFormDialog extends LitElement {
                         ${this.groups.map(group => html`<sl-option value="${group}">${group}</sl-option>`)}
                     </sl-select>
                 ` : nothing}
+                </fieldset>
             </form>
         `;
     }
@@ -202,13 +251,13 @@ export class ExerciseFormDialog extends LitElement {
         this.dispatchEvent(new CustomEvent<ExerciseDto>("save", {detail: saved}));
     }
 
-    private close = () => {
-        this.dispatchEvent(new CustomEvent("close"));
+    private cancel = () => {
+        this.dispatchEvent(new CustomEvent("cancel"));
     }
 }
 
 declare global {
     interface HTMLElementTagNameMap {
-        "exercise-form-dialog": ExerciseFormDialog;
+        "exercise-form": ExerciseForm;
     }
 }

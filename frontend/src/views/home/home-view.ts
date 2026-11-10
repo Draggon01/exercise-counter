@@ -7,14 +7,12 @@ import {
     deleteExercise,
     listExercisesSelected,
     reorderExercises,
-    saveExercise,
     selectAllExercises,
     selectExercisesStatus,
     unselectExercise
 } from './slice/exerciseSlice';
 import {ExerciseDto} from "./models/exerciseDto";
 import './elements/exercise-card'
-import './elements/exercise-form-dialog'
 import '../../components/confirm-dialog'
 import '../../components/empty-state'
 import {navigate} from "../../utils/navigation";
@@ -30,7 +28,6 @@ import {
     selectAllChecks,
     selectChecksPerExercise
 } from "./slice/checkSlice";
-import {listUserMappings, selectUserMappingByUser} from "../groups/slice/groupSlice";
 import {loadOptions} from "../options/slice/optionsSlice";
 
 
@@ -46,13 +43,6 @@ export class HomeView extends ConnectedLitElement {
     @state()
     private user?: UserDto;
 
-    /** Exercise form: open for a new exercise (exerciseToEdit undefined) or to edit one. */
-    @state()
-    private formOpen = false;
-
-    @state()
-    private exerciseToEdit?: ExerciseDto;
-
     @state()
     private exerciseToDelete?: ExerciseDto;
 
@@ -64,9 +54,6 @@ export class HomeView extends ConnectedLitElement {
 
     @state()
     private checks: Record<string, CheckDto[]> = {}
-
-    @state()
-    private groups: string[] = [];
 
 
 
@@ -107,7 +94,6 @@ export class HomeView extends ConnectedLitElement {
         store.dispatch(listExercisesSelected());
         store.dispatch(listUserChecks())
         store.dispatch(listChecksPerExercise());
-        store.dispatch(listUserMappings());
         store.dispatch(loadOptions());
     }
 
@@ -126,10 +112,6 @@ export class HomeView extends ConnectedLitElement {
             this.checksSelected = true;
             this.checks = selectChecksPerExercise(state);
         }
-        if (this.user && state.group.userMappings.status === "idle") {
-            let groups = selectUserMappingByUser(state, this.user.username)
-            this.groups = groups ? groups.groupInformation.map(group => group.groupName) : [];
-        }
     }
 
     render() {
@@ -137,7 +119,8 @@ export class HomeView extends ConnectedLitElement {
             <div class="page-container">
             <div class="action-bar">
                 <sl-button variant="primary" @click="${() => this.openForm()}">
-                    Add Exercise
+                    <sl-icon slot="prefix" name="plus-lg"></sl-icon>
+                    New exercise
                 </sl-button>
 
                 <sl-button variant="${this.editMode ? 'success' : 'neutral'}" @click="${() => {
@@ -149,12 +132,6 @@ export class HomeView extends ConnectedLitElement {
 
             <div class="exercise-list">${this.renderItems()}</div>
             </div>
-            <exercise-form-dialog .open="${this.formOpen}"
-                                  .exercise="${this.exerciseToEdit}"
-                                  .groups="${this.groups}"
-                                  @save="${this.saveExerciseForm}"
-                                  @close="${() => this.formOpen = false}">
-            </exercise-form-dialog>
             <confirm-dialog label="Delete exercise" confirmLabel="Delete Exercise" cancelLabel="Close"
                             .open="${this.exerciseToDelete !== undefined}"
                             @confirm="${this.confirmDelete}"
@@ -242,10 +219,9 @@ export class HomeView extends ConnectedLitElement {
         return !!check;
     }
 
-    /** Opens the exercise form for a new exercise, or to edit the given one. */
+    /** Opens the page to create a new exercise, or to edit the given one. */
     private openForm(exercise?: ExerciseDto) {
-        this.exerciseToEdit = exercise ? {...exercise} : undefined;
-        this.formOpen = true;
+        navigate(exercise ? `/exercises/${exercise.exerciseId}/edit` : "/exercises/new");
     }
 
     /** Swaps the exercise at {@code index} with its neighbour and saves the new order. */
@@ -265,8 +241,4 @@ export class HomeView extends ConnectedLitElement {
         store.dispatch(listChecksPerExercise());
     }
 
-    private saveExerciseForm = (e: CustomEvent<ExerciseDto>) => {
-        store.dispatch(saveExercise(e.detail));
-        this.formOpen = false;
-    }
 }

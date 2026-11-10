@@ -1,30 +1,29 @@
 // @vitest-environment happy-dom
 import {describe, expect, it, vi} from "vitest";
-import "./exercise-form-dialog";
-import {ExerciseFormDialog, toExerciseType} from "./exercise-form-dialog";
+import "./exercise-form";
+import {ExerciseForm, toExerciseType} from "./exercise-form";
 import {ExerciseDto} from "../models/exerciseDto";
 
 async function mount(exercise?: ExerciseDto) {
-    const dialog = document.createElement("exercise-form-dialog") as ExerciseFormDialog;
+    const dialog = document.createElement("exercise-form") as ExerciseForm;
     dialog.groups = ["team"];
     dialog.exercise = exercise;
-    dialog.open = true;
     document.body.append(dialog);
     await dialog.updateComplete;
     return dialog;
 }
 
-const field = (dialog: ExerciseFormDialog, name: string) =>
+const field = (dialog: ExerciseForm, name: string) =>
     dialog.shadowRoot!.querySelector(`[name="${name}"]`) as (HTMLInputElement & { checked: boolean }) | null;
 
-async function change(dialog: ExerciseFormDialog, name: string, value: string | boolean) {
+async function change(dialog: ExerciseForm, name: string, value: string | boolean) {
     const el = field(dialog, name)!;
     if (typeof value === "boolean") el.checked = value; else el.value = value;
     el.dispatchEvent(new Event("sl-change"));
     await dialog.updateComplete;
 }
 
-function save(dialog: ExerciseFormDialog): ExerciseDto {
+function save(dialog: ExerciseForm): ExerciseDto {
     const onSave = vi.fn();
     dialog.addEventListener("save", onSave);
     (dialog.shadowRoot!.querySelectorAll("sl-button")[1] as HTMLElement).click();
@@ -40,7 +39,7 @@ describe("toExerciseType", () => {
     });
 });
 
-describe("exercise-form-dialog", () => {
+describe("exercise-form", () => {
     it("starts a new exercise as private repetitions without increase", async () => {
         const dialog = await mount();
 
@@ -108,22 +107,21 @@ describe("exercise-form-dialog", () => {
         expect(saved).toMatchObject({exerciseType: "TIMEREPEAT", exerciseIncrease: "", visibility: "PUBLIC", groups: []});
     });
 
-    it("starts with empty fields every time it is opened for a new exercise", async () => {
+    it("rebuilds the form when another exercise is shown", async () => {
         const dialog = await mount();
         field(dialog, "exerciseTitle")!.value = "typed before";
 
-        dialog.open = false;
-        await dialog.updateComplete;
-        dialog.open = true;
+        dialog.exercise = {exerciseId: "x", exerciseTitle: "Loaded", exerciseType: "NUMBERREPEAT", visibility: "PRIVATE",
+            startTime: "07:00:00", daysRepeat: 1} as ExerciseDto;
         await dialog.updateComplete;
 
-        expect(field(dialog, "exerciseTitle")!.value).toBe("");
+        expect(field(dialog, "exerciseTitle")!.value).toBe("Loaded");
     });
 
-    it("emits close on cancel", async () => {
+    it("emits cancel", async () => {
         const dialog = await mount();
         const onClose = vi.fn();
-        dialog.addEventListener("close", onClose);
+        dialog.addEventListener("cancel", onClose);
 
         (dialog.shadowRoot!.querySelectorAll("sl-button")[0] as HTMLElement).click();
 
