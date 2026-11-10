@@ -1,4 +1,5 @@
 import {customElement, state} from 'lit/decorators.js';
+import {onAppRefresh} from "../../utils/refresh";
 import {fullscreenDialogStyles} from "../../styles/dialog";
 import "../../components/fab-button";
 import {touchStyles} from "../../styles/touch";
@@ -265,9 +266,17 @@ export class GroupsView extends ConnectedLitElement {
     private createFormRef: Ref<HTMLFormElement> = createRef();
     private inviteFormRef: Ref<HTMLFormElement> = createRef();
 
+    private stopRefresh?: () => void;
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        this.stopRefresh?.();
+    }
+
     connectedCallback() {
         super.connectedCallback();
         store.dispatch(listUserMappings());
+        this.stopRefresh = onAppRefresh(() => store.dispatch(listUserMappings()));
     }
 
     stateChanged(state: RootState): void {

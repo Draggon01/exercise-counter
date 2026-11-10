@@ -1,4 +1,5 @@
 import {css, html, nothing} from 'lit';
+import {onAppRefresh} from "../../utils/refresh";
 import {touchStyles} from "../../styles/touch";
 import {customElement, property, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
@@ -292,9 +293,17 @@ export class StatisticsView extends ConnectedLitElement {
     @state()
     private tip?: { status: string, detail: string, x: number, y: number };
 
+    private stopRefresh?: () => void;
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        this.stopRefresh?.();
+    }
+
     connectedCallback() {
         super.connectedCallback();
         store.dispatch(loadStatistic(this.exerciseId));
+        this.stopRefresh = onAppRefresh(() => store.dispatch(loadStatistic(this.exerciseId)));
         // the exercise name comes from the home list – load it when the page is opened directly
         if (selectExercisesStatus(store.getState()) !== "idle") {
             store.dispatch(listExercisesSelected());

@@ -42,6 +42,35 @@ export class ExerciseCard extends ConnectedLitElement {
             display: block;
         }
 
+        /* lifted while it is dragged to a new place (home view, edit order) */
+        :host([dragging]) {
+            position: relative;
+            z-index: 5;
+        }
+
+        :host([dragging]) .card {
+            box-shadow: var(--app-shadow-raised);
+            border-color: var(--app-accent);
+        }
+
+        .drag-handle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            min-height: 44px;
+            font-size: 1.25rem;
+            color: var(--app-text-muted);
+            cursor: grab;
+            /* the finger drags the card instead of scrolling the page */
+            touch-action: none;
+            user-select: none;
+        }
+
+        :host([dragging]) .drag-handle {
+            cursor: grabbing;
+        }
+
         .card {
             display: flex;
             flex-direction: column;
@@ -292,13 +321,15 @@ export class ExerciseCard extends ConnectedLitElement {
                         ` : nothing}
                     </div>
                 </div>
-                ${this._collapsed ? nothing : this._renderBody()}
+                ${this._collapsed || this.editMode ? nothing : this._renderBody()}
             </article>
         `;
     }
 
     private _renderSortControls() {
         return html`
+            <!-- dragged by the home view (pointer events); the arrows stay for keyboard / screen readers -->
+            <span class="drag-handle" data-drag-handle title="Drag to move"><sl-icon name="grip-vertical"></sl-icon></span>
             <sl-icon-button name="arrow-up" label="Move up" @click="${this._moveUpClick}"></sl-icon-button>
             <sl-icon-button name="arrow-down" label="Move down" @click="${this._moveDownClick}"></sl-icon-button>
         `;

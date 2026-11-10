@@ -1,4 +1,5 @@
 import {css, html} from 'lit';
+import {onAppRefresh} from "../../utils/refresh";
 import {pageStyles} from "../../styles/page";
 import "../../components/page-header";
 import "../../components/empty-state";
@@ -36,9 +37,17 @@ export class BrowseView extends ConnectedLitElement {
 
     `];
 
+    private stopRefresh?: () => void;
+
     connectedCallback() {
         super.connectedCallback();
-        store.dispatch(listExercisesAvailable())
+        store.dispatch(listExercisesAvailable());
+        this.stopRefresh = onAppRefresh(() => store.dispatch(listExercisesAvailable()));
+    }
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        this.stopRefresh?.();
     }
 
     stateChanged(state: RootState): void {

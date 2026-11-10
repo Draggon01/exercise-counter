@@ -363,10 +363,14 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
 - Done: `<fab-button>` on home + groups (desktop keeps the normal buttons), `fullscreenDialogStyles` for the
   create-group and What's new dialogs (confirm dialogs stay compact on purpose), sticky `<page-header>`.
 
-### [ ] T5.4 📱 Gestures
+### [x] T5.4 📱 Gestures
 - Reorder exercises by drag & drop with touch (long press) instead of the ↑/↓ edit mode.
 - Pull to refresh on home (reload exercises and checks).
 - Optional: swipe a card to mark it done.
+- Done: grip handle in edit order (pointer events – mouse + touch, card follows the finger, others make room,
+  auto-scroll at the edges; ↑/↓ stay for keyboard / screen readers; edit mode shows only the card headers).
+  Pull to refresh in the app shell (`utils/refresh.ts`) for home, browse, groups, statistics.
+  Swipe to done left out: too easy to trigger by accident while scrolling, "Mark as done" is one tap.
 
 ### [ ] T5.5 📱 App feel during workouts
 - ~~Keep the screen on while a timer runs~~ and ~~vibrate when it finishes~~ – done (feedback F3).
@@ -393,4 +397,4 @@ The app is mostly used on phones, like an installed app. Check every task on a 3
 | 2 – Frontend structure | 9 | 9 |
 | 3 – Visual | 10 | 10 |
 | 4 – Features | 1 | 1 |
-| 5 – Mobile / app experience | 7 | 3 |
+| 5 – Mobile / app experience | 7 | 4 |

@@ -1,4 +1,5 @@
 import {css, html} from 'lit';
+import {onAppRefresh} from "../../utils/refresh";
 import '../../components/fab-button'
 import {pageStyles} from "../../styles/page";
 import {customElement, state} from "lit/decorators.js";
@@ -30,6 +31,21 @@ import {
     selectChecksPerExercise
 } from "./slice/checkSlice";
 import {loadOptions} from "../options/slice/optionsSlice";
+import {dropIndex, moveItem, shiftFor} from "../../utils/reorder";
+
+/** State of a running drag (edit order): positions are relative to the list's top, so scrolling does not matter. */
+interface DragState {
+    pointerId: number;
+    from: number;
+    to: number;
+    startY: number;
+    cards: HTMLElement[];
+    centers: number[];
+    /** height of the dragged card + gap = how far the other cards move to make room */
+    step: number;
+    list: HTMLElement;
+    scroller?: HTMLElement;
+}
 
 
 @customElement("home-view")
@@ -100,12 +116,21 @@ export class HomeView extends ConnectedLitElement {
     @state()
     private exercisesStatus: AsyncStoreState = "initial";
 
+    private stopRefresh?: () => void;
+
     connectedCallback() {
         super.connectedCallback();
-        store.dispatch(listExercisesSelected());
-        store.dispatch(listUserChecks())
-        store.dispatch(listChecksPerExercise());
+        this.load();
         store.dispatch(loadOptions());
+        this.stopRefresh = onAppRefresh(() => this.load());
+    }
+
+    private load() {
+        return Promise.all([
+            store.dispatch(listExercisesSelected()),
+            store.dispatch(listUserChecks()),
+            store.dispatch(listChecksPerExercise()),
+        ]);
     }
 
     stateChanged(state: RootState) {
@@ -141,7 +166,7 @@ export class HomeView extends ConnectedLitElement {
                 </sl-button>
             </div>
 
-            <div class="exercise-list">${this.renderItems()}</div>
+            <div class="exercise-list" @pointerdown="${this.dragStart}">${this.renderItems()}</div>
             </div>
             <fab-button label="New exercise" @click="${() => this.openForm()}"></fab-button>
             <confirm-dialog label="Delete exercise" confirmLabel="Delete Exercise" cancelLabel="Close"
@@ -202,11 +227,7 @@ export class HomeView extends ConnectedLitElement {
                     </sl-button>
                 </empty-state>`;
         }
-        let exerciseDtos = [...this.listExercises].sort((a, b) => {
-            const aOrder = a.position ?? 0;
-            const bOrder = b.position ?? 0;
-            return aOrder - bOrder;
-        });
+        const exerciseDtos = this.sortedExercises();
         return html`
             ${exerciseDtos.map((element, index) => {
                 return html`
@@ -224,6 +245,10 @@ export class HomeView extends ConnectedLitElement {
                     ></exercise-card>`;
             })}
         `;
+    }
+
+    private sortedExercises() {
+        return [...this.listExercises].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
     }
 
     private getChecked(element: ExerciseDto) {
@@ -247,10 +272,112 @@ export class HomeView extends ConnectedLitElement {
         store.dispatch(reorderExercises(newOrder.map(e => e.exerciseId)));
     }
 
+    // ---- drag & drop (edit order)
+
+    private drag?: DragState;
+
+    private dragStart = (e: PointerEvent) => {
+        if (!this.editMode || this.drag || (e.pointerType === "mouse" && e.button !== 0)) return;
+        const path = e.composedPath() as HTMLElement[];
+        if (!path.some(el => el.dataset?.dragHandle !== undefined)) return;
+        const list = e.currentTarget as HTMLElement;
+        const cards = [...list.querySelectorAll<HTMLElement>("exercise-card")];
+        const from = cards.findIndex(card => path.includes(card));
+        if (from < 0) return;
+        e.preventDefault();
+        const listTop = list.getBoundingClientRect().top;
+        const rects = cards.map(card => card.getBoundingClientRect());
+        const gap = rects.length > 1 ? rects[1].top - rects[0].bottom : 0;
+        this.drag = {
+            pointerId: e.pointerId, from, to: from, startY: e.clientY - listTop, list, cards,
+            centers: rects.map(r => r.top - listTop + r.height / 2),
+            step: rects[from].height + gap,
+            scroller: scrollParent(list),
+        };
+        cards[from].toggleAttribute("dragging", true);
+        cards.forEach((card, i) => card.style.transition = i === from ? "none" : "transform 0.15s ease");
+        window.addEventListener("pointermove", this.dragMove);
+        window.addEventListener("pointerup", this.dragEnd);
+        window.addEventListener("pointercancel", this.dragCancel);
+    }
+
+    private dragMove = (e: PointerEvent) => {
+        const drag = this.drag;
+        if (!drag || e.pointerId !== drag.pointerId) return;
+        const dy = e.clientY - drag.list.getBoundingClientRect().top - drag.startY;
+        drag.to = dropIndex(drag.centers, drag.from, drag.centers[drag.from] + dy);
+        drag.cards.forEach((card, i) => {
+            card.style.transform = i === drag.from
+                ? `translateY(${dy}px)`
+                : `translateY(${shiftFor(i, drag.from, drag.to) * drag.step}px)`;
+        });
+        this.autoScroll(drag, e.clientY);
+    }
+
+    /** Scrolls the page while the card is dragged near the top or bottom edge. */
+    private autoScroll(drag: DragState, y: number) {
+        if (!drag.scroller) return;
+        const box = drag.scroller.getBoundingClientRect();
+        const edge = 60;
+        if (y < box.top + edge) drag.scroller.scrollBy(0, -12);
+        else if (y > box.bottom - edge) drag.scroller.scrollBy(0, 12);
+    }
+
+    private dragEnd = async (e: PointerEvent) => {
+        const drag = this.drag;
+        if (!drag || e.pointerId !== drag.pointerId) return;
+        this.stopDragListeners();
+        if (drag.to !== drag.from) {
+            const order = moveItem(this.sortedExercises(), drag.from, drag.to);
+            navigator.vibrate?.(10);
+            await store.dispatch(reorderExercises(order.map(ex => ex.exerciseId)));
+            await this.updateComplete; // the cards show the new order now – remove the offsets without animation
+        }
+        this.resetDrag(drag);
+    }
+
+    private dragCancel = () => {
+        if (!this.drag) return;
+        this.stopDragListeners();
+        this.resetDrag(this.drag);
+    }
+
+    private stopDragListeners() {
+        window.removeEventListener("pointermove", this.dragMove);
+        window.removeEventListener("pointerup", this.dragEnd);
+        window.removeEventListener("pointercancel", this.dragCancel);
+    }
+
+    private resetDrag(drag: DragState) {
+        drag.cards.forEach(card => {
+            card.style.transition = "";
+            card.style.transform = "";
+            card.removeAttribute("dragging");
+        });
+        this.drag = undefined;
+    }
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        this.stopRefresh?.();
+        this.dragCancel();
+    }
+
     private async setFinished(exercise: ExerciseDto, finished: boolean) {
         const check: CheckDto = {exerciseId: exercise.exerciseId, user: this.user?.username ?? "", streak: -1};
         await store.dispatch(finished ? saveCheck(check) : deleteCheck(check));
         store.dispatch(listChecksPerExercise());
     }
 
+}
+
+/** The nearest scrolling ancestor, also across shadow roots and slots (the app shell's main). */
+function scrollParent(el: HTMLElement): HTMLElement | undefined {
+    let node: Element | null = el;
+    while (node) {
+        const next: Element | null = node.assignedSlot ?? node.parentElement ?? ((node.getRootNode() as ShadowRoot).host ?? null);
+        if (next instanceof HTMLElement && /(auto|scroll)/.test(getComputedStyle(next).overflowY)) return next;
+        node = next;
+    }
+    return undefined;
 }

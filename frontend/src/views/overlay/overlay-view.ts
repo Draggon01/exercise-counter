@@ -7,6 +7,8 @@ import {UserDto} from "../login/models/userDto";
 import {navigate} from "../../utils/navigation";
 import {ChangelogEntry, markChangelogSeen, selectUnseenChangelog} from "../../shared-slices/changelog/changelogSlice";
 import "../../components/changelog-dialog";
+import {styleMap} from "lit/directives/style-map.js";
+import {pullDistance, PULL_THRESHOLD, requestAppRefresh} from "../../utils/refresh";
 
 type NavItem = { path: string, label: string, icon: string };
 
@@ -115,6 +117,48 @@ export class OverlayView extends ConnectedLitElement {
         main {
             overflow: auto;
             min-height: 0;
+            /* no scroll chaining / browser refresh – pulling down at the top is our pull to refresh */
+            overscroll-behavior-y: contain;
+        }
+
+        /* ---- pull to refresh: a round indicator drops in from the top of the page */
+        .pull {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            height: 0;
+            display: flex;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .pull-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--app-surface);
+            color: var(--app-accent);
+            box-shadow: var(--app-shadow-raised);
+            font-size: 1.25rem;
+            transform: translateY(calc(var(--pull, 0px) - 44px));
+            opacity: var(--pull-opacity, 0);
+        }
+
+        .pull.released .pull-indicator {
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        /* turns while pulling; full color once releasing refreshes */
+        .pull-indicator sl-icon {
+            transform: rotate(calc(var(--pull, 0px) / 1px * 4deg));
+            opacity: 0.6;
+        }
+
+        .pull.ready .pull-indicator sl-icon {
+            opacity: 1;
         }
 
         .bottom-nav {
@@ -167,6 +211,63 @@ export class OverlayView extends ConnectedLitElement {
     /** Current path, to highlight the active section. */
     @state()
     private path = window.location.pathname;
+
+    // ---- pull to refresh
+
+    /** How far the indicator is pulled down (px); 0 = hidden. */
+    @state()
+    private pull = 0;
+
+    @state()
+    private refreshing = false;
+
+    private pullStartY?: number;
+
+    private renderPull() {
+        const shown = this.refreshing ? PULL_THRESHOLD : this.pull;
+        const classes = [this.pullStartY === undefined ? "released" : "", this.pull >= PULL_THRESHOLD ? "ready" : ""];
+        return html`
+            <div class="pull ${classes.join(" ")}" aria-hidden="${!this.refreshing}"
+                 style="${styleMap({"--pull": `${shown}px`, "--pull-opacity": `${Math.min(1, shown / PULL_THRESHOLD)}`})}">
+                <div class="pull-indicator" role="status" aria-label="${this.refreshing ? "Refreshing" : ""}">
+                    ${this.refreshing ? html`<sl-spinner></sl-spinner>` : html`<sl-icon name="arrow-clockwise"></sl-icon>`}
+                </div>
+            </div>`;
+    }
+
+    private pullStart = (e: TouchEvent) => {
+        const main = e.currentTarget as HTMLElement;
+        // not while scrolled down, refreshing, inside dialogs / the timer view or while sorting cards
+        const path = e.composedPath() as HTMLElement[];
+        const ignored = path.some(el => el.getAttribute?.("role") === "dialog" || el.dataset?.dragHandle !== undefined);
+        if (main.scrollTop > 0 || this.refreshing || ignored || e.touches.length !== 1) return;
+        this.pullStartY = e.touches[0].clientY;
+    }
+
+    private pullMove = (e: TouchEvent) => {
+        if (this.pullStartY === undefined) return;
+        const main = e.currentTarget as HTMLElement;
+        if (main.scrollTop > 0) {
+            this.pullStartY = undefined;
+            this.pull = 0;
+            return;
+        }
+        const next = pullDistance(e.touches[0].clientY - this.pullStartY);
+        if (this.pull < PULL_THRESHOLD && next >= PULL_THRESHOLD) navigator.vibrate?.(10);
+        this.pull = next;
+    }
+
+    private pullEnd = async () => {
+        if (this.pullStartY === undefined) return;
+        const ready = this.pull >= PULL_THRESHOLD;
+        this.pullStartY = undefined;
+        this.pull = 0;
+        if (!ready) return;
+        this.refreshing = true;
+        // at least a short moment, so the spinner does not just flash
+        await Promise.all([requestAppRefresh(), new Promise(resolve => setTimeout(resolve, 500))]);
+        this.refreshing = false;
+    }
 
     private onLocationChange = () => {
         this.path = window.location.pathname;
@@ -234,7 +335,9 @@ export class OverlayView extends ConnectedLitElement {
                     </sl-menu>
                 </sl-dropdown>
             </header>
-            <main>
+            <main @touchstart="${this.pullStart}" @touchmove="${this.pullMove}" @touchend="${this.pullEnd}"
+                  @touchcancel="${this.pullEnd}">
+                ${this.renderPull()}
                 <slot name="main"></slot>
             </main>
             <nav class="bottom-nav" aria-label="Main">${this.renderLinks(NAV_ITEMS)}</nav>
