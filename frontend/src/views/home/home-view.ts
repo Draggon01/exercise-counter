@@ -32,6 +32,7 @@ import {
 } from "./slice/checkSlice";
 import {loadOptions} from "../options/slice/optionsSlice";
 import {dropIndex, moveItem, shiftFor} from "../../utils/reorder";
+import {LatestValueSync} from "../../utils/latest-value-sync";
 
 /** State of a running drag (edit order): positions are relative to the list's top, so scrolling does not matter. */
 interface DragState {
@@ -251,9 +252,13 @@ export class HomeView extends ConnectedLitElement {
         return [...this.listExercises].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
     }
 
+    /** Done as shown: what the user just clicked (still being saved) or what the server has. */
     private getChecked(element: ExerciseDto) {
-        let check = this.listChecks.find(check => check.exerciseId === element.exerciseId);
-        return !!check;
+        return this.doneSync.pending(element.exerciseId) ?? this.isSavedAsDone(element.exerciseId);
+    }
+
+    private isSavedAsDone(exerciseId: string) {
+        return this.listChecks.some(check => check.exerciseId === exerciseId);
     }
 
     /** Opens the page to create a new exercise, or to edit the given one. */
@@ -363,10 +368,19 @@ export class HomeView extends ConnectedLitElement {
         this.dragCancel();
     }
 
-    private async setFinished(exercise: ExerciseDto, finished: boolean) {
-        const check: CheckDto = {exerciseId: exercise.exerciseId, user: this.user?.username ?? "", streak: -1};
-        await store.dispatch(finished ? saveCheck(check) : deleteCheck(check));
-        store.dispatch(listChecksPerExercise());
+    /** "Mark as done" / "Done": shown at once, saved one request at a time (fast clicks send only the last state). */
+    private doneSync = new LatestValueSync<boolean>(async (exerciseId, done) => {
+        const check: CheckDto = {exerciseId, user: this.user?.username ?? "", streak: -1};
+        const result = done ? await store.dispatch(saveCheck(check)) : await store.dispatch(deleteCheck(check));
+        const saved = saveCheck.fulfilled.match(result) || deleteCheck.fulfilled.match(result);
+        if (saved) {
+            store.dispatch(listChecksPerExercise()); // "Finished by" chips and streaks
+        }
+        return saved;
+    }, () => this.requestUpdate());
+
+    private setFinished(exercise: ExerciseDto, finished: boolean) {
+        this.doneSync.set(exercise.exerciseId, finished, this.isSavedAsDone(exercise.exerciseId));
     }
 
 }

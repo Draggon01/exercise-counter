@@ -61,24 +61,11 @@ export const checkSlice = createSlice({
                 state.checks.status = 'idle';
                 checkAdapter.setAll(state.checks, action.payload);
             })
-            .addCase(saveCheck.pending, state => {
-                state.checks.status = 'initial';
-            })
-            .addCase(saveCheck.rejected, state => {
-                state.checks.status = 'error';
-            })
+            // mutations only change the data on success (the list status is for loading the list)
             .addCase(saveCheck.fulfilled, (state, action) => {
-                state.checks.status = 'idle';
                 checkAdapter.upsertOne(state.checks, action.payload);
             })
-            .addCase(deleteCheck.pending, state => {
-                state.checks.status = 'initial';
-            })
-            .addCase(deleteCheck.rejected, state => {
-                state.checks.status = 'error';
-            })
             .addCase(deleteCheck.fulfilled, (state, action) => {
-                state.checks.status = 'idle';
                 checkAdapter.removeOne(state.checks, action.payload.exerciseId);
             })
             .addCase(listChecksPerExercise.pending, state => {

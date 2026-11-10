@@ -29,6 +29,10 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -107,6 +111,34 @@ class CheckServiceTest {
 
         checkService.uncheck(exercise.getExerciseId(), ANNA);
         assertEquals(0, checkService.listForUser(ANNA).size());
+    }
+
+    @Test
+    void checkAndUncheck_twiceIsNoError() {
+        checkService.check(exercise.getExerciseId(), ANNA);
+        checkService.check(exercise.getExerciseId(), ANNA);
+        assertEquals(1, checkService.listForUser(ANNA).size());
+
+        checkService.uncheck(exercise.getExerciseId(), ANNA);
+        checkService.uncheck(exercise.getExerciseId(), ANNA);
+        assertEquals(0, checkService.listForUser(ANNA).size());
+    }
+
+    /** Fast clicks on "Mark as done": the same requests arrive at the same time. */
+    @Test
+    void parallelChecksAndUnchecks_doNotFail() throws Exception {
+        UUID id = exercise.getExerciseId();
+        try (ExecutorService pool = Executors.newFixedThreadPool(8)) {
+            List<Future<?>> checks = new ArrayList<>();
+            for (int i = 0; i < 16; i++) checks.add(pool.submit(() -> checkService.check(id, ANNA)));
+            for (Future<?> f : checks) f.get(); // throws if one request failed
+            assertEquals(1, checkService.listForUser(ANNA).size());
+
+            List<Future<?>> unchecks = new ArrayList<>();
+            for (int i = 0; i < 16; i++) unchecks.add(pool.submit(() -> checkService.uncheck(id, ANNA)));
+            for (Future<?> f : unchecks) f.get();
+            assertEquals(0, checkService.listForUser(ANNA).size());
+        }
     }
 
     /** A one-day period that ended {@code daysAgo} days ago, finished by the given users. */

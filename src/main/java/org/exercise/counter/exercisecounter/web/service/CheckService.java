@@ -1,7 +1,6 @@
 package org.exercise.counter.exercisecounter.web.service;
 
 import org.exercise.counter.exercisecounter.web.data.checks.Check;
-import org.exercise.counter.exercisecounter.web.data.checks.CheckId;
 import org.exercise.counter.exercisecounter.web.data.checks.CheckRepository;
 import org.exercise.counter.exercisecounter.web.data.statistic.FinishedUserRepository;
 import org.exercise.counter.exercisecounter.web.data.statistic.Period;
@@ -77,12 +76,12 @@ public class CheckService {
 
     @Transactional
     public void check(UUID exerciseId, String username) {
-        checkRepository.save(new Check(new CheckId(exerciseId, username)));
+        checkRepository.insertIfAbsent(exerciseId, username);
     }
 
     @Transactional
     public void uncheck(UUID exerciseId, String username) {
-        checkRepository.deleteById(new CheckId(exerciseId, username));
+        checkRepository.deleteIfPresent(exerciseId, username);
     }
 
     /**
