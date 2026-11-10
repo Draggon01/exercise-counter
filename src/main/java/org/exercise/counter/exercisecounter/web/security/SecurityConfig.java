@@ -1,12 +1,14 @@
 package org.exercise.counter.exercisecounter.web.security;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -21,13 +23,23 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JpaUserDetailsService userDetailsService;
+    private final ObjectProvider<InMemoryUserDetailsManager> devUserDetailsService;
 
-    public SecurityConfig(JpaUserDetailsService userDetailsService) {
+    /**
+     * @param devUserDetailsService only available with the {@code dev} profile, see {@link DevSecurityConfig}
+     */
+    public SecurityConfig(JpaUserDetailsService userDetailsService,
+                          ObjectProvider<InMemoryUserDetailsManager> devUserDetailsService) {
         this.userDetailsService = userDetailsService;
+        this.devUserDetailsService = devUserDetailsService;
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        InMemoryUserDetailsManager devUsers = devUserDetailsService.getIfAvailable();
+        if (devUsers != null) {
+            http.userDetailsService(devUsers);
+        }
         return http.csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth

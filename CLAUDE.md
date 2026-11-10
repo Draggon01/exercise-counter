@@ -22,6 +22,7 @@ For backend
 mvn clean verify        # full build + tests
 mvn test                # tests only
 mvn spring-boot:run     # run locally (needs DB)
+mvn spring-boot:run -Dspring-boot.run.profiles=dev   # run locally with dev login user/password
 ```
 For frontend
 ```bash

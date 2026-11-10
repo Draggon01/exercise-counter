@@ -20,6 +20,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 - Steps:
   1. Delete the `inMemoryUserDetailsService()` bean and the `.userDetailsService(inMemoryUserDetailsService())` line.
   2. If a dev user is needed, create it in a `@Profile("dev")` config instead.
+- Done: `DevSecurityConfig` (`@Profile("dev")`) provides `user` / `password`; `SecurityConfig` registers it only when present.
 - Done when: login with `user` / `password` fails; normal users still log in.
 
 ### [x] T0.2 🔴 Cancel scheduler when an exercise is deleted
