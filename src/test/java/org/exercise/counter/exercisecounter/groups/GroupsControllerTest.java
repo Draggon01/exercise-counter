@@ -72,6 +72,24 @@ class GroupsControllerTest {
     }
 
     @Test
+    void acceptInvitation_withNullInvitedFlag_doesNotFail() {
+        groupsController.inviteUserToGroup(Map.of("username", "grp-bob", "groupName", GROUP), auth("grp-alice"));
+        userGroupMappingRepository.findByUserGroupMappingId_Username("grp-bob").forEach(m -> {
+            m.setIsInvited(null);
+            userGroupMappingRepository.save(m);
+        });
+
+        assertDoesNotThrow(() -> groupsController.acceptUserToGroup(GROUP, auth("grp-bob")));
+    }
+
+    @Test
+    void lastMemberLeaving_deletesGroup() {
+        groupsController.deleteGroupOnUser(GROUP, auth("grp-alice"));
+
+        assertTrue(groupRepository.findByGroupName(GROUP).isEmpty());
+    }
+
+    @Test
     void listUserGroups_returnsOnlyCurrentUser() {
         List<UserGroupMappingDto> result = groupsController.listUserGroups(auth("grp-bob"));
 

@@ -5,6 +5,7 @@ import org.exercise.counter.exercisecounter.web.data.register.RegisterRepository
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.rest.user.UserController;
+import org.exercise.counter.exercisecounter.web.service.InviteService;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,30 +28,30 @@ class InviteLinkTest {
 
     @Test
     void usesOriginAsSent() {
-        assertEquals("http://localhost:5173/register/" + ID, UserController.inviteUrl("http://localhost:5173", ID));
-        assertEquals("https://exercise-counter.de/register/" + ID, UserController.inviteUrl("https://exercise-counter.de/", ID));
+        assertEquals("http://localhost:5173/register/" + ID, InviteService.inviteUrl("http://localhost:5173", ID));
+        assertEquals("https://exercise-counter.de/register/" + ID, InviteService.inviteUrl("https://exercise-counter.de/", ID));
     }
 
     @Test
     void bareHostFromOldClients_getsHttps() {
-        assertEquals("https://exercise-counter.de/register/" + ID, UserController.inviteUrl("exercise-counter.de", ID));
+        assertEquals("https://exercise-counter.de/register/" + ID, InviteService.inviteUrl("exercise-counter.de", ID));
     }
 
     @Test
     void jsonQuotedBody_isAccepted() {
-        assertEquals("https://exercise-counter.de/register/" + ID, UserController.inviteUrl("\"https://exercise-counter.de\"", ID));
+        assertEquals("https://exercise-counter.de/register/" + ID, InviteService.inviteUrl("\"https://exercise-counter.de\"", ID));
     }
 
     @Test
     void pathAndQueryAreDropped() {
-        assertEquals("https://a.de/register/" + ID, UserController.inviteUrl("https://a.de/some/path?x=1", ID));
+        assertEquals("https://a.de/register/" + ID, InviteService.inviteUrl("https://a.de/some/path?x=1", ID));
     }
 
     @Test
     void invalidOrNonHttpUrl_isRejected() {
-        assertThrows(ResponseStatusException.class, () -> UserController.inviteUrl("javascript://alert(1)", ID));
-        assertThrows(ResponseStatusException.class, () -> UserController.inviteUrl("", ID));
-        assertThrows(ResponseStatusException.class, () -> UserController.inviteUrl("http://exa mple.de", ID));
+        assertThrows(ResponseStatusException.class, () -> InviteService.inviteUrl("javascript://alert(1)", ID));
+        assertThrows(ResponseStatusException.class, () -> InviteService.inviteUrl("", ID));
+        assertThrows(ResponseStatusException.class, () -> InviteService.inviteUrl("http://exa mple.de", ID));
     }
 
     @Nested

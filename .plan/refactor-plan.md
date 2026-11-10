@@ -125,7 +125,7 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 - New: `web/service/SelectionService.java`
 - Remove the `ExerciseController` dependency from `UserSelectionController` (use `ExerciseService` instead).
 
-### [ ] T1.9 🟠 Service layer – groups, statistics, invites
+### [x] T1.9 🟠 Service layer – groups, statistics, invites
 - New: `GroupService`, `StatisticService`, `InviteService` (from `UserController`). Controllers become thin.
 
 ### [ ] T1.10 🟠 Typed request DTOs (records)
