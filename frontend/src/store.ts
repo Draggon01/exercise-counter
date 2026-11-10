@@ -4,11 +4,11 @@ import {exerciseReducer} from "./views/home/slice/exerciseSlice";
 import {checkReducer} from "./views/home/slice/checkSlice";
 import {statisticReducer} from "./views/statistics/slice/statisticSlice";
 import {groupReducer} from "./views/groups/slice/groupSlice";
-import {authReducer} from "./othrSlices/auth/authSlice";
-import {authMiddleware} from "./othrSlices/auth/authMiddleware";
+import {authReducer} from "./shared-slices/auth/authSlice";
+import {authMiddleware} from "./shared-slices/auth/authMiddleware";
 import {optionsReducer} from "./views/options/slice/optionsSlice";
 import {registerReducer} from "./views/register/slice/registerSlice";
-import {metaReducer} from "./othrSlices/meta/metaSlice";
+import {metaReducer} from "./shared-slices/meta/metaSlice";
 
 const rootReducer = combineReducers({
     user: userReducer,

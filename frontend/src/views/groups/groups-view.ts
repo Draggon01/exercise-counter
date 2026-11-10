@@ -5,6 +5,7 @@ import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from '../../store';
 import {
     acceptGroupToUser,
+    clearPublicGroupSearch,
     createGroupOnUser,
     deleteGroupOnUser,
     inviteUserToGroup,
@@ -367,7 +368,7 @@ export class GroupsView extends ConnectedLitElement {
                         if (this.joinSearchQuery.length > 0) {
                             store.dispatch(searchPublicGroups(this.joinSearchQuery));
                         } else {
-                            store.dispatch({type: 'group/clearSearch'});
+                            store.dispatch(clearPublicGroupSearch());
                         }
                     }}">
             </sl-input>

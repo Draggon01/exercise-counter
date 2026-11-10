@@ -28,7 +28,7 @@ import {
 import {listUserMappings, selectUserMappingByUser} from "../groups/slice/groupSlice";
 import {CustomRouter} from "../../index";
 import {loadOptions} from "../options/slice/optionsSlice";
-import {loadExerciseMeta, selectExerciseTypes, selectVisibilities} from "../../othrSlices/meta/metaSlice";
+import {loadExerciseMeta, selectExerciseTypes, selectVisibilities} from "../../shared-slices/meta/metaSlice";
 
 
 @customElement("home-view")

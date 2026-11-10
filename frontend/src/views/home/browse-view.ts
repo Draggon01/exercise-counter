@@ -1,7 +1,6 @@
 import {css, html} from 'lit';
 import "../../components/page-header";
 import {customElement, state} from 'lit/decorators.js';
-import '@shoelace-style/shoelace/dist/components/button/button.js';
 import './elements/browse-card'
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from '../../store';

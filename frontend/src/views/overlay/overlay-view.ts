@@ -1,6 +1,5 @@
 import {customElement, state} from 'lit/decorators.js';
 import {css, html} from 'lit';
-import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 import {RootState, store} from "../../store";
 import {logoutUser, selectCurrentUser} from "../login/slice/userSlice";
 import {ConnectedLitElement} from "../../connectedLitElement";

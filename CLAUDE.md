@@ -53,7 +53,7 @@ npm test                # frontend unit tests (vitest, *.test.ts next to the cod
 - `frontend/...` FRONTEND
     - `/`                 — index.html and vite config and package.json
     - `src/`              — general files that not have any relation to distinct views like the index.ts, lit-router.ts, redux store and so on.
-    - `src/othrSlices/`   — Place for Redux slices that have no distinct view
+    - `src/shared-slices/` — Redux slices that belong to no single view (auth, meta, ...)
     - `web/views/`        — Place for views, f.e. the login page has its own folder, or the home folder includes the main page where the exercises get shown.
 
 ## Conventions

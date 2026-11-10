@@ -204,7 +204,7 @@ Reusable pieces are tracked in `frontend/src/components/README.md` – update it
 ### [x] T2.6 🟠 Typed custom events
 - Replace `(e: any)` with `CustomEvent<ExerciseDto>` etc. Define event names as constants.
 
-### [ ] T2.7 🟠 Small cleanups
+### [x] T2.7 🟠 Small cleanups
 - Rename `src/othrSlices/` → `src/shared-slices/` (update imports + CLAUDE.md).
 - `main.ts`: remove duplicate `import '@shoelace-style/shoelace'`, register only needed components or keep autoloader – pick one.
 - Fix: clearing the group search dispatches `{type: 'group/clearSearch'}` – the action is `clearPublicGroupSearch`, so old results stay.
@@ -303,7 +303,7 @@ Goal: when a user logs in and there is a changelog entry they have not seen yet,
 5. Tests: unseen entries for null / old / current version; `seen` updates the options row.
 
 **Frontend**
-6. `src/othrSlices/changelog/changelogSlice.ts` (register in `store.ts`): thunks `loadUnseenChangelog`, `markChangelogSeen`.
+6. `src/shared-slices/changelog/changelogSlice.ts` (register in `store.ts`): thunks `loadUnseenChangelog`, `markChangelogSeen`.
 7. Dispatch `loadUnseenChangelog` after a successful login and on app start when already logged in
    (listener on `saveUserInfo.fulfilled` / `readUserInfo.fulfilled` in a listener middleware – no fetch in components).
 8. `src/components/changelog-dialog.ts`: `sl-dialog` showing title, date and items of the unseen entries
@@ -324,6 +324,6 @@ Goal: when a user logs in and there is a changelog entry they have not seen yet,
 |---|---|---|
 | 0 – Bugs & security | 11 | 11 |
 | 1 – Backend | 15 | 15 |
-| 2 – Frontend structure | 9 | 2 |
+| 2 – Frontend structure | 9 | 9 |
 | 3 – Visual | 10 | 0 |
 | 4 – Features | 1 | 0 |
