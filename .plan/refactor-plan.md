@@ -145,11 +145,14 @@ Legend: 🔴 bug/security · 🟠 structure · 🟢 visual · ⚠️ breaking AP
 ### [x] T1.12 🟠 Rename `Visibiltiy` → `Visibility`
 - Java enum rename only (DB stores the enum value, not the class name).
 
-### [ ] T1.13 🟠 Remove legacy JSON statistic model
+### [x] T1.13 🟠 Remove legacy JSON statistic model
 - Prerequisite: `V20260306_001__migrateStatistics` has run on all environments.
 - Delete `Statistic`, `StatisticJpa`, `StatisticId`, `StatisticIdKeyDeserializer`, `StatisticRepository`, `TestSerializeStatistic`.
 - Decide what happens to the data migration class (keep it if `DataMigrationRunner` needs history, otherwise remove).
 - New migration: `DROP TABLE statistic_exercise_data;`
+- Done: `V20261110_002` drops the table only if `V20260306_001__migrateStatistics` is recorded in
+  `data_migration_history` or the table is empty – otherwise it is kept untouched. The data migration
+  framework (`DataMigration`, runner, history) stays for future data migrations.
 
 ### [ ] T1.14 🟠 CORS origins from config
 - Move the list in `SecurityConfig.corsConfigurationSource` to `app.cors.allowed-origins` in `application.properties`.
