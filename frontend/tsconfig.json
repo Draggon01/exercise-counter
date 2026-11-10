@@ -9,7 +9,8 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": false,
     "useDefineForClassFields": false, // Required for Lit reactivity
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true // don't type-check node_modules .d.ts files (Shoelace/lib.dom mismatches)
   },
   "include": ["src/**/*", "vite.config.ts"]
 }
