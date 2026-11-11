@@ -20,6 +20,9 @@ public record ExerciseDto(
         String startTime,
         @JsonProperty("utcOffset")
         Integer utcOffset,
+        /* IANA time zone of startTime, e.g. Europe/Vienna (null: utcOffset is used) */
+        @JsonProperty("timeZone")
+        String timeZone,
         @JsonProperty("exerciseType")
         ExerciseType exerciseType,
         @JsonProperty("exerciseValue")

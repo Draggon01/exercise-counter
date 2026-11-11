@@ -3,6 +3,8 @@ package org.exercise.counter.exercisecounter.web.data.exercise;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.LocalTime;
 import java.util.UUID;
 import java.util.Objects;
@@ -46,7 +48,30 @@ public class Exercise {
     @Column
     private LocalDateTime lastSchedulerRun;
 
+    /** IANA time zone of {@link #startTime} (e.g. Europe/Vienna); null for old rows → {@link #utcOffset}. */
+    @Column(name = "time_zone")
+    private String timeZone;
+
     public Exercise() {
+    }
+
+    public String getTimeZone() {
+        return this.timeZone;
+    }
+
+    public void setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
+    }
+
+    /**
+     * The zone the reset time is meant in: the stored time zone (follows daylight saving time), or the
+     * fixed {@code utcOffset} for exercises without one.
+     */
+    public ZoneId zone() {
+        if (timeZone != null && !timeZone.isBlank()) {
+            return ZoneId.of(timeZone);
+        }
+        return ZoneOffset.ofHours(utcOffset == null ? 0 : utcOffset);
     }
 
     public Exercise(UUID exerciseId, String exerciseTitle, String creator, Integer daysRepeat, LocalTime startTime, Integer utcOffset, ExerciseType exerciseType, String exerciseValue, String exerciseIncrease, Visibility visibility, LocalDateTime lastSchedulerRun) {
@@ -165,16 +190,17 @@ public class Exercise {
                 Objects.equals(getExerciseValue(), other.getExerciseValue()) &&
                 Objects.equals(getExerciseIncrease(), other.getExerciseIncrease()) &&
                 Objects.equals(getVisibility(), other.getVisibility()) &&
-                Objects.equals(getLastSchedulerRun(), other.getLastSchedulerRun());
+                Objects.equals(getLastSchedulerRun(), other.getLastSchedulerRun()) &&
+                Objects.equals(getTimeZone(), other.getTimeZone());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getDaysRepeat(), getUtcOffset(), getExerciseId(), getExerciseTitle(), getCreator(), getStartTime(), getExerciseType(), getExerciseValue(), getExerciseIncrease(), getVisibility(), getLastSchedulerRun());
+        return Objects.hash(getDaysRepeat(), getUtcOffset(), getExerciseId(), getExerciseTitle(), getCreator(), getStartTime(), getExerciseType(), getExerciseValue(), getExerciseIncrease(), getVisibility(), getLastSchedulerRun(), getTimeZone());
     }
 
     @Override
     public String toString() {
-        return "Exercise(exerciseId=" + this.getExerciseId() + ", exerciseTitle=" + this.getExerciseTitle() + ", creator=" + this.getCreator() + ", daysRepeat=" + this.getDaysRepeat() + ", startTime=" + this.getStartTime() + ", utcOffset=" + this.getUtcOffset() + ", exerciseType=" + this.getExerciseType() + ", exerciseValue=" + this.getExerciseValue() + ", exerciseIncrease=" + this.getExerciseIncrease() + ", visibility=" + this.getVisibility() + ", lastSchedulerRun=" + this.getLastSchedulerRun() + ")";
+        return "Exercise(exerciseId=" + this.getExerciseId() + ", exerciseTitle=" + this.getExerciseTitle() + ", creator=" + this.getCreator() + ", daysRepeat=" + this.getDaysRepeat() + ", startTime=" + this.getStartTime() + ", utcOffset=" + this.getUtcOffset() + ", exerciseType=" + this.getExerciseType() + ", exerciseValue=" + this.getExerciseValue() + ", exerciseIncrease=" + this.getExerciseIncrease() + ", visibility=" + this.getVisibility() + ", lastSchedulerRun=" + this.getLastSchedulerRun() + ", timeZone=" + this.getTimeZone() + ")";
     }
 }

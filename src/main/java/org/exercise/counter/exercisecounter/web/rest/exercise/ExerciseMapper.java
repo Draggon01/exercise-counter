@@ -1,5 +1,11 @@
 package org.exercise.counter.exercisecounter.web.rest.exercise;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.DateTimeException;
+import java.time.ZoneId;
+
 import org.exercise.counter.exercisecounter.web.data.exercise.Exercise;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
 
@@ -30,6 +36,7 @@ public final class ExerciseMapper {
                 exercise.getDaysRepeat(),
                 exercise.getStartTime().format(TIME_FORMAT),
                 exercise.getUtcOffset(),
+                exercise.getTimeZone(),
                 exercise.getExerciseType(),
                 exercise.getExerciseValue(),
                 exercise.getExerciseIncrease(),
@@ -46,7 +53,7 @@ public final class ExerciseMapper {
      * @param creator the authenticated user – the creator sent by the client is ignored
      */
     public static Exercise toEntity(ExerciseDto dto, String creator) {
-        return new Exercise(
+        Exercise exercise = new Exercise(
                 dto.exerciseId(),
                 dto.exerciseTitle(),
                 creator,
@@ -58,5 +65,19 @@ public final class ExerciseMapper {
                 dto.exerciseIncrease(),
                 dto.visibility(),
                 null);
+        exercise.setTimeZone(validTimeZone(dto.timeZone()));
+        return exercise;
+    }
+
+    /** A known IANA zone id (e.g. Europe/Vienna) or null; anything else is a bad request. */
+    static String validTimeZone(String timeZone) {
+        if (timeZone == null || timeZone.isBlank()) {
+            return null;
+        }
+        try {
+            return ZoneId.of(timeZone.trim()).getId();
+        } catch (DateTimeException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown time zone: " + timeZone);
+        }
     }
 }

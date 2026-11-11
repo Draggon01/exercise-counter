@@ -5,6 +5,8 @@ export interface ExerciseDto {
     daysRepeat: number;
     startTime: string;
     utcOffset: number;
+    /** IANA time zone of startTime, e.g. Europe/Vienna (null for exercises from before zones were stored) */
+    timeZone?: string | null;
     exerciseType: string;
     exerciseValue: string;
     exerciseIncrease: string;

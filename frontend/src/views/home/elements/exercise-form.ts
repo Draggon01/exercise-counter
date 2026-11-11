@@ -3,7 +3,7 @@ import {customElement, property, state} from "lit/decorators.js";
 import {createRef, ref, Ref} from "lit/directives/ref.js";
 import {keyed} from "lit/directives/keyed.js";
 import {ExerciseDto} from "../models/exerciseDto";
-import {ExerciseType, isIncreaseExercise, isTimeExercise} from "../../../utils/exercise";
+import {ExerciseType, isIncreaseExercise, isTimeExercise, exerciseTimeZone} from "../../../utils/exercise";
 import {validateForm} from "../../../utils/form";
 import {formatDuration} from "../../../utils/format";
 import {touchStyles} from "../../../styles/touch";
@@ -197,6 +197,7 @@ export class ExerciseForm extends LitElement {
                 <legend>Schedule</legend>
                 <div class="row">
                     <sl-input name="startTime" type="time" label="Resets at" required
+                              help-text="Time in ${exerciseTimeZone(exercise)}"
                               .value="${(exercise?.startTime ?? "23:59:00").slice(0, 5)}"></sl-input>
                     <sl-input name="daysRepeat" type="number" inputmode="numeric" min="1" label="Every … days" required
                               .value="${String(exercise?.daysRepeat ?? 1)}"></sl-input>
@@ -246,6 +247,7 @@ export class ExerciseForm extends LitElement {
             startTime: startTime.length === 5 ? `${startTime}:00` : startTime,
             daysRepeat: Number(value("daysRepeat")),
             utcOffset: -new Date().getTimezoneOffset() / 60,
+            timeZone: exerciseTimeZone(this.exercise),
             visibility: this.visibility,
             groups: this.visibility === "GROUPS" && groups ? groups.value : [],
         };

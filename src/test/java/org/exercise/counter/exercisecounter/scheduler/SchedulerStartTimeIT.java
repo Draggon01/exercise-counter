@@ -120,4 +120,22 @@ class SchedulerStartTimeIT {
         assertNotNull(updated.getLastSchedulerRun(),
                 "lastSchedulerRun should be set after the scheduler fires");
     }
+
+    @Test
+    void afterAReset_theNextOneIsPlanned() throws Exception {
+        // resets in 2 seconds (UTC), then again tomorrow at the same time
+        testExercise.setStartTime(LocalTime.now(ZoneId.of("UTC")).plusSeconds(2).withNano(0));
+        testExercise.setTimeZone("UTC");
+        testExercise = exerciseRepository.save(testExercise);
+        schedulerService.restartSchedulerFor(testExercise);
+
+        Thread.sleep(4000);
+
+        assertNotNull(exerciseRepository.findById(testExercise.getExerciseId()).orElseThrow().getLastSchedulerRun(),
+                "the reset ran");
+        assertTrue(schedulerService.isScheduled(testExercise.getExerciseId()), "the next reset is planned");
+        long left = schedulerService.getTimeLeftSeconds(testExercise.getExerciseId());
+        assertTrue(left > 23 * 3600 && left <= 24 * 3600, "next reset tomorrow, but was in " + left + "s");
+        schedulerService.cancelSchedulerFor(testExercise.getExerciseId());
+    }
 }

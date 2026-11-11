@@ -74,7 +74,7 @@ public class ExerciseController {
     /** The id in the URL wins over an id in the body (null for create). */
     private static ExerciseDto withId(ExerciseDto dto, UUID exerciseId) {
         return new ExerciseDto(exerciseId, dto.exerciseTitle(), dto.creator(), dto.daysRepeat(), dto.startTime(),
-                dto.utcOffset(), dto.exerciseType(), dto.exerciseValue(), dto.exerciseIncrease(), dto.visibility(),
+                dto.utcOffset(), dto.timeZone(), dto.exerciseType(), dto.exerciseValue(), dto.exerciseIncrease(), dto.visibility(),
                 dto.groups(), dto.timeLeftSeconds(), dto.position());
     }
 }

@@ -56,7 +56,7 @@ class ExerciseControllerTest {
 
     @Test
     void addExercise_ignoresCreatorSentByClient() {
-        ExerciseDto request = new ExerciseDto(null, "Pushups", OTHER, 1, "12:00:00", 0,
+        ExerciseDto request = new ExerciseDto(null, "Pushups", OTHER, 1, "12:00:00", 0, null,
                 ExerciseType.NUMBERREPEAT, "10", null, Visibility.PRIVATE, List.of(), null, 0);
 
         ExerciseDto saved = exerciseController.create(request, auth(OWNER));

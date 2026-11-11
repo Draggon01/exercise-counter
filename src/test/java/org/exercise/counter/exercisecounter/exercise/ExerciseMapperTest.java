@@ -25,13 +25,13 @@ class ExerciseMapperTest {
 
         ExerciseDto dto = ExerciseMapper.toDto(exercise, List.of("team"), 3600L, 4);
 
-        assertEquals(new ExerciseDto(ID, "Squats", "alice", 2, "07:05:09", 1, ExerciseType.TIMEINCREASE,
+        assertEquals(new ExerciseDto(ID, "Squats", "alice", 2, "07:05:09", 1, null, ExerciseType.TIMEINCREASE,
                 "60", "5", Visibility.GROUPS, List.of("team"), 3600L, 4), dto);
     }
 
     @Test
     void toEntity_usesGivenCreatorAndResetsLastSchedulerRun() {
-        ExerciseDto dto = new ExerciseDto(ID, "Squats", "mallory", 2, "07:05:09", 1, ExerciseType.TIMEINCREASE,
+        ExerciseDto dto = new ExerciseDto(ID, "Squats", "mallory", 2, "07:05:09", 1, null, ExerciseType.TIMEINCREASE,
                 "60", "5", Visibility.GROUPS, List.of(), 0L, null);
 
         Exercise entity = ExerciseMapper.toEntity(dto, "alice");
@@ -44,9 +44,38 @@ class ExerciseMapperTest {
 
     @Test
     void toEntity_rejectsMalformedTime() {
-        ExerciseDto dto = new ExerciseDto(null, "x", null, 1, "7:5", 0, ExerciseType.NUMBERREPEAT,
+        ExerciseDto dto = new ExerciseDto(null, "x", null, 1, "7:5", 0, null, ExerciseType.NUMBERREPEAT,
                 "1", null, Visibility.PUBLIC, List.of(), 0L, null);
 
         assertThrows(java.time.format.DateTimeParseException.class, () -> ExerciseMapper.toEntity(dto, "alice"));
+    }
+
+    @Test
+    void toEntity_keepsAValidTimeZone() {
+        ExerciseDto dto = new ExerciseDto(null, "x", null, 1, "20:00:00", 2, "Europe/Vienna", ExerciseType.NUMBERREPEAT,
+                "1", null, Visibility.PUBLIC, List.of(), 0L, null);
+
+        Exercise entity = ExerciseMapper.toEntity(dto, "alice");
+
+        assertEquals("Europe/Vienna", entity.getTimeZone());
+        assertEquals(java.time.ZoneId.of("Europe/Vienna"), entity.zone());
+    }
+
+    @Test
+    void toEntity_withoutTimeZone_usesTheOffset() {
+        ExerciseDto dto = new ExerciseDto(null, "x", null, 1, "20:00:00", 2, null, ExerciseType.NUMBERREPEAT,
+                "1", null, Visibility.PUBLIC, List.of(), 0L, null);
+
+        assertEquals(java.time.ZoneOffset.ofHours(2), ExerciseMapper.toEntity(dto, "alice").zone());
+    }
+
+    @Test
+    void toEntity_rejectsUnknownTimeZones() {
+        ExerciseDto dto = new ExerciseDto(null, "x", null, 1, "20:00:00", 2, "Mars/Olympus", ExerciseType.NUMBERREPEAT,
+                "1", null, Visibility.PUBLIC, List.of(), 0L, null);
+
+        var error = assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> ExerciseMapper.toEntity(dto, "alice"));
+        assertEquals(400, error.getStatusCode().value());
     }
 }

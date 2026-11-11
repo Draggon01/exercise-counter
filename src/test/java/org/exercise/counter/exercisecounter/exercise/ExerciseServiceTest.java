@@ -106,7 +106,7 @@ class ExerciseServiceTest {
     @Test
     void create_withoutPosition_addsToTheEndOfTheList() {
         userSelectionRepository.save(new UserSelection(new UserSelectionId(ALICE, publicEx.getExerciseId()), 0));
-        ExerciseDto request = new ExerciseDto(null, "new one", ALICE, 1, "12:00:00", 0,
+        ExerciseDto request = new ExerciseDto(null, "new one", ALICE, 1, "12:00:00", 0, null,
                 ExerciseType.NUMBERREPEAT, "5", null, Visibility.PRIVATE, List.of(), null, null);
 
         ExerciseDto created = exerciseService.save(request, ALICE);
@@ -118,7 +118,7 @@ class ExerciseServiceTest {
     @Test
     void edit_keepsTheExistingPosition() {
         userSelectionRepository.save(new UserSelection(new UserSelectionId(ALICE, publicEx.getExerciseId()), 4));
-        ExerciseDto edit = new ExerciseDto(publicEx.getExerciseId(), "renamed", ALICE, 1, "12:00:00", 0,
+        ExerciseDto edit = new ExerciseDto(publicEx.getExerciseId(), "renamed", ALICE, 1, "12:00:00", 0, null,
                 ExerciseType.NUMBERREPEAT, "1", null, Visibility.PUBLIC, List.of(), 0L, 99);
 
         assertEquals(4, exerciseService.save(edit, ALICE).position());
@@ -132,7 +132,7 @@ class ExerciseServiceTest {
 
     @Test
     void onlyCreatorCanEdit() {
-        ExerciseDto edit = new ExerciseDto(publicEx.getExerciseId(), "hijacked", BOB, 1, "12:00:00", 0,
+        ExerciseDto edit = new ExerciseDto(publicEx.getExerciseId(), "hijacked", BOB, 1, "12:00:00", 0, null,
                 ExerciseType.NUMBERREPEAT, "1", null, Visibility.PUBLIC, List.of(), 0L, 0);
 
         assertThrows(ForbiddenException.class, () -> exerciseService.save(edit, BOB));

@@ -6,7 +6,8 @@ import org.exercise.counter.exercisecounter.web.data.exercise.ExerciseRepository
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
-import java.time.*;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,8 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Manages one scheduled reset task per exercise. The actual reset logic lives in
- * {@link ExerciseResetJob}, which runs in its own transaction.
+ * Manages the next reset of every exercise. The actual reset logic lives in {@link ExerciseResetJob},
+ * which runs in its own transaction; afterwards the following reset is planned.
  */
 @Service
 public class SchedulerService {
@@ -27,16 +28,10 @@ public class SchedulerService {
     private final ThreadPoolTaskScheduler taskScheduler;
     private final ExerciseRepository exerciseRepository;
     private final ExerciseResetJob exerciseResetJob;
+    private final Clock clock;
 
+    /** The next reset of each exercise (one-shot – after it ran, the following one is planned). */
     private final Map<UUID, ScheduledFuture<?>> scheduledExerciseUpdates = new ConcurrentHashMap<>();
-
-    private void addScheduledExerciseUpdate(UUID exerciseId, Runnable runnable, Instant startTime, Duration duration) {
-        ScheduledFuture<?> previous = scheduledExerciseUpdates.put(
-                exerciseId, taskScheduler.scheduleAtFixedRate(runnable, startTime, duration));
-        if (previous != null) {
-            previous.cancel(false);
-        }
-    }
 
     /**
      * Stops the scheduled reset for the given exercise, e.g. when the exercise gets deleted.
@@ -55,59 +50,48 @@ public class SchedulerService {
     public long getTimeLeftSeconds(UUID exerciseId) {
         ScheduledFuture<?> future = scheduledExerciseUpdates.get(exerciseId);
         if (future == null) return 0;
-        return future.getDelay(TimeUnit.SECONDS);
+        return Math.max(0, future.getDelay(TimeUnit.SECONDS));
     }
 
+    /** Plans the next reset of the exercise (replacing a planned one). */
     public void restartSchedulerFor(Exercise exercise) {
         UUID exerciseId = exercise.getExerciseId();
-        cancelSchedulerFor(exerciseId);
         if (exercise.getExerciseType() == null) {
+            cancelSchedulerFor(exerciseId);
             return;
         }
-        addScheduledExerciseUpdate(
-                exerciseId,
-                () -> runResetJob(exerciseId),
-                calculateNextRunInstant(exercise),
-                Duration.ofDays(exercise.getDaysRepeat()));
+        ScheduledFuture<?> previous = scheduledExerciseUpdates.put(exerciseId,
+                taskScheduler.schedule(() -> runResetJob(exerciseId), calculateNextRunInstant(exercise)));
+        if (previous != null) {
+            previous.cancel(false);
+        }
     }
 
     private void runResetJob(UUID exerciseId) {
         try {
             exerciseResetJob.run(exerciseId);
         } catch (RuntimeException e) {
-            // never let an exception escape: it would silently stop all future executions
+            // never let an exception escape – the next reset is planned anyway
             log.error("Reset job for exercise {} failed", exerciseId, e);
         }
+        // plan the following reset from the calendar (keeps the clock time across daylight saving time)
+        exerciseRepository.findById(exerciseId).ifPresentOrElse(this::restartSchedulerFor,
+                () -> scheduledExerciseUpdates.remove(exerciseId));
     }
 
     /**
-     * Calculates when the next scheduler run should start.
-     * If lastSchedulerRun is known, computes the next run as lastSchedulerRun + daysRepeat days
-     * (at the configured reset time). If that time is already past, schedules immediately.
-     * Falls back to the default start-time calculation for new exercises with no run history.
+     * When the next reset is due: {@code lastSchedulerRun + daysRepeat} days at the reset time in the
+     * exercise's time zone, or the next occurrence of the reset time for new exercises. Overdue (the
+     * server was down): right away. See {@link ResetSchedule}.
      */
     public Instant calculateNextRunInstant(Exercise exercise) {
-        LocalDateTime lastRun = exercise.getLastSchedulerRun();
-        if (lastRun == null) {
-            return generateStartTime(exercise.getStartTime(), exercise.getUtcOffset());
+        Instant now = clock.instant();
+        Instant next = ResetSchedule.nextRun(exercise.getStartTime(), exercise.zone(), exercise.getDaysRepeat(),
+                exercise.getLastSchedulerRun(), now);
+        if (exercise.getLastSchedulerRun() != null && !next.isAfter(now.plusSeconds(1))) {
+            log.warn("Exercise {} missed its scheduled reset, running it now", exercise.getExerciseId());
         }
-
-        ZoneId utcZone = ZoneId.of("UTC");
-        LocalTime resetTimeUtc = exercise.getStartTime().minusHours(exercise.getUtcOffset());
-        LocalDateTime nextExpected = lastRun.toLocalDate()
-                .plusDays(exercise.getDaysRepeat())
-                .atTime(resetTimeUtc);
-
-        ZonedDateTime nextRunZdt = ZonedDateTime.of(nextExpected, utcZone);
-        ZonedDateTime now = ZonedDateTime.now(utcZone);
-
-        if (nextRunZdt.isAfter(now)) {
-            return nextRunZdt.toInstant();
-        }
-        // Missed the scheduled run; execute as soon as possible
-        log.warn("Exercise {} missed its scheduled run (expected {}), running immediately",
-                exercise.getExerciseId(), nextExpected);
-        return Instant.now().plusSeconds(1);
+        return next;
     }
 
     /**
@@ -119,22 +103,11 @@ public class SchedulerService {
         exerciseRepository.findAll().forEach(this::restartSchedulerFor);
     }
 
-    private Instant generateStartTime(LocalTime localTime, Integer offsetToUtc) {
-        ZoneId zoneId = ZoneId.of("UTC");
-        LocalDate today = LocalDate.now(zoneId);
-
-        ZonedDateTime targetDateTime = ZonedDateTime.of(today, localTime.minusHours(offsetToUtc), zoneId);
-        ZonedDateTime now = ZonedDateTime.now(zoneId);
-
-        if (targetDateTime.isBefore(now)) {
-            targetDateTime = targetDateTime.plusDays(1);
-        }
-        return targetDateTime.toInstant();
-    }
-
-    public SchedulerService(ThreadPoolTaskScheduler taskScheduler, ExerciseRepository exerciseRepository, ExerciseResetJob exerciseResetJob) {
+    public SchedulerService(ThreadPoolTaskScheduler taskScheduler, ExerciseRepository exerciseRepository,
+                            ExerciseResetJob exerciseResetJob, Clock clock) {
         this.taskScheduler = taskScheduler;
         this.exerciseRepository = exerciseRepository;
         this.exerciseResetJob = exerciseResetJob;
+        this.clock = clock;
     }
 }

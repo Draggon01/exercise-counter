@@ -97,17 +97,16 @@ public class ExerciseResetJob {
     }
 
     /**
-     * Period ranges are stored in the exercise's local time (UTC + utcOffset hours), the same
-     * convention the existing rows use. The range is {@code (start, end]} where start is the end
+     * Period ranges are stored in the exercise's local time (its time zone, see {@link Exercise#zone()}),
+     * the same convention the existing rows use. The range is {@code (start, end]} where start is the end
      * of the latest stored period (or the previous run / one cycle back) so that it never overlaps
      * an existing period (the table has an EXCLUDE constraint on overlapping ranges).
      */
     Range<LocalDateTime> periodRange(Exercise exercise, LocalDateTime previousRunUtc, LocalDateTime nowUtc) {
-        int offset = exercise.getUtcOffset() == null ? 0 : exercise.getUtcOffset();
-        LocalDateTime end = nowUtc.plusHours(offset);
+        LocalDateTime end = local(nowUtc, exercise);
 
         LocalDateTime start = previousRunUtc != null
-                ? previousRunUtc.plusHours(offset)
+                ? local(previousRunUtc, exercise)
                 : end.minusDays(exercise.getDaysRepeat());
         LocalDateTime latestStored = periodRepository.findLatestEnd(exercise.getExerciseId());
         if (latestStored != null && latestStored.isAfter(start)) {
@@ -119,6 +118,10 @@ public class ExerciseResetJob {
             return Range.closed(end, end);
         }
         return Range.openClosed(start, end);
+    }
+
+    private static LocalDateTime local(LocalDateTime utc, Exercise exercise) {
+        return utc.atZone(ZoneOffset.UTC).withZoneSameInstant(exercise.zone()).toLocalDateTime();
     }
 
     public ExerciseResetJob(ExerciseRepository exerciseRepository,
