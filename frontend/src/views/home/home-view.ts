@@ -1,4 +1,6 @@
-import {css, html} from 'lit';
+import {css, html, nothing} from 'lit';
+import {touchStyles} from "../../styles/touch";
+import '../../components/page-header';
 import {onAppRefresh} from "../../utils/refresh";
 import '../../components/fab-button'
 import {pageStyles} from "../../styles/page";
@@ -75,12 +77,9 @@ export class HomeView extends ConnectedLitElement {
 
 
 
-    static styles = [pageStyles, css`
-        .action-bar {
-            display: flex;
-            gap: var(--app-space-2);
-            flex-wrap: wrap;
-            margin-bottom: var(--app-space-4);
+    static styles = [pageStyles, touchStyles, css`
+        .header-icon {
+            font-size: 1.25rem;
         }
 
         .exercise-list {
@@ -95,10 +94,6 @@ export class HomeView extends ConnectedLitElement {
         }
 
         @media (max-width: 768px) {
-            .action-bar sl-button {
-                flex: 1;
-            }
-
             /* the floating "+" button takes over on phones */
             .desktop-only {
                 display: none;
@@ -154,22 +149,28 @@ export class HomeView extends ConnectedLitElement {
     render() {
         return html`
             <div class="page-container">
-            <div class="action-bar">
-                <sl-button class="desktop-only" variant="primary" @click="${() => this.openForm()}">
-                    <sl-icon slot="prefix" name="plus-lg"></sl-icon>
-                    New exercise
-                </sl-button>
-
-                <sl-button variant="${this.editMode ? 'success' : 'neutral'}" @click="${() => {
-                    this.editMode = !this.editMode;
-                }}">
-                    ${this.editMode ? 'Done' : 'Edit Order'}
-                </sl-button>
-            </div>
+            <page-header heading="${this.editMode ? "Edit order" : "My exercises"}">
+                ${this.editMode ? html`
+                    <sl-button slot="actions" size="small" variant="success" @click="${this.toggleEditMode}">
+                        <sl-icon slot="prefix" name="check-lg"></sl-icon>
+                        Done
+                    </sl-button>
+                ` : html`
+                    <sl-button slot="actions" class="desktop-only" variant="primary" @click="${() => this.openForm()}">
+                        <sl-icon slot="prefix" name="plus-lg"></sl-icon>
+                        New exercise
+                    </sl-button>
+                    ${this.listExercises.length > 1 ? html`
+                        <sl-tooltip slot="actions" content="Edit order">
+                            <sl-icon-button class="header-icon" name="arrow-down-up" label="Edit order"
+                                            @click="${this.toggleEditMode}"></sl-icon-button>
+                        </sl-tooltip>` : nothing}
+                `}
+            </page-header>
 
             <div class="exercise-list" @pointerdown="${this.dragStart}">${this.renderItems()}</div>
             </div>
-            <fab-button label="New exercise" @click="${() => this.openForm()}"></fab-button>
+            ${this.editMode ? nothing : html`<fab-button label="New exercise" @click="${() => this.openForm()}"></fab-button>`}
             <confirm-dialog label="Delete exercise" confirmLabel="Delete Exercise" cancelLabel="Close"
                             .open="${this.exerciseToDelete !== undefined}"
                             @confirm="${this.confirmDelete}"
@@ -187,6 +188,10 @@ export class HomeView extends ConnectedLitElement {
             </confirm-dialog>
 
         `;
+    }
+
+    private toggleEditMode = () => {
+        this.editMode = !this.editMode;
     }
 
     private confirmDelete = () => {

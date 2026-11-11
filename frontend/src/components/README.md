@@ -11,7 +11,7 @@ Generic UI that is not tied to one feature. Import once (side-effect import) whe
 | Tag | File | Use it for | API | Used in | Status |
 |---|---|---|---|---|---|
 | `<confirm-dialog>` | `confirm-dialog.ts` | Asking before a destructive or irreversible action (delete, hide, leave) | props: `open`, `label`, `confirmLabel`, `cancelLabel`, `variant` (`danger` \| `warning` \| `primary`); default slot: message; events: `confirm`, `cancel` | home (delete / hide exercise), groups (leave group) | ✅ |
-| `<page-header>` | `page-header.ts` | Title of a page, optional Back button (sub pages only), optional actions | sticky at the top while the page scrolls; props: `heading`, `backTo` (no Back button if empty); slot `actions` | browse, groups, statistics (with Back), options | ✅ |
+| `<page-header>` | `page-header.ts` | Title of every page (each view needs one): optional Back, actions on the right; sticky. **On phones it is the app's top bar** (full width, back arrow as icon – the app shell shows no header there), so use icon buttons (`sl-icon-button`) or small buttons as actions | props: `heading`, `backTo` (no Back button if empty); slot `actions` | home (edit order icon), browse, groups, statistics, options, exercise edit | ✅ |
 | `<overlay-view>` | `views/overlay/overlay-view.ts` | App shell around every logged-in page: header (brand, nav, user menu), bottom nav on mobile, active section highlighted | add main sections to `NAV_ITEMS`; page goes into slot `main` | lit-router | ✅ |
 | `<empty-state>` | `empty-state.ts` | "Nothing here yet" / "could not load" with icon and optional actions | props: `icon`, `heading`, `text`; default slot: actions (buttons) | home, browse, groups, statistics | ✅ |
 | `toast(message, variant?, duration?)` | `toast.ts` | Short feedback (`sl-alert` toast stack, same message not stacked twice). **API errors are toasted automatically** by `errorToastMiddleware` – do not add own error UI for failed requests | – | browse (added), groups (created, joined, invited), options (copied), all failed requests | ✅ |
@@ -51,6 +51,8 @@ Belong to one feature, listed here so they are not built a second time.
 | `moveItem`, `dropIndex`, `shiftFor` | `src/utils/reorder.ts` | Sorting a list by drag & drop (home edit order: grip handle `data-drag-handle` on the card, pointer events in the view) | ✅ |
 | `onAppRefresh(load)` / `requestAppRefresh()`, `pullDistance` | `src/utils/refresh.ts` | Pull to refresh: pages register their loader in `connectedCallback` (call the returned function in `disconnectedCallback`); the app shell shows the indicator until the loaders are done | ✅ |
 | `pushSupport(env)`, `currentPushEnvironment()`, `base64UrlToBytes`, `REMINDER_HOURS`, `reminderHoursLabel` | `src/utils/push.ts` | Push reminders: what the browser can do, the server key for `pushManager.subscribe` | ✅ |
+| `LatestValueSync` | `src/utils/latest-value-sync.ts` | Saving a toggle per item without flooding the server: shown at once, one request at a time, only the latest wish is sent (home: "Mark as done") | ✅ |
+| `placeTooltip(anchor, size, area)` | `src/utils/tooltip.ts` | Position of a custom tooltip: above (below if no room), always inside the visible area (statistics grid) | ✅ |
 | `isTimeExercise(type)` / `isRepExercise(type)` / `isIncreaseExercise(type)` | `src/utils/exercise.ts` | Branching on `ExerciseType` (exercise form, exercise card) | ✅ |
 
 ## App / PWA

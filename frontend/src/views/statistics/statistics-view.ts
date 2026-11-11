@@ -1,4 +1,6 @@
 import {css, html, nothing} from 'lit';
+import {styleMap} from "lit/directives/style-map.js";
+import {Box, placeTooltip} from "../../utils/tooltip";
 import {onAppRefresh} from "../../utils/refresh";
 import {touchStyles} from "../../styles/touch";
 import {customElement, property, state} from 'lit/decorators.js';
@@ -159,7 +161,7 @@ export class StatisticsView extends ConnectedLitElement {
             /* left-aligned when it fits; when it overflows, rtl scrolling still starts at the newest end */
             margin-right: auto;
             border-collapse: separate;
-            border-spacing: 2px;
+            border-spacing: 3px;
         }
 
         th {
@@ -181,6 +183,8 @@ export class StatisticsView extends ConnectedLitElement {
             max-width: 110px;
             overflow: hidden;
             text-overflow: ellipsis;
+            /* older periods scroll in under the names */
+            border-right: 1px solid var(--app-divider);
         }
 
         th.now {
@@ -245,10 +249,33 @@ export class StatisticsView extends ConnectedLitElement {
             display: block;
         }
 
+        /* first render: measured, not shown (see showTip) */
+        .tooltip.measuring {
+            visibility: hidden;
+        }
+
+        .scroll-hint {
+            display: none;
+            margin: var(--app-space-2) 0 0;
+            font-size: 0.8em;
+            color: var(--app-text-subtle);
+        }
+
         .skeleton {
             --border-radius: var(--app-radius);
             height: 90px;
             margin-top: var(--app-space-3);
+        }
+
+        @media (max-width: 768px) {
+            .scroll-hint {
+                display: block;
+            }
+
+            /* the last section is not glued to the bottom navigation */
+            .page-container {
+                padding-bottom: var(--app-space-6);
+            }
         }
 
         @media (max-width: 480px) {
@@ -289,15 +316,16 @@ export class StatisticsView extends ConnectedLitElement {
     @state()
     private showEveryone = false;
 
-    /** Tooltip of the hovered / focused grid cell. */
+    /** Tooltip of the hovered / tapped / focused grid cell; placed once its size is known. */
     @state()
-    private tip?: { status: string, detail: string, x: number, y: number };
+    private tip?: { status: string, detail: string, anchor: Box, left?: number, top?: number };
 
     private stopRefresh?: () => void;
 
     disconnectedCallback() {
         super.disconnectedCallback();
         this.stopRefresh?.();
+        this.hideTip();
     }
 
     connectedCallback() {
@@ -324,7 +352,8 @@ export class StatisticsView extends ConnectedLitElement {
                 ${this.renderContent()}
             </div>
             ${this.tip ? html`
-                <div class="tooltip" role="tooltip" style="left: ${this.tip.x}px; top: ${this.tip.y}px">
+                <div class="tooltip ${this.tip.left === undefined ? "measuring" : ""}" role="tooltip"
+                     style="${styleMap({left: `${this.tip.left ?? 0}px`, top: `${this.tip.top ?? 0}px`})}">
                     <strong>${this.tip.status}</strong>${this.tip.detail}
                 </div>` : nothing}
         `;
@@ -426,7 +455,7 @@ export class StatisticsView extends ConnectedLitElement {
                 <span><span class="mark missed"></span>Missed</span>
                 <span><span class="mark open"></span>Not done yet (this period)</span>
             </div>
-            <div class="scroller">
+            <div class="scroller" @scroll="${this.hideTip}">
                 <table>
                     <thead>
                     <tr>
@@ -438,7 +467,7 @@ export class StatisticsView extends ConnectedLitElement {
                         <th scope="col" class="now">Now</th>
                     </tr>
                     </thead>
-                    <tbody @pointerleave="${() => this.tip = undefined}" @focusout="${() => this.tip = undefined}">
+                    <tbody @pointerleave="${this.mouseLeave}">
                     ${users.map(user => html`
                         <tr>
                             <th scope="row" title="${user}">${user}</th>
@@ -449,20 +478,56 @@ export class StatisticsView extends ConnectedLitElement {
                     </tbody>
                 </table>
             </div>
+            ${periods.length > 10 ? html`<p class="scroll-hint">Swipe sideways for older periods</p>` : nothing}
         `;
     }
 
     private renderCell(user: string, date: string, state: "done" | "missed" | "open") {
         const status = state === "done" ? "Done" : state === "missed" ? "Missed" : "Not done yet";
         const show = (e: Event) => {
-            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-            this.tip = {status, detail: `${user} · ${date}`, x: rect.left + rect.width / 2 + 8, y: rect.bottom + 6};
+            if (e.type === "pointerenter" && (e as PointerEvent).pointerType !== "mouse") return; // touch: on tap
+            void this.showTip(e.currentTarget as HTMLElement, status, `${user} · ${date}`);
         };
         return html`
             <td>
-                <button class="cell" aria-label="${user}, ${date}: ${status}" @pointerenter="${show}" @focus="${show}">
+                <button class="cell" aria-label="${user}, ${date}: ${status}"
+                        @pointerenter="${show}" @click="${show}" @focus="${show}">
                     <span class="mark ${state}"></span>
                 </button>
             </td>`;
     }
+
+    // ---- tooltip of the grid
+
+    private async showTip(cell: HTMLElement, status: string, detail: string) {
+        const r = cell.getBoundingClientRect();
+        this.tip = {status, detail, anchor: {left: r.left, top: r.top, right: r.right, bottom: r.bottom}};
+        await this.updateComplete; // rendered invisibly – now its size is known
+        const tooltip = this.renderRoot.querySelector<HTMLElement>(".tooltip");
+        if (!tooltip || !this.tip) return;
+        // visible area: below the (sticky) top bar, inside the window
+        const headerBottom = this.renderRoot.querySelector("page-header")?.getBoundingClientRect().bottom ?? 0;
+        const area = {left: 0, top: Math.max(0, headerBottom), right: window.innerWidth, bottom: window.innerHeight};
+        this.tip = {...this.tip, ...placeTooltip(this.tip.anchor, {width: tooltip.offsetWidth, height: tooltip.offsetHeight}, area)};
+        window.addEventListener("scroll", this.hideTip, {capture: true, passive: true});
+        window.addEventListener("pointerdown", this.pointerDownOutside, {capture: true});
+    }
+
+    private hideTip = () => {
+        if (!this.tip) return;
+        this.tip = undefined;
+        window.removeEventListener("scroll", this.hideTip, {capture: true});
+        window.removeEventListener("pointerdown", this.pointerDownOutside, {capture: true});
+    }
+
+    /** A tap anywhere but on a grid cell closes the tooltip (touch has no "pointer leaves"). */
+    private pointerDownOutside = (e: PointerEvent) => {
+        const onCell = e.composedPath().some(el => el instanceof HTMLElement && el.classList.contains("cell"));
+        if (!onCell) this.hideTip();
+    }
+
+    private mouseLeave = (e: PointerEvent) => {
+        if (e.pointerType === "mouse") this.hideTip();
+    }
+
 }

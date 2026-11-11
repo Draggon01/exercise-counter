@@ -11,6 +11,8 @@ import "../../components/page-header";
 import "./elements/reminder-settings";
 import {customElement, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
+import {logoutUser, selectCurrentUser} from "../login/slice/userSlice";
+import {navigate} from "../../utils/navigation";
 import {RootState, store} from '../../store';
 import {clearInviteLinks, clearUnfinishedPeriods, generateInviteLink, loadOptions, loadUnfinishedPeriods, PeriodDto, selectAutoCollapse, selectInviteLinks, selectInviteLinkStatus, selectMissedEntryStatus, selectUnfinishedPeriods, selectUnfinishedPeriodsStatus, setAutoCollapse, submitMissedEntry} from "./slice/optionsSlice";
 import {listExercises, selectVisibleExercises} from "../home/slice/exerciseSlice";
@@ -171,7 +173,16 @@ export class OptionsView extends ConnectedLitElement {
         store.dispatch(loadChangelog());
     }
 
+    @state()
+    private username = "";
+
+    private handleLogout = async () => {
+        await store.dispatch(logoutUser());
+        navigate("/login");
+    }
+
     stateChanged(state: RootState) {
+        this.username = selectCurrentUser(state)?.username ?? "";
         this.inviteLinks = selectInviteLinks(state);
         this.inviteLinkStatus = selectInviteLinkStatus(state);
         this.exercises = selectVisibleExercises(state);
@@ -275,6 +286,16 @@ export class OptionsView extends ConnectedLitElement {
                                     </sl-select>
                                 </div>
                                 <reminder-settings></reminder-settings>
+                                <div class="setting-row">
+                                    <div>
+                                        <div class="setting-label">Account</div>
+                                        <div class="setting-description">Signed in as <strong>${this.username}</strong></div>
+                                    </div>
+                                    <sl-button size="small" @click="${this.handleLogout}">
+                                        <sl-icon slot="prefix" name="box-arrow-right"></sl-icon>
+                                        Log out
+                                    </sl-button>
+                                </div>
                             </div>
                         </div>
                     </sl-tab-panel>

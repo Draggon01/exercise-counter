@@ -189,7 +189,17 @@ export class OverlayView extends ConnectedLitElement {
         }
 
         @media (max-width: 768px) {
-            .top-nav, .username {
+            /* phones: each page's <page-header> is the top bar – the shell only fills the status bar area */
+            :host {
+                grid-template-rows: env(safe-area-inset-top) auto 1fr auto;
+            }
+
+            header {
+                padding: 0;
+                border-bottom: none;
+            }
+
+            .brand, .top-nav, .user-menu {
                 display: none;
             }
 
