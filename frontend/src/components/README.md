@@ -32,6 +32,8 @@ Belong to one feature, listed here so they are not built a second time.
 | `<exercise-edit-view>` | `views/exercise-edit/exercise-edit-view.ts` | Page `/exercises/new` and `/exercises/:id/edit` around `<exercise-form>` (loads exercise + groups, saves, toasts) | ✅ |
 | `<exercise-timer>` | `views/home/elements/exercise-timer.ts` | Countdown for time exercises with a large focus view while running (minimize / reopen), keeps the screen on (props `targetSeconds`, `completedSeconds`, `label`; event `progress-changed`) | ✅ |
 | `<reminder-settings>` | `views/options/elements/reminder-settings.ts` | Options → General: reminders on/off for this device, hours before the reset, test notification; hints for iPhone (install first), blocked permission, unsupported browsers. Hidden when the server has no push keys (`pushSlice`) | ✅ |
+| `<account-settings>` | `views/options/elements/account-settings.ts` | Options → General: signed in as / log out, change password (dialog), for admins (`APP_ADMINS`) one-time password reset links (`accountSlice`) | ✅ |
+| `<reset-password-view>` | `views/reset-password/reset-password-view.ts` | Public page `/reset-password/:token` of a reset link: new password twice (`resetPasswordSlice`) | ✅ |
 | `<rep-counter>` | `views/home/elements/rep-counter.ts` | Reps input for rep exercises (props `target`, `value`; event `progress-changed`, debounced 500ms) | ✅ |
 
 ## Helpers
@@ -53,6 +55,8 @@ Belong to one feature, listed here so they are not built a second time.
 | `pushSupport(env)`, `currentPushEnvironment()`, `base64UrlToBytes`, `REMINDER_HOURS`, `reminderHoursLabel` | `src/utils/push.ts` | Push reminders: what the browser can do, the server key for `pushManager.subscribe` | ✅ |
 | `LatestValueSync` | `src/utils/latest-value-sync.ts` | Saving a toggle per item without flooding the server: shown at once, one request at a time, only the latest wish is sent (home: "Mark as done") | ✅ |
 | `placeTooltip(anchor, size, area)` | `src/utils/tooltip.ts` | Position of a custom tooltip: above (below if no room), always inside the visible area (statistics grid) | ✅ |
+| `newPasswordProblem(password, repeated)`, `MIN_PASSWORD_LENGTH` | `src/utils/password.ts` | New-password checks (same minimum as the backend): change password, reset page | ✅ |
+| `browserTimeZone()`, `exerciseTimeZone(exercise)` | `src/utils/exercise.ts` | Time zone sent with an exercise (existing keeps theirs, new get the browser's) | ✅ |
 | `isTimeExercise(type)` / `isRepExercise(type)` / `isIncreaseExercise(type)` | `src/utils/exercise.ts` | Branching on `ExerciseType` (exercise form, exercise card) | ✅ |
 
 ## App / PWA

@@ -87,6 +87,14 @@ public class InviteService {
      * path and query are dropped.
      */
     public static String inviteUrl(String baseUrl, UUID registerId) {
+        return appUrl(baseUrl, "/register/" + registerId);
+    }
+
+    /**
+     * {@code <origin><path>} of the frontend. Accepts a full origin or a bare host (gets {@code https://});
+     * path and query of {@code baseUrl} are dropped.
+     */
+    public static String appUrl(String baseUrl, String path) {
         String origin = baseUrl == null ? "" : baseUrl.trim();
         if (!origin.contains("://")) {
             origin = "https://" + origin;
@@ -102,6 +110,6 @@ public class InviteService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid base url");
         }
         String port = uri.getPort() == -1 ? "" : ":" + uri.getPort();
-        return scheme + "://" + uri.getHost() + port + "/register/" + registerId;
+        return scheme + "://" + uri.getHost() + port + path;
     }
 }

@@ -5,6 +5,7 @@ import {routes} from "./routes";
 import './views/login/login-view'
 import './views/overlay/overlay-view'
 import './views/register/register-view'
+import './views/reset-password/reset-password-view'
 import {RootState, store} from "./store";
 import {readUserInfo, selectCurrentUser, selectUserInit, selectUserStatus} from "./views/login/slice/userSlice";
 import "./components/empty-state";
@@ -89,6 +90,12 @@ export class LitRouter extends ConnectedLitElement {
             // the invite link is validated by register-view itself (via registerSlice)
         },
         {
+            path: '/reset-password/:token',
+            render: (params) => html`
+                <reset-password-view .token="${params["token"] ?? ""}"></reset-password-view>
+            `,
+        },
+        {
             path: '*',
             render: () => html`
                 <overlay-view>
@@ -100,7 +107,7 @@ export class LitRouter extends ConnectedLitElement {
                     // user info not loaded yet: stateChanged routes the URL again once it is
                     return false;
                 }
-                if (window.location.pathname.includes("register")) {
+                if (window.location.pathname.includes("register") || window.location.pathname.startsWith("/reset-password/")) {
                     return false;
                 }
                 if (this.user && !this.user.anonymous) {

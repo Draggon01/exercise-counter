@@ -63,6 +63,11 @@ export class ReminderSettings extends ConnectedLitElement {
         this.hours = selectReminderHours(state);
     }
 
+    /** Not offered by this server: the element takes no room in the settings list. */
+    protected willUpdate() {
+        this.hidden = this.push.status === "error" || (this.push.status === "idle" && !this.push.serverEnabled);
+    }
+
     render() {
         const push = this.push;
         if (push.status === "initial" || push.status === "loading") {

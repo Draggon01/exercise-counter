@@ -5,6 +5,7 @@ import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.rest.user.dto.InviteLinkRequest;
 import org.exercise.counter.exercisecounter.web.rest.user.dto.RegisterDto;
 import org.exercise.counter.exercisecounter.web.rest.user.dto.UserDto;
+import org.exercise.counter.exercisecounter.web.service.AccountService;
 import org.exercise.counter.exercisecounter.web.service.InviteService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,19 +26,21 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final InviteService inviteService;
+    private final AccountService accountService;
 
-    public UserController(UserRepository userRepository, InviteService inviteService) {
+    public UserController(UserRepository userRepository, InviteService inviteService, AccountService accountService) {
         this.userRepository = userRepository;
         this.inviteService = inviteService;
+        this.accountService = accountService;
     }
 
     /** The logged-in user, or an anonymous user. */
     @GetMapping("/public/userinfo")
     public UserDto userInfo(@AuthenticationPrincipal UserDetails user) {
         if (user != null) {
-            return new UserDto(user.getUsername(), false);
+            return new UserDto(user.getUsername(), false, accountService.isAdmin(user.getUsername()));
         }
-        return new UserDto("", true);
+        return new UserDto("", true, false);
     }
 
     /** @return {@code true} if the username is still free */
@@ -49,7 +52,7 @@ public class UserController {
     @PostMapping("/public/register")
     public UserDto register(@RequestBody RegisterDto registerDto) {
         User user = inviteService.register(registerDto.username(), registerDto.password(), registerDto.registerId());
-        return new UserDto(user.getUsername(), false);
+        return new UserDto(user.getUsername(), false, false);
     }
 
     @GetMapping("/public/invites/{registerId}/valid")
