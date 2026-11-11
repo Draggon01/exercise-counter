@@ -1,7 +1,7 @@
 import {StatisticDto} from "../models/statisticDto";
 import {createSlice, Reducer} from "@reduxjs/toolkit";
 import {AsyncStoreState} from "../../../commons";
-import {apiGet, apiThunk} from "../../../api/http";
+import {apiGet, apiPost, apiThunk} from "../../../api/http";
 
 type SliceState = {
     statisticStatus: AsyncStoreState;
@@ -20,6 +20,15 @@ const initialState: SliceState = {
 export const loadStatistic = apiThunk<StatisticDto, string>(
     'statistic/load', exerciseId => apiGet(`/api/statistic/${exerciseId}`));
 
+type MissedEntry = { exerciseId: string, date: string, username: string };
+
+/** Marks one of the last periods (closing day YYYY-MM-DD) as done by the user ("forgot to tap Done"). */
+export const addMissedEntry = apiThunk<MissedEntry, MissedEntry>(
+    'statistic/addMissedEntry', async entry => {
+        await apiPost(`/api/statistic/${entry.exerciseId}/missed-entries`, {date: entry.date});
+        return entry;
+    });
+
 
 export const statisticSlice = createSlice({
     name: 'statistic',
@@ -27,6 +36,14 @@ export const statisticSlice = createSlice({
     reducers: {},
     extraReducers: builder => {
         builder
+            .addCase(addMissedEntry.fulfilled, (state, action) => {
+                // same key format as the backend: "<closing day>:<closing day>"
+                const key = `${action.payload.date}:${action.payload.date}`;
+                const finishers = state.statistic.finishedInformation?.[key];
+                if (finishers && !finishers.includes(action.payload.username)) {
+                    finishers.push(action.payload.username);
+                }
+            })
             .addCase(loadStatistic.pending, state => {
                 state.statisticStatus = 'loading';
                 // never show the previous exercise's numbers while the next one loads

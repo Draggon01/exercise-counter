@@ -9,13 +9,19 @@ import org.exercise.counter.exercisecounter.web.data.statistic.PeriodRepository;
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
+import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionId;
+import org.exercise.counter.exercisecounter.web.rest.error.ForbiddenException;
 import org.exercise.counter.exercisecounter.web.rest.error.NotFoundException;
-import org.exercise.counter.exercisecounter.web.rest.statistic.dto.PeriodDto;
 import org.exercise.counter.exercisecounter.web.rest.statistic.dto.StatisticDto;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,6 +37,9 @@ public class StatisticService {
 
     /** Key of the still-running period in {@link StatisticDto}. */
     public static final String CURRENT_PERIOD_KEY = "current";
+
+    /** How many of the newest periods can be marked as finished afterwards. */
+    public static final int MISSED_ENTRY_PERIODS = 7;
 
     private final CheckRepository checkRepository;
     private final PeriodRepository periodRepository;
@@ -68,16 +77,6 @@ public class StatisticService {
         return new StatisticDto(statistics, userSelectionRepository.findUsernamesByExerciseId(exerciseId));
     }
 
-    /** Closed periods of the exercise the user did not finish. */
-    @Transactional(readOnly = true)
-    public List<PeriodDto> unfinishedPeriods(UUID exerciseId, String username) {
-        Map<UUID, List<String>> finishers = finishersByPeriod(exerciseId);
-        return periodRepository.findByExerciseExerciseId(exerciseId).stream()
-                .filter(period -> !finishers.getOrDefault(period.getPeriodId(), List.of()).contains(username))
-                .map(period -> new PeriodDto(period.getPeriodId(), period.toKeyString()))
-                .toList();
-    }
-
     /** period id → usernames that finished it, loaded in one query. */
     private Map<UUID, List<String>> finishersByPeriod(UUID exerciseId) {
         return finishedUserRepository.findFinishersByExerciseIds(List.of(exerciseId)).stream()
@@ -85,13 +84,35 @@ public class StatisticService {
                         Collectors.mapping(PeriodFinisher::username, Collectors.toList())));
     }
 
-    /** Marks a past period of the exercise as finished by the user (idempotent). */
+    /**
+     * Marks a past period as finished by the user ("forgot to tap Done"). Only the last
+     * {@link #MISSED_ENTRY_PERIODS} periods can be added afterwards, only for exercises on the user's home list.
+     *
+     * @param date the day the period closed (YYYY-MM-DD) – periods closed on the same day count as one
+     */
     @Transactional
-    public void addMissedEntry(UUID exerciseId, UUID periodId, String username) {
+    public void addMissedEntry(UUID exerciseId, String date, String username) {
         User user = findUser(username);
-        Period period = periodRepository.findById(periodId)
-                .filter(p -> p.getExercise().getExerciseId().equals(exerciseId))
+        LocalDate day = parseDay(date);
+        List<Period> newestFirst = periodRepository.findByExerciseExerciseId(exerciseId).stream()
+                .sorted(Comparator.comparing((Period p) -> p.getTimeRange().upper()).reversed())
+                .toList();
+        Period period = newestFirst.stream()
+                .filter(p -> p.getTimeRange().upper().toLocalDate().equals(day))
+                .findFirst()
                 .orElseThrow(() -> new NotFoundException("Period not found"));
+        if (!userSelectionRepository.existsById(new UserSelectionId(username, exerciseId))) {
+            throw new ForbiddenException("Only for exercises on your home page");
+        }
+        List<LocalDate> recentDays = newestFirst.stream()
+                .map(p -> p.getTimeRange().upper().toLocalDate())
+                .distinct()
+                .limit(MISSED_ENTRY_PERIODS)
+                .toList();
+        if (!recentDays.contains(day)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Only the last " + MISSED_ENTRY_PERIODS + " periods can be added afterwards");
+        }
         if (finishedUserRepository.existsByPeriod_PeriodIdAndUsername(period.getPeriodId(), user)) {
             return;
         }
@@ -99,6 +120,14 @@ public class StatisticService {
         finishedUser.setPeriod(period);
         finishedUser.setUsername(user);
         finishedUserRepository.save(finishedUser);
+    }
+
+    private static LocalDate parseDay(String date) {
+        try {
+            return LocalDate.parse(date == null ? "" : date.trim());
+        } catch (DateTimeParseException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid date, expected YYYY-MM-DD");
+        }
     }
 
     private User findUser(String username) {

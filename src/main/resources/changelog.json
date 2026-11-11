@@ -22,6 +22,7 @@
       "A note at the top shows when you are offline; your phone vibrates briefly when you mark an exercise as done",
       "New and edited exercises get their own page instead of a small dialog",
       "Statistics only show people who currently take part and were active in the selected time",
+      "Forgot to tap Done? Tap the + on a missed day in the statistics (last 7 periods) – replaces the Missed Entry tab",
       "Change your password in Options; if you forgot it, ask the admin for a reset link",
       "Fixed: reset times now follow summer and winter time (they moved by an hour before)",
       "Fixed: tapping \"Mark as done\" several times quickly no longer causes errors",

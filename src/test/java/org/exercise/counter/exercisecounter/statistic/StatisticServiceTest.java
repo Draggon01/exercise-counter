@@ -16,6 +16,8 @@ import org.exercise.counter.exercisecounter.web.data.userselection.UserSelection
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionId;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
 import org.exercise.counter.exercisecounter.web.rest.error.NotFoundException;
+import org.springframework.web.server.ResponseStatusException;
+import org.exercise.counter.exercisecounter.web.rest.error.ForbiddenException;
 import org.exercise.counter.exercisecounter.web.service.StatisticService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -88,25 +90,65 @@ class StatisticServiceTest {
     }
 
     @Test
-    void addMissedEntry_rejectsPeriodOfAnotherExercise() {
-        LocalDateTime end = LocalDateTime.now().minusDays(1);
-        Period foreign = period(second, Range.openClosed(end.minusDays(1), end));
+    void addMissedEntry_marksTheDayAsFinished_once() {
+        onHomeList(A, first);
+        Period period = closedDaysAgo(first, 1);
 
-        assertThrows(NotFoundException.class,
-                () -> statisticService.addMissedEntry(first.getExerciseId(), foreign.getPeriodId(), A));
-        assertTrue(finishedUserRepository.findByPeriod_PeriodId(foreign.getPeriodId()).isEmpty());
+        statisticService.addMissedEntry(first.getExerciseId(), day(period), A);
+        statisticService.addMissedEntry(first.getExerciseId(), day(period), A);
+
+        assertEquals(1, finishedUserRepository.findByPeriod_PeriodId(period.getPeriodId()).size());
+        assertEquals(List.of(A), statisticService.load(first.getExerciseId()).finishedInformation()
+                .get(day(period) + ":" + day(period)));
     }
 
     @Test
-    void addMissedEntry_marksPeriodFinished_once() {
-        LocalDateTime end = LocalDateTime.now().minusDays(1);
-        Period period = period(first, Range.openClosed(end.minusDays(1), end));
+    void addMissedEntry_onlyForTheLastSevenPeriods() {
+        onHomeList(A, first);
+        List<Period> periods = new java.util.ArrayList<>();
+        for (int daysAgo = 1; daysAgo <= 9; daysAgo++) periods.add(closedDaysAgo(first, daysAgo));
 
-        statisticService.addMissedEntry(first.getExerciseId(), period.getPeriodId(), A);
-        statisticService.addMissedEntry(first.getExerciseId(), period.getPeriodId(), A);
+        statisticService.addMissedEntry(first.getExerciseId(), day(periods.get(6)), A); // 7th newest: ok
+        var error = assertThrows(ResponseStatusException.class,
+                () -> statisticService.addMissedEntry(first.getExerciseId(), day(periods.get(7)), A)); // 8th: too old
 
-        assertEquals(1, finishedUserRepository.findByPeriod_PeriodId(period.getPeriodId()).size());
-        assertTrue(statisticService.unfinishedPeriods(first.getExerciseId(), A).isEmpty());
+        assertEquals(400, error.getStatusCode().value());
+        assertEquals(1, finishedUserRepository.findByPeriod_PeriodId(periods.get(6).getPeriodId()).size());
+        assertTrue(finishedUserRepository.findByPeriod_PeriodId(periods.get(7).getPeriodId()).isEmpty());
+    }
+
+    @Test
+    void addMissedEntry_onlyForExercisesOnTheHomeList() {
+        Period period = closedDaysAgo(first, 1);
+
+        assertThrows(ForbiddenException.class, () -> statisticService.addMissedEntry(first.getExerciseId(), day(period), A));
+        assertTrue(finishedUserRepository.findByPeriod_PeriodId(period.getPeriodId()).isEmpty());
+    }
+
+    @Test
+    void addMissedEntry_unknownDayOrOtherExercise_is404_badDateIs400() {
+        onHomeList(A, first);
+        Period foreign = closedDaysAgo(second, 1);
+
+        assertThrows(NotFoundException.class, () -> statisticService.addMissedEntry(first.getExerciseId(), day(foreign), A));
+        assertThrows(NotFoundException.class, () -> statisticService.addMissedEntry(first.getExerciseId(), "2001-01-01", A));
+        var error = assertThrows(ResponseStatusException.class,
+                () -> statisticService.addMissedEntry(first.getExerciseId(), "yesterday", A));
+        assertEquals(400, error.getStatusCode().value());
+    }
+
+    private void onHomeList(String username, Exercise exercise) {
+        userSelectionRepository.save(new UserSelection(new UserSelectionId(username, exercise.getExerciseId()), 0));
+    }
+
+    /** A one-day period that closed {@code daysAgo} days ago at noon. */
+    private Period closedDaysAgo(Exercise exercise, int daysAgo) {
+        LocalDateTime end = LocalDate.now().minusDays(daysAgo).atTime(12, 0);
+        return period(exercise, Range.openClosed(end.minusDays(1), end));
+    }
+
+    private static String day(Period period) {
+        return period.getTimeRange().upper().toLocalDate().toString();
     }
 
     private Exercise exercise(String title) {

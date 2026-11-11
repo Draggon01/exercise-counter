@@ -13,16 +13,11 @@ import "./elements/account-settings";
 import {customElement, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from '../../store';
-import {clearInviteLinks, clearUnfinishedPeriods, generateInviteLink, loadOptions, loadUnfinishedPeriods, PeriodDto, selectAutoCollapse, selectInviteLinks, selectInviteLinkStatus, selectMissedEntryStatus, selectUnfinishedPeriods, selectUnfinishedPeriodsStatus, setAutoCollapse, submitMissedEntry} from "./slice/optionsSlice";
-import {listExercises, selectVisibleExercises} from "../home/slice/exerciseSlice";
-import {ExerciseDto} from "../home/models/exerciseDto";
+import {clearInviteLinks, generateInviteLink, loadOptions, selectAutoCollapse, selectInviteLinks, selectInviteLinkStatus, setAutoCollapse} from "./slice/optionsSlice";
 
 @customElement('options-view')
 export class OptionsView extends ConnectedLitElement {
     static styles = [pageStyles, touchStyles, settingStyles, css`
-
-
-
 
         .tab-content {
             padding: 1rem 0;
@@ -94,29 +89,12 @@ export class OptionsView extends ConnectedLitElement {
             font-size: 0.875rem;
         }
 
-        .missed-entry-form {
-            margin-top: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .missed-entry-form sl-select {
-            width: 100%;
-        }
-
-        .missed-entry-error {
-            font-size: 0.85rem;
-            color: var(--sl-color-danger-600);
-        }
-
         .general-form {
             margin-top: 1rem;
             display: flex;
             flex-direction: column;
             gap: 1rem;
         }
-
 
         .timer-sound-form {
             margin-top: 1rem;
@@ -131,11 +109,6 @@ export class OptionsView extends ConnectedLitElement {
             width: 100%;
         }
 
-
-
-
-
-
     `];
 
     @state()
@@ -145,29 +118,10 @@ export class OptionsView extends ConnectedLitElement {
     private inviteLinkStatus: string = "initial";
 
     @state()
-    private exercises: ExerciseDto[] = [];
-
-    @state()
     private autoCollapse: boolean = true;
-
-    @state()
-    private selectedExerciseId: string = "";
-
-    @state()
-    private selectedPeriodId: string = "";
-
-    @state()
-    private unfinishedPeriods: PeriodDto[] = [];
-
-    @state()
-    private unfinishedPeriodsStatus: string = "initial";
-
-    @state()
-    private missedEntryStatus: string = "initial";
 
     connectedCallback() {
         super.connectedCallback();
-        store.dispatch(listExercises());
         store.dispatch(loadOptions());
         store.dispatch(loadChangelog());
     }
@@ -175,12 +129,8 @@ export class OptionsView extends ConnectedLitElement {
     stateChanged(state: RootState) {
         this.inviteLinks = selectInviteLinks(state);
         this.inviteLinkStatus = selectInviteLinkStatus(state);
-        this.exercises = selectVisibleExercises(state);
         this.autoCollapse = selectAutoCollapse(state);
         this.changelog = selectChangelog(state);
-        this.unfinishedPeriods = selectUnfinishedPeriods(state);
-        this.unfinishedPeriodsStatus = selectUnfinishedPeriodsStatus(state);
-        this.missedEntryStatus = selectMissedEntryStatus(state);
     }
 
     /** Device-local display preference, stored in localStorage (see styles/color-scheme.ts). */
@@ -212,26 +162,6 @@ export class OptionsView extends ConnectedLitElement {
         store.dispatch(clearInviteLinks());
     }
 
-    private handleExerciseSelect(e: Event) {
-        this.selectedExerciseId = (e.target as SlSelect).value as string;
-        this.selectedPeriodId = "";
-        if (this.selectedExerciseId) {
-            store.dispatch(loadUnfinishedPeriods(this.selectedExerciseId));
-        } else {
-            store.dispatch(clearUnfinishedPeriods());
-        }
-    }
-
-    private async handleSubmitMissedEntry() {
-        if (!this.selectedExerciseId || !this.selectedPeriodId) return;
-        await store.dispatch(submitMissedEntry({
-            exerciseId: this.selectedExerciseId,
-            periodId: this.selectedPeriodId
-        }));
-        store.dispatch(loadUnfinishedPeriods(this.selectedExerciseId));
-        this.selectedPeriodId = "";
-    }
-
     protected render() {
         return html`
             <div class="page-container">
@@ -241,7 +171,6 @@ export class OptionsView extends ConnectedLitElement {
                     <!-- Tabs -->
                     <sl-tab slot="nav" panel="general">General</sl-tab>
                     <sl-tab slot="nav" panel="invite">Invite Link</sl-tab>
-                    <sl-tab slot="nav" panel="missed-entry">Missed Entry</sl-tab>
                     <sl-tab slot="nav" panel="timer-sound">Timer Sound</sl-tab>
                     <sl-tab slot="nav" panel="changelog">Changelog</sl-tab>
 
@@ -316,43 +245,6 @@ export class OptionsView extends ConnectedLitElement {
                                 </div>
                             ` : ''}
                             <p class="invite-hint">Links are valid for a limited time and expire after one use.</p>
-                        </div>
-                    </sl-tab-panel>
-
-                    <sl-tab-panel name="missed-entry">
-                        <div class="tab-content">
-                            <p>Add a missed entry for an exercise period you completed but forgot to track.</p>
-                            <div class="missed-entry-form">
-                                <sl-select
-                                        label="Exercise"
-                                        placeholder="Select an exercise"
-                                        @sl-change="${this.handleExerciseSelect}"
-                                >
-                                    ${this.exercises.map(ex => html`
-                                        <sl-option value="${ex.exerciseId}">${ex.exerciseTitle}</sl-option>
-                                    `)}
-                                </sl-select>
-                                <sl-select
-                                        label="Period"
-                                        placeholder="${this.selectedExerciseId ? (this.unfinishedPeriodsStatus === 'loading' ? 'Loading…' : (this.unfinishedPeriods.length === 0 ? 'No unfinished periods' : 'Select a period')) : 'Select an exercise first'}"
-                                        ?disabled="${!this.selectedExerciseId || this.unfinishedPeriods.length === 0}"
-                                        @sl-change="${(e: Event) => { this.selectedPeriodId = (e.target as SlSelect).value as string; }}"
-                                        .value="${this.selectedPeriodId}"
-                                >
-                                    ${this.unfinishedPeriods.map(p => html`
-                                        <sl-option value="${p.periodId}">${p.label}</sl-option>
-                                    `)}
-                                </sl-select>
-                                ${this.missedEntryStatus === 'error' ? html`
-                                    <p class="missed-entry-error">Failed to submit entry. Please try again.</p>
-                                ` : ''}
-                                <sl-button
-                                        variant="primary"
-                                        ?disabled="${!this.selectedExerciseId || !this.selectedPeriodId}"
-                                        ?loading="${this.missedEntryStatus === 'loading'}"
-                                        @click="${this.handleSubmitMissedEntry}"
-                                >Submit Entry</sl-button>
-                            </div>
                         </div>
                     </sl-tab-panel>
 

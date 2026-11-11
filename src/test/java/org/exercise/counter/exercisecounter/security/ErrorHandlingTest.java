@@ -95,7 +95,7 @@ class ErrorHandlingTest {
     void missingEntity_is404() throws Exception {
         HttpResponse<String> res = send(HttpRequest.newBuilder(uri("/api/statistic/" + UUID.randomUUID() + "/missed-entries"))
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString("{\"periodId\":\"" + UUID.randomUUID() + "\"}")));
+                .POST(HttpRequest.BodyPublishers.ofString("{\"date\":\"2001-01-01\"}")));
 
         assertEquals(404, res.statusCode());
         assertTrue(res.body().contains("\"error\""), res.body());

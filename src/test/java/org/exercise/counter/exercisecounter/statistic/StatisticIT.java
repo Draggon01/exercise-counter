@@ -15,7 +15,9 @@ import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.rest.statistic.StatisticController;
 import org.exercise.counter.exercisecounter.web.rest.statistic.dto.MissedEntryRequest;
-import org.exercise.counter.exercisecounter.web.rest.statistic.dto.PeriodDto;
+import org.exercise.counter.exercisecounter.web.data.userselection.UserSelection;
+import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionId;
+import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
 import org.exercise.counter.exercisecounter.web.rest.statistic.dto.StatisticDto;
 import org.exercise.counter.exercisecounter.web.scheduler.ExerciseResetJob;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +63,9 @@ public class StatisticIT {
 
     @Autowired
     private FinishedUserRepository finishedUserRepository;
+
+    @Autowired
+    private UserSelectionRepository userSelectionRepository;
 
     private User testUser;
     private Exercise testExercise;
@@ -140,33 +145,18 @@ public class StatisticIT {
     }
 
     @Test
-    void testGetUnfinishedPeriods() {
-        Period period = new Period();
-        period.setExercise(testExercise);
-        period.setTimeRange(Range.closed(LocalDateTime.now().minusDays(1), LocalDateTime.now()));
-        period = periodRepository.save(period);
-
-        UserDetails auth = buildAuth(testUser.getUsername());
-
-        List<PeriodDto> unfinished = statisticController.unfinishedPeriods(testExercise.getExerciseId(), auth);
-
-        assertEquals(1, unfinished.size());
-        assertEquals(period.getPeriodId(), unfinished.get(0).periodId());
-    }
-
-    @Test
     void testAddMissedEntry() {
         Period period = new Period();
         period.setExercise(testExercise);
         period.setTimeRange(Range.closed(LocalDateTime.now().minusDays(1), LocalDateTime.now()));
         period = periodRepository.save(period);
+        userSelectionRepository.save(new UserSelection(new UserSelectionId(testUser.getUsername(), testExercise.getExerciseId()), 0));
+        String day = period.getTimeRange().upper().toLocalDate().toString();
 
-        UserDetails auth = buildAuth(testUser.getUsername());
+        statisticController.addMissedEntry(testExercise.getExerciseId(), new MissedEntryRequest(day), buildAuth(testUser.getUsername()));
 
-        statisticController.addMissedEntry(testExercise.getExerciseId(), new MissedEntryRequest(period.getPeriodId()), auth);
-
-        List<PeriodDto> unfinished = statisticController.unfinishedPeriods(testExercise.getExerciseId(), auth);
-        assertTrue(unfinished.isEmpty(), "Period should no longer be unfinished after adding missed entry");
+        assertTrue(statisticController.load(testExercise.getExerciseId()).finishedInformation().get(day + ":" + day)
+                .contains(testUser.getUsername()), "the period counts as finished after adding the missed entry");
     }
 
     private UserDetails buildAuth(String username) {

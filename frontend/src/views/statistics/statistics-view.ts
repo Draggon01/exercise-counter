@@ -7,19 +7,25 @@ import {customElement, property, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from "../../store";
 import {StatisticDto} from "./models/statisticDto";
-import {loadStatistic, selectStatistic, selectStatisticStatus} from "./slice/statisticSlice";
+import {addMissedEntry, loadStatistic, selectStatistic, selectStatisticStatus} from "./slice/statisticSlice";
 import {listExercisesSelected, selectAllExercises, selectExercisesStatus} from "../home/slice/exerciseSlice";
 import {selectCurrentUser} from "../login/slice/userSlice";
 import {AsyncStoreState} from "../../commons";
 import {pageStyles} from "../../styles/page";
-import {closedPeriods, CURRENT_PERIOD, participants, PeriodRow, summarize, UserSummary, visiblePeople} from "../../utils/statistics";
+import {addableDays, closedPeriods, CURRENT_PERIOD, MISSED_ENTRY_PERIODS, participants, PeriodRow, summarize, UserSummary, visiblePeople} from "../../utils/statistics";
 import "../../components/page-header";
 import "../../components/empty-state";
+import "../../components/confirm-dialog";
+import {toast} from "../../components/toast";
 import type {SlCheckbox, SlRadioGroup} from "@shoelace-style/shoelace";
 
 type Range = "7" | "30" | "all";
 
 /** Short column label, e.g. "9.11" for 2026-11-09. */
+/** "Monday, 9 November" for a YYYY-MM-DD day (in the viewer's language). */
+const longDay = (date: string) =>
+    new Date(`${date}T12:00:00`).toLocaleDateString(undefined, {weekday: "long", day: "numeric", month: "long"});
+
 const dayLabel = (date: string) => {
     const [, month, day] = date.split("-");
     return month && day ? `${Number(day)}.${Number(month)}` : date;
@@ -249,6 +255,34 @@ export class StatisticsView extends ConnectedLitElement {
             display: block;
         }
 
+        /* own missed day that can still be added */
+        .cell.addable {
+            cursor: pointer;
+        }
+
+        .mark.addable {
+            display: inline-grid;
+            place-items: center;
+            border-color: var(--app-accent);
+            color: var(--app-accent);
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .add-hint {
+            display: flex;
+            align-items: center;
+            gap: var(--app-space-2);
+            margin: 0 0 var(--app-space-3);
+            font-size: 0.85em;
+            color: var(--app-text-muted);
+        }
+
+        .add-hint .mark {
+            flex-shrink: 0;
+        }
+
         /* first render: measured, not shown (see showTip) */
         .tooltip.measuring {
             visibility: hidden;
@@ -312,6 +346,10 @@ export class StatisticsView extends ConnectedLitElement {
     @state()
     private range: Range = "30";
 
+    /** Day (YYYY-MM-DD) the user tapped to add as done – the confirm dialog is open. */
+    @state()
+    private missedDay?: string;
+
     /** Also show people who no longer have the exercise on their home page. */
     @state()
     private showEveryone = false;
@@ -356,6 +394,13 @@ export class StatisticsView extends ConnectedLitElement {
                      style="${styleMap({left: `${this.tip.left ?? 0}px`, top: `${this.tip.top ?? 0}px`})}">
                     <strong>${this.tip.status}</strong>${this.tip.detail}
                 </div>` : nothing}
+            <confirm-dialog label="Add as done?" confirmLabel="Add as done" variant="primary"
+                            .open="${this.missedDay !== undefined}"
+                            @confirm="${this.confirmMissedDay}" @cancel="${() => this.missedDay = undefined}">
+                Did you do <strong>${this.exerciseTitle || "this exercise"}</strong> on
+                <strong>${this.missedDay ? longDay(this.missedDay) : ""}</strong> but forgot to tap Done?
+                Adding it updates your streak.
+            </confirm-dialog>
         `;
     }
 
@@ -408,7 +453,7 @@ export class StatisticsView extends ConnectedLitElement {
             </section>
             <section>
                 <h3>Who finished when</h3>
-                ${this.renderGrid(users, periods, current)}
+                ${this.renderGrid(users, periods, current, this.addable(allPeriods))}
             </section>
         `;
     }
@@ -447,7 +492,22 @@ export class StatisticsView extends ConnectedLitElement {
         `;
     }
 
-    private renderGrid(users: string[], periods: PeriodRow[], current: string[]) {
+    /** Own missed days that can still be added – only for exercises on the user's home page (backend rule). */
+    private addable(allPeriods: PeriodRow[]): Set<string> {
+        return this.statistic.participants?.includes(this.me) ? addableDays(allPeriods, this.me) : new Set();
+    }
+
+    private confirmMissedDay = async () => {
+        const date = this.missedDay;
+        this.missedDay = undefined;
+        if (!date) return;
+        const result = await store.dispatch(addMissedEntry({exerciseId: this.exerciseId, date, username: this.me}));
+        if (addMissedEntry.fulfilled.match(result)) {
+            toast("Added – your streak is updated", "success", 3000);
+        }
+    }
+
+    private renderGrid(users: string[], periods: PeriodRow[], current: string[], addable: Set<string>) {
         const labelEvery = periods.length > 14 ? 7 : 1;
         return html`
             <div class="legend" aria-hidden="true">
@@ -455,6 +515,11 @@ export class StatisticsView extends ConnectedLitElement {
                 <span><span class="mark missed"></span>Missed</span>
                 <span><span class="mark open"></span>Not done yet (this period)</span>
             </div>
+            ${addable.size > 0 ? html`
+                <p class="add-hint">
+                    <span class="mark missed addable" aria-hidden="true">+</span>
+                    Forgot to tap Done? Tap + on one of your last ${MISSED_ENTRY_PERIODS} periods to add it.
+                </p>` : nothing}
             <div class="scroller" @scroll="${this.hideTip}">
                 <table>
                     <thead>
@@ -471,7 +536,8 @@ export class StatisticsView extends ConnectedLitElement {
                     ${users.map(user => html`
                         <tr>
                             <th scope="row" title="${user}">${user}</th>
-                            ${periods.map(p => this.renderCell(user, p.date, p.finishers.includes(user) ? "done" : "missed"))}
+                            ${periods.map(p => this.renderCell(user, p.date, p.finishers.includes(user) ? "done" : "missed",
+                                    user === this.me && addable.has(p.date)))}
                             ${this.renderCell(user, "this period", current.includes(user) ? "done" : "open")}
                         </tr>
                     `)}
@@ -482,17 +548,23 @@ export class StatisticsView extends ConnectedLitElement {
         `;
     }
 
-    private renderCell(user: string, date: string, state: "done" | "missed" | "open") {
-        const status = state === "done" ? "Done" : state === "missed" ? "Missed" : "Not done yet";
+    /** @param addable the user's own missed day that can still be added (shows "+", tap → confirm) */
+    private renderCell(user: string, date: string, state: "done" | "missed" | "open", addable = false) {
+        const status = state === "done" ? "Done" : state === "missed" ? (addable ? "Missed – tap to add" : "Missed") : "Not done yet";
         const show = (e: Event) => {
             if (e.type === "pointerenter" && (e as PointerEvent).pointerType !== "mouse") return; // touch: on tap
+            if (e.type === "click" && addable) {
+                this.hideTip();
+                this.missedDay = date;
+                return;
+            }
             void this.showTip(e.currentTarget as HTMLElement, status, `${user} · ${date}`);
         };
         return html`
             <td>
-                <button class="cell" aria-label="${user}, ${date}: ${status}"
+                <button class="cell ${addable ? "addable" : ""}" aria-label="${user}, ${date}: ${status}"
                         @pointerenter="${show}" @click="${show}" @focus="${show}">
-                    <span class="mark ${state}"></span>
+                    <span class="mark ${state} ${addable ? "addable" : ""}">${addable ? "+" : nothing}</span>
                 </button>
             </td>`;
     }

@@ -104,6 +104,8 @@ nothing distinct for now
 
 ## Learned
 
+- Missed entries ("forgot to tap Done") are added in the statistics grid: own missed squares of the last 7 periods (`StatisticService.MISSED_ENTRY_PERIODS` = `MISSED_ENTRY_PERIODS` in `utils/statistics.ts`) show a "+"; `POST /api/statistic/{id}/missed-entries` with `{date}` (closing day), only for exercises on the user's home list
+
 - Passwords: `AccountService` (min 8 characters, stored as `{bcrypt}`, read with the delegating encoder). Users change theirs in Options; admins (`app.admins` = env `APP_ADMINS`, comma separated usernames; `UserDto.admin`) create one-time reset links (`/reset-password/<token>`, 24h, only the SHA-256 of the token is stored in `password_reset`, a new link replaces the old one). Public endpoints: `/api/public/password-resets/{token}`
 
 - Push reminders: `ReminderService` (run by `ReminderScheduler` every `app.push.check-interval`, default 10 min) notifies users about home-list exercises not checked yet when the reset (`SchedulerService.getTimeLeftSeconds`) is within `options.reminder_hours`; once per period (`push_reminder`, cleared by `ExerciseResetJob`). Web Push is implemented without a library in `web/service/push/` (`WebPushCrypto` = RFC 8291/8292, tested with the RFC test vector); the server only calls hosts in `app.push.allowed-hosts`. Off unless `APP_PUSH_PUBLIC_KEY`/`APP_PUSH_PRIVATE_KEY` are set (the startup log prints a fresh pair); never change the keys once users subscribed

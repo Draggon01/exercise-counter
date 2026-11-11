@@ -49,7 +49,7 @@ Belong to one feature, listed here so they are not built a second time.
 | `validateForm(form)` | `src/utils/form.ts` | Show validation messages of all Shoelace fields and return whether the form is valid (exercise form, create group) | ✅ |
 | `formatDuration(seconds)` | `src/utils/format.ts` | `M:SS` / `H:MM:SS` for time exercises | ✅ |
 | `formatTimeLeft(seconds)`, `isUrgent(seconds)` | `src/utils/format.ts` | "2 Days and 3 Hours left" / "45 Minutes left"; < 6h left | ✅ |
-| `closedPeriods`, `participants`, `summarize` (streaks, completion) | `src/utils/statistics.ts` | Statistics of an exercise from the backend's `finishedInformation` | ✅ |
+| `closedPeriods`, `participants`, `summarize` (streaks, completion), `addableDays` (own missed days that can still be added, last `MISSED_ENTRY_PERIODS`) | `src/utils/statistics.ts` | Statistics of an exercise from the backend's `finishedInformation` | ✅ |
 | `moveItem`, `dropIndex`, `shiftFor` | `src/utils/reorder.ts` | Sorting a list by drag & drop (home edit order: grip handle `data-drag-handle` on the card, pointer events in the view) | ✅ |
 | `onAppRefresh(load)` / `requestAppRefresh()`, `pullDistance` | `src/utils/refresh.ts` | Pull to refresh: pages register their loader in `connectedCallback` (call the returned function in `disconnectedCallback`); the app shell shows the indicator until the loaders are done | ✅ |
 | `pushSupport(env)`, `currentPushEnvironment()`, `base64UrlToBytes`, `REMINDER_HOURS`, `reminderHoursLabel` | `src/utils/push.ts` | Push reminders: what the browser can do, the server key for `pushManager.subscribe` | ✅ |

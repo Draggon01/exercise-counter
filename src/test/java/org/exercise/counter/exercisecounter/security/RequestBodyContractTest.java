@@ -174,12 +174,13 @@ class RequestBodyContractTest {
     }
 
     @Test
-    void statistic_load_unfinished_missedEntry() throws Exception {
+    void statistic_load_missedEntry() throws Exception {
         String id = exercise.getExerciseId().toString();
         assertTrue(json("GET", "/api/statistic/" + id, null).body().contains("current"));
-        assertEquals("[]", json("GET", "/api/statistic/" + id + "/unfinished-periods", null).body());
         assertEquals(404, json("POST", "/api/statistic/" + id + "/missed-entries",
-                "{\"periodId\":\"" + UUID.randomUUID() + "\"}").statusCode());
+                "{\"date\":\"2001-01-01\"}").statusCode());
+        assertEquals(400, json("POST", "/api/statistic/" + id + "/missed-entries",
+                "{\"date\":\"not a date\"}").statusCode());
     }
 
     @Test

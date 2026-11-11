@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {closedPeriods, participants, periodDate, summarize, visiblePeople} from "./statistics";
+import {closedPeriods, participants, periodDate, summarize, visiblePeople, addableDays} from "./statistics";
 
 const info = {
     "2026-11-07:2026-11-07": ["anna", "me"],
@@ -62,5 +62,24 @@ describe("statistics helpers", () => {
 
     it("handles no periods", () => {
         expect(summarize("x", [], [])).toMatchObject({currentStreak: 0, bestStreak: 0, rate: 0, total: 0});
+    });
+});
+
+describe("addableDays", () => {
+    const rows = (n: number, finishedBy: (i: number) => string[]) =>
+        Array.from({length: n}, (_, i) => ({date: `2026-11-${String(i + 1).padStart(2, "0")}`, finishers: finishedBy(i)}));
+
+    it("only missed days among the last 7 periods", () => {
+        const periods = rows(10, i => i === 8 ? ["me"] : []); // 1–10 Nov, done on the 9th
+        expect([...addableDays(periods, "me")]).toEqual(
+            ["2026-11-04", "2026-11-05", "2026-11-06", "2026-11-07", "2026-11-08", "2026-11-10"]);
+    });
+
+    it("others' finishes do not count", () => {
+        expect(addableDays(rows(2, () => ["anna"]), "me").size).toBe(2);
+    });
+
+    it("nothing when everything is done", () => {
+        expect(addableDays(rows(3, () => ["me"]), "me").size).toBe(0);
     });
 });

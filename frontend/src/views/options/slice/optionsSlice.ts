@@ -2,11 +2,6 @@ import {AsyncStoreState} from "../../../commons";
 import {createSlice, Reducer} from "@reduxjs/toolkit";
 import {apiGet, apiPost, apiPut, apiThunk} from "../../../api/http";
 
-export type PeriodDto = {
-    periodId: string;
-    label: string;
-};
-
 type SliceState = {
     inviteLinks: {
         status: AsyncStoreState;
@@ -16,9 +11,6 @@ type SliceState = {
     /** reminders come this many hours before the reset (all devices of the user) */
     reminderHours: number;
     optionsStatus: AsyncStoreState;
-    unfinishedPeriods: PeriodDto[];
-    unfinishedPeriodsStatus: AsyncStoreState;
-    missedEntryStatus: AsyncStoreState;
 }
 
 type SliceProjection = {
@@ -33,9 +25,6 @@ const initialState: SliceState = {
     autoCollapse: true,
     reminderHours: 3,
     optionsStatus: "initial",
-    unfinishedPeriods: [],
-    unfinishedPeriodsStatus: "initial",
-    missedEntryStatus: "initial"
 }
 
 export const generateInviteLink = apiThunk<string>(
@@ -54,14 +43,6 @@ export const setReminderHours = apiThunk<number, number>(
     'options/setReminderHours', async reminderHours =>
         (await apiPut<OptionsDto>("/api/options", {reminderHours})).reminderHours);
 
-/** Past periods of the exercise the user did not finish. */
-export const loadUnfinishedPeriods = apiThunk<PeriodDto[], string>(
-    'options/loadUnfinishedPeriods', exerciseId => apiGet(`/api/statistic/${exerciseId}/unfinished-periods`));
-
-export const submitMissedEntry = apiThunk<void, { exerciseId: string; periodId: string }>(
-    'options/submitMissedEntry', ({exerciseId, periodId}) =>
-        apiPost(`/api/statistic/${exerciseId}/missed-entries`, {periodId}));
-
 const optionsSlice = createSlice({
     name: 'options',
     initialState,
@@ -70,10 +51,6 @@ const optionsSlice = createSlice({
             state.inviteLinks.values = [];
             state.inviteLinks.status = "initial";
         },
-        clearUnfinishedPeriods(state) {
-            state.unfinishedPeriods = [];
-            state.unfinishedPeriodsStatus = "initial";
-        }
     },
     extraReducers: (builder) => {
         builder
@@ -103,36 +80,14 @@ const optionsSlice = createSlice({
             })
             .addCase(setReminderHours.fulfilled, (state, action) => {
                 state.reminderHours = action.payload;
-            })
-            .addCase(loadUnfinishedPeriods.pending, (state) => {
-                state.unfinishedPeriodsStatus = "loading";
-            })
-            .addCase(loadUnfinishedPeriods.fulfilled, (state, action) => {
-                state.unfinishedPeriodsStatus = "idle";
-                state.unfinishedPeriods = action.payload;
-            })
-            .addCase(loadUnfinishedPeriods.rejected, (state) => {
-                state.unfinishedPeriodsStatus = "error";
-            })
-            .addCase(submitMissedEntry.pending, (state) => {
-                state.missedEntryStatus = "loading";
-            })
-            .addCase(submitMissedEntry.fulfilled, (state) => {
-                state.missedEntryStatus = "idle";
-            })
-            .addCase(submitMissedEntry.rejected, (state) => {
-                state.missedEntryStatus = "error";
             });
     }
 });
 
 export const optionsReducer: Reducer<SliceState> = optionsSlice.reducer;
-export const {clearInviteLinks, clearUnfinishedPeriods} = optionsSlice.actions;
+export const {clearInviteLinks} = optionsSlice.actions;
 
 export const selectInviteLinks = (state: SliceProjection) => state.options.inviteLinks.values;
 export const selectInviteLinkStatus = (state: SliceProjection) => state.options.inviteLinks.status;
 export const selectAutoCollapse = (state: SliceProjection) => state.options.autoCollapse;
 export const selectReminderHours = (state: SliceProjection) => state.options.reminderHours;
-export const selectUnfinishedPeriods = (state: SliceProjection) => state.options.unfinishedPeriods;
-export const selectUnfinishedPeriodsStatus = (state: SliceProjection) => state.options.unfinishedPeriodsStatus;
-export const selectMissedEntryStatus = (state: SliceProjection) => state.options.missedEntryStatus;

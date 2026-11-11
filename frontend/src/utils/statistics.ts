@@ -86,3 +86,14 @@ export function summarize(username: string, periods: PeriodRow[], current: strin
         doneNow,
     };
 }
+
+/** How many of the newest periods can be marked as done afterwards (backend: StatisticService.MISSED_ENTRY_PERIODS). */
+export const MISSED_ENTRY_PERIODS = 7;
+
+/**
+ * Days (period closing dates) the user did not finish but can still add as done ("forgot to tap Done"):
+ * among the last {@link MISSED_ENTRY_PERIODS} periods of all periods (not only the shown range).
+ */
+export function addableDays(periods: PeriodRow[], me: string, limit = MISSED_ENTRY_PERIODS): Set<string> {
+    return new Set(periods.slice(-limit).filter(p => !p.finishers.includes(me)).map(p => p.date));
+}
