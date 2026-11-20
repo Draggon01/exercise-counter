@@ -10,6 +10,7 @@ import {ColorScheme, getColorScheme, setColorScheme} from "../../styles/color-sc
 import "../../components/page-header";
 import "./elements/reminder-settings";
 import "./elements/account-settings";
+import "./elements/delete-account";
 import {customElement, property, query, state} from 'lit/decorators.js';
 import {navigate} from "../../utils/navigation";
 import {getTimerSound, isVibrationOn, setTimerSound, setVibrationOn} from "../../utils/preferences";
@@ -285,6 +286,7 @@ export class OptionsView extends ConnectedLitElement {
                                                aria-label="Vibration"></sl-switch>
                                 </div>
                                 <account-settings></account-settings>
+                                <delete-account></delete-account>
                             </div>
                         </div>
                     </sl-tab-panel>

@@ -69,12 +69,19 @@ public class AccountService {
 
     @Transactional
     public void changePassword(String username, String currentPassword, String newPassword) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("User not found"));
-        if (currentPassword == null || !PASSWORD_ENCODER.matches(currentPassword, user.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The current password is wrong");
-        }
+        User user = requirePassword(username, currentPassword);
         setPassword(user, newPassword);
         log.info("User {} changed their password", username);
+    }
+
+    /** The user, if the password is theirs (changing the password, deleting the account); 400 otherwise. */
+    @Transactional(readOnly = true)
+    public User requirePassword(String username, String password) {
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("User not found"));
+        if (password == null || !PASSWORD_ENCODER.matches(password, user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The current password is wrong");
+        }
+        return user;
     }
 
     /** Usernames to pick from when creating a reset link (admins only). */

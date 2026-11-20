@@ -35,4 +35,8 @@ public interface UserSelectionRepository extends JpaRepository<UserSelection, Us
 
     @Query("SELECT MAX(u.position) FROM show_exercise_for_user u WHERE u.userSelectionId.username = :username")
     Optional<Integer> findMaxPositionByUsername(@Param("username") String username);
+
+    /** Only the ids (no managed entities): who has these exercises on the home list. */
+    @Query("select s.userSelectionId from show_exercise_for_user s where s.userSelectionId.exerciseId in :exerciseIds")
+    List<UserSelectionId> findIdsByExerciseIdIn(@Param("exerciseIds") java.util.Collection<UUID> exerciseIds);
 }

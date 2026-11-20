@@ -28,4 +28,13 @@ public interface CheckRepository extends JpaRepository<Check, CheckId> {
     @Modifying
     @Query("delete from checks c where c.checkId.exerciseId = :exerciseId and c.checkId.username = :username")
     void deleteIfPresent(@Param("exerciseId") UUID exerciseId, @Param("username") String username);
+
+    /** Only the ids (no managed entities): who finished these exercises in the current period. */
+    @Query("select c.checkId from checks c where c.checkId.exerciseId in :exerciseIds")
+    List<CheckId> findIdsByExerciseIdIn(@Param("exerciseIds") Collection<UUID> exerciseIds);
+
+    /** Account deletion: all checks of the user. */
+    @Modifying
+    @Query("delete from checks c where c.checkId.username = :username")
+    void deleteByUsername(@Param("username") String username);
 }

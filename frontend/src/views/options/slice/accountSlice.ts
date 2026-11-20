@@ -1,6 +1,6 @@
 import {createSlice, Reducer} from "@reduxjs/toolkit";
 import {AsyncStoreState} from "../../../commons";
-import {apiGet, apiPost, apiPut, apiThunk} from "../../../api/http";
+import {apiDelete, apiGet, apiPost, apiPut, apiThunk} from "../../../api/http";
 
 /** Own password, and for admins: reset links for people who forgot theirs. */
 export type PasswordResetLinkDto = { link: string, username: string, expiresAt: string };
@@ -18,6 +18,10 @@ const initialState: AccountState = {usernames: [], usernamesStatus: "initial", r
 
 export const changePassword = apiThunk<void, { currentPassword: string, newPassword: string }>(
     'account/changePassword', request => apiPut("/api/account/password", request));
+
+/** Deletes the own account (password needed); the server ends all sessions of the user. */
+export const deleteAccount = apiThunk<void, string>(
+    'account/delete', password => apiDelete("/api/account", {password}));
 
 export const loadUsernames = apiThunk<string[]>(
     'account/loadUsernames', () => apiGet("/api/admin/users"));

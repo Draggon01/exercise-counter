@@ -1,7 +1,12 @@
 package org.exercise.counter.exercisecounter.web.rest.account;
 
 import org.exercise.counter.exercisecounter.web.rest.account.dto.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import org.exercise.counter.exercisecounter.web.security.UserSessions;
+import org.exercise.counter.exercisecounter.web.service.AccountDeletionService;
 import org.exercise.counter.exercisecounter.web.service.AccountService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -9,15 +14,34 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/** Passwords: change your own, admins create reset links, the public reset page sets a new one. */
+/** Accounts: delete your own; passwords: change your own, admins create reset links, the public reset page sets a new one. */
 @RestController
 @RequestMapping("/api")
 public class AccountController {
 
     private final AccountService accountService;
+    private final AccountDeletionService deletionService;
+    private final UserSessions userSessions;
 
-    public AccountController(AccountService accountService) {
+    public AccountController(AccountService accountService, AccountDeletionService deletionService,
+                             UserSessions userSessions) {
         this.accountService = accountService;
+        this.deletionService = deletionService;
+        this.userSessions = userSessions;
+    }
+
+    /** Deletes the own account (password needed) and logs out everywhere. */
+    @DeleteMapping("/account")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAccount(@RequestBody DeleteAccountRequest request, @AuthenticationPrincipal UserDetails user,
+                              HttpServletRequest httpRequest) {
+        deletionService.deleteAccount(user.getUsername(), request.password());
+        userSessions.endAll(user.getUsername());
+        HttpSession session = httpRequest.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        SecurityContextHolder.clearContext();
     }
 
     @PutMapping("/account/password")

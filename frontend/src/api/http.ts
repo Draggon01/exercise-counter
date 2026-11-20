@@ -65,7 +65,7 @@ async function errorMessage(res: Response): Promise<string> {
 export const apiGet = <T>(url: string) => request<T>("GET", url);
 export const apiPost = <T = void>(url: string, body?: Body) => request<T>("POST", url, body);
 export const apiPut = <T = void>(url: string, body?: Body) => request<T>("PUT", url, body);
-export const apiDelete = <T = void>(url: string) => request<T>("DELETE", url);
+export const apiDelete = <T = void>(url: string, body?: Body) => request<T>("DELETE", url, body);
 
 /** Converts anything thrown by a request into a serialisable {@link ApiError}. */
 export function toApiError(e: unknown): ApiError {
