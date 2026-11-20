@@ -200,6 +200,8 @@ export class OptionsView extends ConnectedLitElement {
 
     /** A tab was chosen: give it its own URL, so it can be linked and Back returns to the previous tab. */
     private handleTabShow = (e: SlTabShowEvent) => {
+        // tab groups inside the panels (e.g. the reminder setup guide) send the same event – not ours
+        if (e.target !== e.currentTarget) return;
         const name = toTab(e.detail.name);
         if (name !== toTab(this.tab)) {
             navigate(name === "general" ? "/options" : `/options/${name}`);
