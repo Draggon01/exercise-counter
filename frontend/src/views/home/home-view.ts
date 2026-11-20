@@ -20,6 +20,7 @@ import './elements/exercise-card'
 import '../../components/confirm-dialog'
 import '../../components/empty-state'
 import {navigate} from "../../utils/navigation";
+import {vibrate} from "../../utils/preferences";
 import {AsyncStoreState} from "../../commons";
 import {UserDto} from '../login/models/userDto';
 import {selectCurrentUser} from "../login/slice/userSlice";
@@ -344,7 +345,7 @@ export class HomeView extends ConnectedLitElement {
         this.stopDragListeners();
         if (drag.to !== drag.from) {
             const order = moveItem(this.sortedExercises(), drag.from, drag.to);
-            navigator.vibrate?.(10);
+            vibrate(10);
             await store.dispatch(reorderExercises(order.map(ex => ex.exerciseId)));
             await this.updateComplete; // the cards show the new order now – remove the offsets without animation
         }

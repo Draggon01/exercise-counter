@@ -1,5 +1,6 @@
 import {AsyncStoreState} from "../../../commons";
 import {createSlice, Reducer} from "@reduxjs/toolkit";
+import {browserTimeZone} from "../../../utils/exercise";
 import {apiGet, apiPost, apiPut, apiThunk} from "../../../api/http";
 
 type SliceState = {
@@ -10,8 +11,12 @@ type SliceState = {
     autoCollapse: boolean;
     /** reminders come this many hours before the reset (all devices of the user) */
     reminderHours: number;
+    /** no reminders from quietFrom to quietUntil (full hours, the user's time zone) */
+    quietHours: QuietHours;
     optionsStatus: AsyncStoreState;
 }
+
+export type QuietHours = { on: boolean, from: number, until: number };
 
 type SliceProjection = {
     options: SliceState
@@ -24,13 +29,19 @@ const initialState: SliceState = {
     },
     autoCollapse: true,
     reminderHours: 3,
+    quietHours: {on: false, from: 22, until: 7},
     optionsStatus: "initial",
 }
 
 export const generateInviteLink = apiThunk<string>(
     'options/generateInviteLink', () => apiPost("/api/invites", {baseUrl: window.location.origin}));
 
-type OptionsDto = { autoCollapse: boolean, reminderHours: number };
+type OptionsDto = {
+    autoCollapse: boolean, reminderHours: number,
+    quietHours: boolean, quietFrom: number, quietUntil: number, timeZone: string | null
+};
+
+const toQuietHours = (dto: OptionsDto): QuietHours => ({on: dto.quietHours, from: dto.quietFrom, until: dto.quietUntil});
 
 export const loadOptions = apiThunk<OptionsDto>(
     'options/loadOptions', () => apiGet("/api/options"));
@@ -42,6 +53,12 @@ export const setAutoCollapse = apiThunk<boolean, boolean>(
 export const setReminderHours = apiThunk<number, number>(
     'options/setReminderHours', async reminderHours =>
         (await apiPut<OptionsDto>("/api/options", {reminderHours})).reminderHours);
+
+/** Sends the browser's time zone along: the hours are meant in local time. */
+export const setQuietHours = apiThunk<QuietHours, QuietHours>(
+    'options/setQuietHours', async quiet => toQuietHours(await apiPut<OptionsDto>("/api/options", {
+        quietHours: quiet.on, quietFrom: quiet.from, quietUntil: quiet.until, timeZone: browserTimeZone()
+    })));
 
 const optionsSlice = createSlice({
     name: 'options',
@@ -71,6 +88,7 @@ const optionsSlice = createSlice({
                 state.optionsStatus = "idle";
                 state.autoCollapse = action.payload.autoCollapse;
                 state.reminderHours = action.payload.reminderHours;
+                state.quietHours = toQuietHours(action.payload);
             })
             .addCase(loadOptions.rejected, (state) => {
                 state.optionsStatus = "error";
@@ -80,6 +98,9 @@ const optionsSlice = createSlice({
             })
             .addCase(setReminderHours.fulfilled, (state, action) => {
                 state.reminderHours = action.payload;
+            })
+            .addCase(setQuietHours.fulfilled, (state, action) => {
+                state.quietHours = action.payload;
             });
     }
 });
@@ -91,3 +112,4 @@ export const selectInviteLinks = (state: SliceProjection) => state.options.invit
 export const selectInviteLinkStatus = (state: SliceProjection) => state.options.inviteLinks.status;
 export const selectAutoCollapse = (state: SliceProjection) => state.options.autoCollapse;
 export const selectReminderHours = (state: SliceProjection) => state.options.reminderHours;
+export const selectQuietHours = (state: SliceProjection) => state.options.quietHours;

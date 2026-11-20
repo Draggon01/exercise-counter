@@ -6,7 +6,7 @@ import {RootState, store} from "../../../store";
 import {settingStyles} from "../../../styles/settings";
 import {touchStyles} from "../../../styles/touch";
 import {toast} from "../../../components/toast";
-import {REMINDER_HOURS, reminderHoursLabel} from "../../../utils/push";
+import {hourLabel, REMINDER_HOURS, reminderHoursLabel} from "../../../utils/push";
 import {
     disableReminders,
     enableReminders,
@@ -16,7 +16,7 @@ import {
     sendTestReminder,
     setExerciseReminder
 } from "../slice/pushSlice";
-import {selectReminderHours, setReminderHours} from "../slice/optionsSlice";
+import {QuietHours, selectQuietHours, selectReminderHours, setQuietHours, setReminderHours} from "../slice/optionsSlice";
 import {listExercisesSelected, selectAllExercises, selectExercisesStatus} from "../../home/slice/exerciseSlice";
 import {ExerciseDto} from "../../home/models/exerciseDto";
 import "./reminder-setup-guide";
@@ -78,6 +78,19 @@ export class ReminderSettings extends ConnectedLitElement {
             color: var(--app-text-subtle);
         }
 
+        .quiet-range {
+            display: flex;
+            align-items: center;
+            gap: var(--app-space-2);
+            margin-top: var(--app-space-2);
+            font-size: 0.85rem;
+            color: var(--app-text-muted);
+        }
+
+        .hour-select {
+            width: 100px;
+        }
+
         sl-skeleton {
             height: 2.5rem;
             --border-radius: var(--app-radius);
@@ -89,6 +102,9 @@ export class ReminderSettings extends ConnectedLitElement {
 
     @state()
     private hours = 3;
+
+    @state()
+    private quiet: QuietHours = {on: false, from: 22, until: 7};
 
     @state()
     private testing = false;
@@ -111,6 +127,7 @@ export class ReminderSettings extends ConnectedLitElement {
     stateChanged(state: RootState) {
         this.push = selectPush(state);
         this.hours = selectReminderHours(state);
+        this.quiet = selectQuietHours(state);
         this.exercises = selectAllExercises(state);
     }
 
@@ -153,6 +170,7 @@ export class ReminderSettings extends ConnectedLitElement {
                         ${REMINDER_HOURS.map(h => html`<sl-option value="${h}">${reminderHoursLabel(h)}</sl-option>`)}
                     </sl-select>
                 </div>
+                ${this.renderQuietHours()}
                 <div class="setting-row">
                     <div>
                         <div class="setting-label">Test</div>
@@ -177,6 +195,48 @@ export class ReminderSettings extends ConnectedLitElement {
             <reminder-setup-guide ?open="${this.guideOpen}"
                                   @close="${() => this.guideOpen = false}"></reminder-setup-guide>
         `;
+    }
+
+    /** No reminders at night: they come when the quiet hours are over (if the exercise has not reset by then). */
+    private renderQuietHours() {
+        const quiet = this.quiet;
+        const hours = Array.from({length: 24}, (_, hour) => hour);
+        const select = (value: number, label: string, change: (hour: number) => QuietHours) => html`
+            <sl-select class="hour-select" size="small" .value="${String(value)}" aria-label="${label}"
+                       @sl-change="${(e: Event) => this.saveQuiet(e.target as SlSelect, value, change)}">
+                ${hours.map(h => html`<sl-option value="${h}">${hourLabel(h)}</sl-option>`)}
+            </sl-select>`;
+        return html`
+            <div>
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label">Quiet hours</div>
+                        <div class="setting-description">
+                            No reminders in this time – they come afterwards if the exercise is still open.
+                        </div>
+                    </div>
+                    <sl-switch ?checked="${quiet.on}" aria-label="Quiet hours"
+                               @sl-change="${(e: Event) => store.dispatch(setQuietHours({...quiet, on: (e.target as SlSwitch).checked}))}">
+                    </sl-switch>
+                </div>
+                ${quiet.on ? html`
+                    <div class="quiet-range">
+                        From ${select(quiet.from, "Quiet from", from => ({...quiet, from}))}
+                        to ${select(quiet.until, "Quiet until", until => ({...quiet, until}))}
+                    </div>
+                ` : nothing}
+            </div>
+        `;
+    }
+
+    private saveQuiet(target: SlSelect, saved: number, change: (hour: number) => QuietHours) {
+        const quiet = change(Number(target.value));
+        if (quiet.from === quiet.until) {
+            toast("Quiet hours need a different start and end", "warning");
+            target.value = String(saved);
+            return;
+        }
+        void store.dispatch(setQuietHours(quiet));
     }
 
     /** Which exercises of the home list are reminded (on all devices). */

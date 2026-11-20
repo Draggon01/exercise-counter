@@ -5,16 +5,26 @@ import {settingStyles} from "../../styles/settings";
 import {toast} from "../../components/toast";
 import "../../components/changelog-entries";
 import {ChangelogEntry, loadChangelog, selectChangelog} from "../../shared-slices/changelog/changelogSlice";
-import type {SlSelect, SlSwitch} from "@shoelace-style/shoelace";
+import type {SlSelect, SlSwitch, SlTabGroup, SlTabShowEvent} from "@shoelace-style/shoelace";
 import {ColorScheme, getColorScheme, setColorScheme} from "../../styles/color-scheme";
 import "../../components/page-header";
 import "./elements/reminder-settings";
 import "./elements/account-settings";
-import {customElement, state} from 'lit/decorators.js';
+import {customElement, property, query, state} from 'lit/decorators.js';
+import {navigate} from "../../utils/navigation";
+import {getTimerSound, isVibrationOn, setTimerSound, setVibrationOn} from "../../utils/preferences";
+import {playTimerSound, TIMER_SOUNDS, TimerSound} from "../../utils/sounds";
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from '../../store';
 import {selectPush} from "./slice/pushSlice";
 import {clearInviteLinks, generateInviteLink, loadOptions, selectAutoCollapse, selectInviteLinks, selectInviteLinkStatus, setAutoCollapse} from "./slice/optionsSlice";
+
+/** Tabs of the options page; each has its own URL (/options/<tab>, General: /options). */
+export const OPTIONS_TABS = ["general", "reminders", "invite", "timer", "changelog"] as const;
+export type OptionsTab = typeof OPTIONS_TABS[number];
+
+const toTab = (value: string | undefined): OptionsTab =>
+    OPTIONS_TABS.find(tab => tab === value) ?? "general";
 
 @customElement('options-view')
 export class OptionsView extends ConnectedLitElement {
@@ -72,24 +82,6 @@ export class OptionsView extends ConnectedLitElement {
             color: var(--sl-color-danger-600);
         }
 
-        .wip-notice {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 0.75rem;
-            background: var(--sl-color-warning-50);
-            border: 1px solid var(--sl-color-warning-200);
-            border-radius: 6px;
-            color: var(--sl-color-warning-800);
-            font-size: 0.875rem;
-        }
-
-        .wip-description {
-            margin-top: 1rem;
-            color: var(--sl-color-neutral-500);
-            font-size: 0.875rem;
-        }
-
         .general-form {
             margin-top: 1rem;
             display: flex;
@@ -97,17 +89,30 @@ export class OptionsView extends ConnectedLitElement {
             gap: 1rem;
         }
 
-        .timer-sound-form {
-            margin-top: 1rem;
+        .timer-form {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
-            opacity: 0.5;
-            pointer-events: none;
+            gap: 1rem;
         }
 
-        .timer-sound-form sl-select {
-            width: 100%;
+        .sound-control {
+            display: flex;
+            gap: var(--app-space-2);
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .planned {
+            display: flex;
+            gap: var(--app-space-2);
+            align-items: flex-start;
+            font-size: 0.8rem;
+            color: var(--app-text-muted);
+        }
+
+        .planned sl-icon {
+            flex-shrink: 0;
+            margin-top: 2px;
         }
 
     `];
@@ -118,8 +123,23 @@ export class OptionsView extends ConnectedLitElement {
     @state()
     private inviteLinkStatus: string = "initial";
 
+    /** Tab from the URL (/options/:tab); empty = General. */
+    @property()
+    tab = "";
+
+    @query("sl-tab-group")
+    private tabGroup?: SlTabGroup;
+
     @state()
     private autoCollapse: boolean = true;
+
+    @state()
+    private timerSound: TimerSound = getTimerSound();
+
+    @state()
+    private vibration = isVibrationOn();
+
+    private readonly canShare = typeof navigator.share === "function";
 
     /** The Reminders tab is hidden when the server offers no push reminders. */
     @state()
@@ -165,8 +185,50 @@ export class OptionsView extends ConnectedLitElement {
         }
     }
 
+    /** Back / forward between tabs: show the tab of the new URL (the first render uses `active`). */
+    protected willUpdate(changed: Map<string, unknown>) {
+        if (changed.has("tab") && this.hasUpdated) {
+            void this.updateComplete.then(() => this.tabGroup?.show(toTab(this.tab)));
+        }
+    }
+
+    /** A tab was chosen: give it its own URL, so it can be linked and Back returns to the previous tab. */
+    private handleTabShow = (e: SlTabShowEvent) => {
+        const name = toTab(e.detail.name);
+        if (name !== toTab(this.tab)) {
+            navigate(name === "general" ? "/options" : `/options/${name}`);
+        }
+    }
+
+    private handleTimerSound = (e: Event) => {
+        this.timerSound = (e.target as SlSelect).value as TimerSound;
+        setTimerSound(this.timerSound);
+        playTimerSound(this.timerSound);
+    }
+
+    private handleVibration = (e: Event) => {
+        this.vibration = (e.target as SlSwitch).checked;
+        setVibrationOn(this.vibration);
+    }
+
+    /** Phones: the system share sheet (WhatsApp, Signal, …); copying is the fallback. */
+    private async handleShareLink(link: string) {
+        try {
+            await navigator.share({title: "Exercise Counter", text: "Join me on Exercise Counter:", url: link});
+        } catch (error) {
+            if ((error as DOMException)?.name !== "AbortError") { // AbortError = closed the share sheet
+                await this.handleCopyLink(link);
+            }
+        }
+    }
+
     private handleClearLinks() {
         store.dispatch(clearInviteLinks());
+    }
+
+    private renderTab(name: OptionsTab, label: string, hidden = false) {
+        return html`<sl-tab slot="nav" panel="${name}" ?active="${name === toTab(this.tab)}"
+                            ?hidden="${hidden}">${label}</sl-tab>`;
     }
 
     protected render() {
@@ -174,13 +236,13 @@ export class OptionsView extends ConnectedLitElement {
             <div class="page-container">
                 <page-header heading="Options"></page-header>
 
-                <sl-tab-group placement="top">
+                <sl-tab-group placement="top" @sl-tab-show="${this.handleTabShow}">
                     <!-- Tabs -->
-                    <sl-tab slot="nav" panel="general">General</sl-tab>
-                    <sl-tab slot="nav" panel="reminders" ?hidden="${!this.remindersAvailable}">Reminders</sl-tab>
-                    <sl-tab slot="nav" panel="invite">Invite Link</sl-tab>
-                    <sl-tab slot="nav" panel="timer-sound">Timer Sound</sl-tab>
-                    <sl-tab slot="nav" panel="changelog">Changelog</sl-tab>
+                    ${this.renderTab("general", "General")}
+                    ${this.renderTab("reminders", "Reminders", !this.remindersAvailable)}
+                    ${this.renderTab("invite", "Invite Link")}
+                    ${this.renderTab("timer", "Timer")}
+                    ${this.renderTab("changelog", "Changelog")}
 
                     <sl-tab-panel name="general">
                         <div class="tab-content">
@@ -211,6 +273,16 @@ export class OptionsView extends ConnectedLitElement {
                                         <sl-option value="light">Light</sl-option>
                                         <sl-option value="dark">Dark</sl-option>
                                     </sl-select>
+                                </div>
+                                <div class="setting-row">
+                                    <div>
+                                        <div class="setting-label">Vibration</div>
+                                        <div class="setting-description">
+                                            Short vibration when you mark an exercise as done or a timer ends (this device).
+                                        </div>
+                                    </div>
+                                    <sl-switch ?checked="${this.vibration}" @sl-change="${this.handleVibration}"
+                                               aria-label="Vibration"></sl-switch>
                                 </div>
                                 <account-settings></account-settings>
                             </div>
@@ -247,10 +319,14 @@ export class OptionsView extends ConnectedLitElement {
                                     ${this.inviteLinks.map(link => html`
                                         <div class="invite-link-item">
                                             <sl-input readonly .value="${link}"></sl-input>
-                                            <sl-button
-                                                    variant="neutral"
-                                                    @click="${() => this.handleCopyLink(link)}"
-                                            >
+                                            ${this.canShare ? html`
+                                                <sl-button variant="primary" aria-label="Share link"
+                                                           @click="${() => this.handleShareLink(link)}">
+                                                    <sl-icon name="share"></sl-icon>
+                                                </sl-button>
+                                            ` : ''}
+                                            <sl-button variant="neutral" aria-label="Copy link"
+                                                       @click="${() => this.handleCopyLink(link)}">
                                                 <sl-icon name="clipboard"></sl-icon>
                                             </sl-button>
                                         </div>
@@ -261,26 +337,29 @@ export class OptionsView extends ConnectedLitElement {
                         </div>
                     </sl-tab-panel>
 
-                    <sl-tab-panel name="timer-sound">
+                    <sl-tab-panel name="timer">
                         <div class="tab-content">
-                            <div class="wip-notice">
-                                <sl-icon name="tools"></sl-icon>
-                                Work in progress — this feature is not yet available.
-                            </div>
-                            <p class="wip-description">
-                                In a future release you will be able to choose or upload a custom sound that plays
-                                when a timer exercise finishes.
-                            </p>
-                            <div class="timer-sound-form">
-                                <sl-select label="Preset sound" placeholder="Select a sound">
-                                    <sl-option value="bell">Bell</sl-option>
-                                    <sl-option value="chime">Chime</sl-option>
-                                    <sl-option value="beep">Beep</sl-option>
-                                </sl-select>
-                                <sl-button variant="neutral" disabled>
-                                    <sl-icon slot="prefix" name="upload"></sl-icon>
-                                    Upload custom sound
-                                </sl-button>
+                            <div class="timer-form">
+                                <div class="setting-row">
+                                    <div>
+                                        <div class="setting-label">Sound when a timer ends</div>
+                                        <div class="setting-description">Plays when you pick it. Saved on this device.</div>
+                                    </div>
+                                    <div class="sound-control">
+                                        <sl-select class="setting-control" size="small" .value="${this.timerSound}"
+                                                   aria-label="Timer sound" @sl-change="${this.handleTimerSound}">
+                                            ${TIMER_SOUNDS.map(sound => html`
+                                                <sl-option value="${sound.id}">${sound.label}</sl-option>`)}
+                                        </sl-select>
+                                        <sl-icon-button name="play-fill" label="Play sound"
+                                                        ?disabled="${this.timerSound === "none"}"
+                                                        @click="${() => playTimerSound(this.timerSound)}"></sl-icon-button>
+                                    </div>
+                                </div>
+                                <div class="planned">
+                                    <sl-icon name="music-note-beamed"></sl-icon>
+                                    <span>Coming later: upload your own sound for the end of a timer.</span>
+                                </div>
                             </div>
                         </div>
                     </sl-tab-panel>

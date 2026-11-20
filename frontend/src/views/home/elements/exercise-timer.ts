@@ -1,4 +1,6 @@
 import {css, html, LitElement, nothing, PropertyValues} from "lit";
+import {playTimerSound} from "../../../utils/sounds";
+import {getTimerSound, vibrate} from "../../../utils/preferences";
 import {customElement, property, state} from "lit/decorators.js";
 import {formatDuration} from "../../../utils/format";
 
@@ -6,7 +8,7 @@ import {formatDuration} from "../../../utils/format";
  * Countdown for time exercises. While it runs, a large focus view shows the time (minimize keeps it
  * running, tapping the small display reopens it) and the screen is kept on (Wake Lock, if supported).
  * Emits `progress-changed` (detail: seconds completed) when paused, finished, reset or removed while
- * running, so the parent can save it. Plays a sound when finished.
+ * running, so the parent can save it. Plays the sound chosen in Options when finished.
  */
 @customElement("exercise-timer")
 export class ExerciseTimer extends LitElement {
@@ -235,8 +237,8 @@ export class ExerciseTimer extends LitElement {
             this.secondsLeft = Math.max(0, this.secondsLeft - 1);
             if (this.secondsLeft === 0) {
                 this.stop();
-                playFinishSound();
-                navigator.vibrate?.([200, 100, 200]);
+                playTimerSound(getTimerSound());
+                vibrate([200, 100, 200]);
                 this.emitProgress();
             }
         }, 1000);
@@ -291,25 +293,6 @@ export class ExerciseTimer extends LitElement {
     private emitProgress() {
         this.dispatchEvent(new CustomEvent<number>("progress-changed", {detail: this.targetSeconds - this.secondsLeft}));
     }
-}
-
-/** Three short beeps (Web Audio API). */
-function playFinishSound() {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx() as AudioContext;
-    [0, 0.4, 0.8].forEach(offset => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(880, ctx.currentTime + offset);
-        gain.gain.setValueAtTime(0.5, ctx.currentTime + offset);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.3);
-        osc.start(ctx.currentTime + offset);
-        osc.stop(ctx.currentTime + offset + 0.35);
-    });
 }
 
 declare global {

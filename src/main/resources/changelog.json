@@ -2,10 +2,15 @@
   {
     "version": "0.8",
     "date": "2026-11-20",
-    "title": "Reminders get their own tab",
+    "title": "Reminders, timer sounds and more options",
     "items": [
       "Reminder settings moved from Options → General to their own tab: Options → Reminders",
-      "Everything about reminders in one place: turn them on, choose your exercises, set how early they come, send a test and open the setup guide"
+      "Everything about reminders in one place: turn them on, choose your exercises, set how early they come, send a test and open the setup guide",
+      "Quiet hours: no reminders at night (Options → Reminders) – they come once the quiet hours are over",
+      "Choose the sound at the end of a timer: Beeps, Bell, Chime, Fanfare or none (Options → Timer); your own sounds will follow later",
+      "Turn off vibration on this device (Options → General)",
+      "Invite links can be shared directly to WhatsApp, Signal & co. on phones",
+      "Each Options tab has its own address – the back button returns to the previous tab"
     ]
   },
   {

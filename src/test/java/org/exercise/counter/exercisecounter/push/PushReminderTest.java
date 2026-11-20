@@ -156,6 +156,29 @@ class PushReminderTest {
     }
 
     @Test
+    void quietHours_holdTheReminderBack_untilTheyAreOver() {
+        Exercise pushUps = exerciseResettingIn(30, "Push-ups");
+        onHomeList(ANNA, pushUps);
+        device(ANNA, DEVICE_A);
+        int hour = LocalTime.now(ZoneOffset.UTC).getHour();
+        UserOptions options = new UserOptions(ANNA, true);
+        options.setQuietHours(true);
+        options.setQuietFrom(hour);
+        options.setQuietUntil((hour + 1) % 24);
+        options.setTimeZone("UTC");
+        optionsRepository.save(options);
+
+        reminderService.remindDue();
+        assertTrue(sender.messagesTo(DEVICE_A).isEmpty(), "quiet now");
+
+        options.setQuietFrom((hour + 1) % 24);
+        options.setQuietUntil((hour + 2) % 24);
+        optionsRepository.save(options);
+        reminderService.remindDue();
+        assertEquals(1, sender.messagesTo(DEVICE_A).size(), "quiet hours are over");
+    }
+
+    @Test
     void severalDueExercises_comeInOneNotification_inHomeListOrder() {
         Exercise plank = exerciseResettingIn(90, "Plank");
         Exercise pushUps = exerciseResettingIn(40, "Push-ups");

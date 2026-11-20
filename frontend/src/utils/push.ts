@@ -73,3 +73,6 @@ export function setupPlatform(userAgent: string, maxTouchPoints = 0): SetupPlatf
     }
     return "desktop-chrome";
 }
+
+/** "07:00" – quiet hours are full hours. */
+export const hourLabel = (hour: number) => `${String(hour).padStart(2, "0")}:00`;

@@ -8,6 +8,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import org.exercise.counter.exercisecounter.web.service.push.QuietHours;
+
+import java.time.DateTimeException;
+import java.time.ZoneId;
 import java.util.Set;
 
 @RestController
@@ -24,7 +28,8 @@ public class OptionsController {
     static final Set<Integer> REMINDER_HOURS = Set.of(1, 2, 3, 6, 12);
 
     /** A PUT only changes the fields that are set (null = keep). */
-    public record OptionsDto(Boolean autoCollapse, Integer reminderHours) {}
+    public record OptionsDto(Boolean autoCollapse, Integer reminderHours,
+                             Boolean quietHours, Integer quietFrom, Integer quietUntil, String timeZone) {}
 
     @GetMapping
     public OptionsDto getOptions(@AuthenticationPrincipal UserDetails user) {
@@ -48,11 +53,34 @@ public class OptionsController {
             }
             options.setReminderHours(dto.reminderHours());
         }
+        applyQuietHours(dto, options);
         userOptionsRepository.save(options);
         return toDto(options);
     }
 
+    private static void applyQuietHours(OptionsDto dto, UserOptions options) {
+        for (Integer hour : new Integer[]{dto.quietFrom(), dto.quietUntil()}) {
+            if (hour != null && !QuietHours.isValidHour(hour)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quiet hours go from 0 to 23");
+            }
+        }
+        if (dto.timeZone() != null) {
+            try {
+                options.setTimeZone(ZoneId.of(dto.timeZone()).getId());
+            } catch (DateTimeException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown time zone");
+            }
+        }
+        if (dto.quietHours() != null) options.setQuietHours(dto.quietHours());
+        if (dto.quietFrom() != null) options.setQuietFrom(dto.quietFrom());
+        if (dto.quietUntil() != null) options.setQuietUntil(dto.quietUntil());
+        if (options.getQuietFrom() == options.getQuietUntil()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quiet hours must start and end at different times");
+        }
+    }
+
     private static OptionsDto toDto(UserOptions options) {
-        return new OptionsDto(options.isAutoCollapse(), options.getReminderHours());
+        return new OptionsDto(options.isAutoCollapse(), options.getReminderHours(), options.isQuietHours(),
+                options.getQuietFrom(), options.getQuietUntil(), options.getTimeZone());
     }
 }

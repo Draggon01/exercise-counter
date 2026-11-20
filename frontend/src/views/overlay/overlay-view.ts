@@ -5,12 +5,17 @@ import {logoutUser, selectCurrentUser} from "../login/slice/userSlice";
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {UserDto} from "../login/models/userDto";
 import {navigate} from "../../utils/navigation";
+import {vibrate} from "../../utils/preferences";
 import {ChangelogEntry, markChangelogSeen, selectUnseenChangelog} from "../../shared-slices/changelog/changelogSlice";
 import "../../components/changelog-dialog";
 import {styleMap} from "lit/directives/style-map.js";
 import {pullDistance, PULL_THRESHOLD, requestAppRefresh} from "../../utils/refresh";
 
 type NavItem = { path: string, label: string, icon: string };
+
+/** The page belongs to this section: exactly its path or a sub page (/options/reminders). */
+const isSection = (path: string, section: string) =>
+    path === section || (section !== "/" && path.startsWith(section + "/"));
 
 /** Main sections, shown in the header (desktop) and the bottom bar (mobile). */
 const NAV_ITEMS: NavItem[] = [
@@ -286,7 +291,7 @@ export class OverlayView extends ConnectedLitElement {
             return;
         }
         const next = pullDistance(e.touches[0].clientY - this.pullStartY);
-        if (this.pull < PULL_THRESHOLD && next >= PULL_THRESHOLD) navigator.vibrate?.(10);
+        if (this.pull < PULL_THRESHOLD && next >= PULL_THRESHOLD) vibrate(10);
         this.pull = next;
     }
 
@@ -351,8 +356,8 @@ export class OverlayView extends ConnectedLitElement {
     private renderLinks(items: NavItem[]) {
         return items.map(item => html`
             <a href="${item.path}"
-               class="${this.path === item.path ? "active" : ""}"
-               aria-current="${this.path === item.path ? "page" : "false"}"
+               class="${isSection(this.path, item.path) ? "active" : ""}"
+               aria-current="${isSection(this.path, item.path) ? "page" : "false"}"
                @click="${(e: MouseEvent) => this.go(e, item.path)}">
                 <sl-icon name="${item.icon}"></sl-icon>
                 <span>${item.label}</span>

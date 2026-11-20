@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {base64UrlToBytes, PushEnvironment, pushSupport, reminderHoursLabel, setupPlatform} from "./push";
+import {base64UrlToBytes, hourLabel, PushEnvironment, pushSupport, reminderHoursLabel, setupPlatform} from "./push";
 
 const full: PushEnvironment = {hasServiceWorker: true, hasPushManager: true, hasNotification: true, isIos: false, standalone: false};
 
@@ -67,5 +67,13 @@ describe("setupPlatform", () => {
         expect(setupPlatform(windows)).toBe("desktop-chrome");
         expect(setupPlatform(macChrome)).toBe("desktop-chrome");
         expect(setupPlatform("")).toBe("desktop-chrome");
+    });
+});
+
+describe("hourLabel", () => {
+    it("shows full hours with two digits", () => {
+        expect(hourLabel(7)).toBe("07:00");
+        expect(hourLabel(22)).toBe("22:00");
+        expect(hourLabel(0)).toBe("00:00");
     });
 });

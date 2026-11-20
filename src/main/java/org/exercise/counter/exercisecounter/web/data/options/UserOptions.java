@@ -27,6 +27,20 @@ public class UserOptions {
 
     public static final int DEFAULT_REMINDER_HOURS = 3;
 
+    /** No reminders from quietFrom to quietUntil (full hours in {@link #timeZone}) when turned on. */
+    @Column(name = "quiet_hours", nullable = false)
+    private boolean quietHours;
+
+    @Column(name = "quiet_from", nullable = false)
+    private int quietFrom = 22;
+
+    @Column(name = "quiet_until", nullable = false)
+    private int quietUntil = 7;
+
+    /** IANA zone of the user's browser (sent with the quiet hours), null = UTC. */
+    @Column(name = "time_zone")
+    private String timeZone;
+
     public UserOptions() {
     }
 
@@ -67,6 +81,38 @@ public class UserOptions {
         this.reminderHours = reminderHours;
     }
 
+    public boolean isQuietHours() {
+        return quietHours;
+    }
+
+    public void setQuietHours(boolean quietHours) {
+        this.quietHours = quietHours;
+    }
+
+    public int getQuietFrom() {
+        return quietFrom;
+    }
+
+    public void setQuietFrom(int quietFrom) {
+        this.quietFrom = quietFrom;
+    }
+
+    public int getQuietUntil() {
+        return quietUntil;
+    }
+
+    public void setQuietUntil(int quietUntil) {
+        this.quietUntil = quietUntil;
+    }
+
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    public void setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -74,16 +120,23 @@ public class UserOptions {
         return Objects.equals(isAutoCollapse(), other.isAutoCollapse()) &&
                 Objects.equals(getUsername(), other.getUsername()) &&
                 Objects.equals(getLastSeenChangelog(), other.getLastSeenChangelog()) &&
-                getReminderHours() == other.getReminderHours();
+                getReminderHours() == other.getReminderHours() &&
+                isQuietHours() == other.isQuietHours() &&
+                getQuietFrom() == other.getQuietFrom() &&
+                getQuietUntil() == other.getQuietUntil() &&
+                Objects.equals(getTimeZone(), other.getTimeZone());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(isAutoCollapse(), getUsername(), getLastSeenChangelog(), getReminderHours());
+        return Objects.hash(isAutoCollapse(), getUsername(), getLastSeenChangelog(), getReminderHours(),
+                isQuietHours(), getQuietFrom(), getQuietUntil(), getTimeZone());
     }
 
     @Override
     public String toString() {
-        return "UserOptions(username=" + this.getUsername() + ", autoCollapse=" + this.isAutoCollapse() + ", lastSeenChangelog=" + this.getLastSeenChangelog() + ", reminderHours=" + this.getReminderHours() + ")";
+        return "UserOptions(username=" + this.getUsername() + ", autoCollapse=" + this.isAutoCollapse() + ", lastSeenChangelog=" + this.getLastSeenChangelog() + ", reminderHours=" + this.getReminderHours() +
+                ", quietHours=" + this.isQuietHours() + " " + this.getQuietFrom() + "-" + this.getQuietUntil() +
+                ", timeZone=" + this.getTimeZone() + ")";
     }
 }

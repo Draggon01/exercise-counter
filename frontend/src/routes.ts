@@ -30,8 +30,9 @@ export const routes: RouteConfig[] = [
             <browse-view></browse-view>`
     },
     {
-      path: '/options', render: () => html`
-            <options-view></options-view>`
+        // one route (optional tab), so switching tabs keeps the same element
+        path: '/options/:tab?', render: (params) => html`
+            <options-view .tab="${params["tab"] ?? ""}"></options-view>`
     },
     {
         path: '/exercises/new', render: () => html`

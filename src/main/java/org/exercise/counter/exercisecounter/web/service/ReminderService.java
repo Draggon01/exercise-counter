@@ -9,6 +9,7 @@ import org.exercise.counter.exercisecounter.web.data.userselection.UserSelection
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
 import org.exercise.counter.exercisecounter.web.rest.error.NotFoundException;
 import org.exercise.counter.exercisecounter.web.scheduler.SchedulerService;
+import org.exercise.counter.exercisecounter.web.service.push.QuietHours;
 import org.exercise.counter.exercisecounter.web.service.push.ReminderMessages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,8 @@ import java.util.stream.Collectors;
  * Reminds users of the exercises on their home list they chose ({@link UserSelection#isRemind()}) and have
  * not finished yet, a configurable number of
  * hours ({@link UserOptions#getReminderHours()}) before the reset. One notification per user and run,
- * each exercise at most once per period ({@link PushReminder}, cleared by the reset).
+ * each exercise at most once per period ({@link PushReminder}, cleared by the reset). Nothing is sent in the
+ * user's quiet hours ({@link QuietHours}).
  */
 @Service
 public class ReminderService {
@@ -64,8 +66,8 @@ public class ReminderService {
             return 0;
         }
         Set<String> users = devicesByUser.keySet();
-        Map<String, Integer> hoursByUser = optionsRepository.findAllById(users).stream()
-                .collect(Collectors.toMap(UserOptions::getUsername, UserOptions::getReminderHours));
+        Map<String, UserOptions> optionsByUser = optionsRepository.findAllById(users).stream()
+                .collect(Collectors.toMap(UserOptions::getUsername, options -> options));
         Set<String> done = checkRepository.findByCheckIdUsernameIn(users).stream()
                 .map(check -> key(check.getCheckId().getUsername(), check.getCheckId().getExerciseId()))
                 .collect(Collectors.toSet());
@@ -79,7 +81,12 @@ public class ReminderService {
         int reminded = 0;
         for (Map.Entry<String, List<UserSelection>> entry : homeLists.entrySet()) {
             String username = entry.getKey();
-            long window = hoursByUser.getOrDefault(username, UserOptions.DEFAULT_REMINDER_HOURS) * 3600L;
+            UserOptions options = optionsByUser.get(username);
+            if (options != null && options.isQuietHours() && QuietHours.isQuiet(
+                    options.getQuietFrom(), options.getQuietUntil(), options.getTimeZone(), clock.instant())) {
+                continue; // sent by the first run after the quiet hours (if the exercise has not reset by then)
+            }
+            long window = (options != null ? options.getReminderHours() : UserOptions.DEFAULT_REMINDER_HOURS) * 3600L;
             List<UserSelection> due = entry.getValue().stream()
                     .filter(selection -> {
                         UUID exerciseId = selection.getUserSelectionId().getExerciseId();

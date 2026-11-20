@@ -6,6 +6,7 @@ import {ConnectedLitElement} from "../../../connectedLitElement";
 import {selectCurrentUser} from "../../login/slice/userSlice";
 import {UserDto} from "../../login/models/userDto";
 import {navigate} from "../../../utils/navigation";
+import {vibrate} from "../../../utils/preferences";
 import {CheckDto} from "../models/checkDto";
 import {RootState, store} from "../../../store";
 import {loadExerciseLog, saveExerciseLog} from "../slice/exerciseSlice";
@@ -464,7 +465,7 @@ export class ExerciseCard extends ConnectedLitElement {
     private _moveDownClick = () => this._emit(ExerciseCardEvents.moveDown, this.item);
 
     private _toggleFinished = () => {
-        if (!this.checked) navigator.vibrate?.(30); // short feedback on phones when marking it done
+        if (!this.checked) vibrate(30); // short feedback on phones when marking it done
         this._emit(ExerciseCardEvents.checkChanged, !this.checked);
     }
 }
