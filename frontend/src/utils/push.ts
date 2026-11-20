@@ -55,3 +55,21 @@ export const REMINDER_HOURS = [1, 2, 3, 6, 12] as const;
 export function reminderHoursLabel(hours: number): string {
     return hours === 1 ? "1 hour" : `${hours} hours`;
 }
+
+/** Tabs of the reminder setup guide. */
+export type SetupPlatform = "ios" | "mac-safari" | "android" | "desktop-chrome";
+
+/** The guide tab that fits the browser (user agent + touch points, iPadOS pretends to be a Mac). */
+export function setupPlatform(userAgent: string, maxTouchPoints = 0): SetupPlatform {
+    if (/iPhone|iPad|iPod/.test(userAgent) || (/Macintosh/.test(userAgent) && maxTouchPoints > 1)) {
+        return "ios";
+    }
+    if (/Android/.test(userAgent)) {
+        return "android";
+    }
+    // Chrome, Edge and other Chromium browsers name "Chrome" in their user agent, Safari does not
+    if (/Macintosh/.test(userAgent) && /Safari/.test(userAgent) && !/Chrome|Chromium|Firefox/.test(userAgent)) {
+        return "mac-safari";
+    }
+    return "desktop-chrome";
+}

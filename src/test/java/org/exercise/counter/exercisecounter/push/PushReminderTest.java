@@ -183,6 +183,46 @@ class PushReminderTest {
     }
 
     @Test
+    void exercisesWithoutReminder_areNotReminded() {
+        Exercise pushUps = exerciseResettingIn(30, "Push-ups");
+        Exercise plank = exerciseResettingIn(30, "Plank");
+        onHomeList(ANNA, pushUps);
+        selectionRepository.save(new UserSelection(new UserSelectionId(ANNA, plank.getExerciseId()), 1)); // no reminder
+        device(ANNA, DEVICE_A);
+
+        reminderService.remindDue();
+
+        List<PushMessage> got = sender.messagesTo(DEVICE_A);
+        assertEquals(1, got.size());
+        assertEquals("Push-ups is not done yet", got.getFirst().title());
+    }
+
+    @Test
+    void setReminder_turnsTheReminderOfAnExerciseOnAndOff() {
+        Exercise pushUps = exerciseResettingIn(30, "Push-ups");
+        selectionRepository.save(new UserSelection(new UserSelectionId(ANNA, pushUps.getExerciseId()), 0));
+        device(ANNA, DEVICE_A);
+        assertTrue(reminderService.reminderExercises(ANNA).isEmpty(), "off for new exercises");
+
+        reminderService.setReminder(ANNA, pushUps.getExerciseId(), true);
+        assertEquals(List.of(pushUps.getExerciseId()), reminderService.reminderExercises(ANNA));
+        reminderService.remindDue();
+        assertEquals(1, sender.messagesTo(DEVICE_A).size());
+
+        reminderService.setReminder(ANNA, pushUps.getExerciseId(), false);
+        assertTrue(reminderService.reminderExercises(ANNA).isEmpty());
+    }
+
+    @Test
+    void setReminder_forAnExerciseNotOnTheHomeList_is404() {
+        Exercise pushUps = exerciseResettingIn(30, "Push-ups");
+
+        var error = assertThrows(ResponseStatusException.class,
+                () -> reminderService.setReminder(BEN, pushUps.getExerciseId(), true));
+        assertEquals(404, error.getStatusCode().value());
+    }
+
+    @Test
     void failedDelivery_isTriedAgainNextRun() {
         Exercise pushUps = exerciseResettingIn(30, "Push-ups");
         onHomeList(ANNA, pushUps);
@@ -282,9 +322,12 @@ class PushReminderTest {
         return saved;
     }
 
+    /** On the home list with reminders turned on. */
     private void onHomeList(String username, Exercise... list) {
         for (int i = 0; i < list.length; i++) {
-            selectionRepository.save(new UserSelection(new UserSelectionId(username, list[i].getExerciseId()), i));
+            UserSelection selection = new UserSelection(new UserSelectionId(username, list[i].getExerciseId()), i);
+            selection.setRemind(true);
+            selectionRepository.save(selection);
         }
     }
 

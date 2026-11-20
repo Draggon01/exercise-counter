@@ -4,10 +4,14 @@ import org.exercise.counter.exercisecounter.web.rest.push.dto.PushConfigDto;
 import org.exercise.counter.exercisecounter.web.rest.push.dto.PushSubscriptionRequest;
 import org.exercise.counter.exercisecounter.web.rest.push.dto.PushTestResultDto;
 import org.exercise.counter.exercisecounter.web.service.PushService;
+import org.exercise.counter.exercisecounter.web.service.ReminderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 /** Reminders by push notification: configuration, devices (subscriptions) and a test message. */
 @RestController
@@ -15,9 +19,11 @@ import org.springframework.web.bind.annotation.*;
 public class PushController {
 
     private final PushService pushService;
+    private final ReminderService reminderService;
 
-    public PushController(PushService pushService) {
+    public PushController(PushService pushService, ReminderService reminderService) {
         this.pushService = pushService;
+        this.reminderService = reminderService;
     }
 
     @GetMapping("/config")
@@ -41,5 +47,23 @@ public class PushController {
     @PostMapping("/test")
     public PushTestResultDto sendTest(@AuthenticationPrincipal UserDetails user) {
         return pushService.sendTest(user.getUsername());
+    }
+
+    /** Ids of the exercises of the home list the user gets reminders for. */
+    @GetMapping("/reminders")
+    public List<UUID> reminders(@AuthenticationPrincipal UserDetails user) {
+        return reminderService.reminderExercises(user.getUsername());
+    }
+
+    @PutMapping("/reminders/{exerciseId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void remind(@PathVariable UUID exerciseId, @AuthenticationPrincipal UserDetails user) {
+        reminderService.setReminder(user.getUsername(), exerciseId, true);
+    }
+
+    @DeleteMapping("/reminders/{exerciseId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void stopReminding(@PathVariable UUID exerciseId, @AuthenticationPrincipal UserDetails user) {
+        reminderService.setReminder(user.getUsername(), exerciseId, false);
     }
 }

@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {base64UrlToBytes, PushEnvironment, pushSupport, reminderHoursLabel} from "./push";
+import {base64UrlToBytes, PushEnvironment, pushSupport, reminderHoursLabel, setupPlatform} from "./push";
 
 const full: PushEnvironment = {hasServiceWorker: true, hasPushManager: true, hasNotification: true, isIos: false, standalone: false};
 
@@ -40,5 +40,32 @@ describe("reminderHoursLabel", () => {
     it("uses singular for one hour", () => {
         expect(reminderHoursLabel(1)).toBe("1 hour");
         expect(reminderHoursLabel(6)).toBe("6 hours");
+    });
+});
+
+describe("setupPlatform", () => {
+    const iphone = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1";
+    const macSafari = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15";
+    const macChrome = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+    const android = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36";
+    const windows = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+
+    it("iPhone and iPad (also iPadOS posing as a Mac) get the iPhone guide", () => {
+        expect(setupPlatform(iphone)).toBe("ios");
+        expect(setupPlatform(macSafari, 5)).toBe("ios");
+    });
+
+    it("Safari on a Mac", () => {
+        expect(setupPlatform(macSafari)).toBe("mac-safari");
+    });
+
+    it("Chrome on Android", () => {
+        expect(setupPlatform(android)).toBe("android");
+    });
+
+    it("Chrome on a computer (also on a Mac) and unknown browsers", () => {
+        expect(setupPlatform(windows)).toBe("desktop-chrome");
+        expect(setupPlatform(macChrome)).toBe("desktop-chrome");
+        expect(setupPlatform("")).toBe("desktop-chrome");
     });
 });

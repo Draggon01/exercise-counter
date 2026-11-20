@@ -10,7 +10,8 @@ import {CheckDto} from "../models/checkDto";
 import {RootState, store} from "../../../store";
 import {loadExerciseLog, saveExerciseLog} from "../slice/exerciseSlice";
 import {selectAutoCollapse} from "../../options/slice/optionsSlice";
-import type {SlSelectEvent} from "@shoelace-style/shoelace";
+import {selectCanChooseReminders, selectReminders, setExerciseReminder} from "../../options/slice/pushSlice";
+import type {SlMenuItem, SlSelectEvent} from "@shoelace-style/shoelace";
 import {formatDuration, formatTimeLeft, isUrgent} from "../../../utils/format";
 import {isRepExercise, isTimeExercise} from "../../../utils/exercise";
 import "./exercise-timer";
@@ -150,6 +151,11 @@ export class ExerciseCard extends ConnectedLitElement {
             color: var(--app-text-subtle);
         }
 
+        .reminder-icon {
+            align-self: center;
+            color: var(--app-text-subtle);
+        }
+
         .danger-item::part(base) {
             color: var(--app-danger);
         }
@@ -230,6 +236,14 @@ export class ExerciseCard extends ConnectedLitElement {
     @state()
     private _autoCollapse = true;
 
+    /** Reminders can be chosen (server offers them, this device gets them). */
+    @state()
+    private _canRemind = false;
+
+    /** Exercises the user gets reminders for. */
+    @state()
+    private _reminders: string[] = [];
+
     /** Seconds (time exercises) or reps done in the current period. */
     @state()
     private _progress = 0;
@@ -253,6 +267,8 @@ export class ExerciseCard extends ConnectedLitElement {
             this.user = selectCurrentUser(state);
         }
         this._autoCollapse = selectAutoCollapse(state);
+        this._canRemind = selectCanChooseReminders(state);
+        this._reminders = selectReminders(state);
         if (!this._autoCollapse) {
             this._collapsed = false;
         }
@@ -295,6 +311,10 @@ export class ExerciseCard extends ConnectedLitElement {
         }
     }
 
+    private _hasReminder(): boolean {
+        return this._reminders.includes(this.item.exerciseId);
+    }
+
     render() {
         const streak = this._myStreak();
         return html`
@@ -309,6 +329,9 @@ export class ExerciseCard extends ConnectedLitElement {
                                     ? html`<span>Done for this period</span>`
                                     : html`<span class="${isUrgent(this.item.timeLeftSeconds) ? "urgent" : ""}">
                                         ${formatTimeLeft(this.item.timeLeftSeconds)}</span>`}
+                            ${this._canRemind && this._hasReminder() ? html`
+                                <sl-icon class="reminder-icon" name="bell-fill" label="Reminder on"></sl-icon>
+                            ` : nothing}
                         </div>
                     </div>
                     <div class="actions">
@@ -343,6 +366,11 @@ export class ExerciseCard extends ConnectedLitElement {
                 <sl-menu @sl-select="${this._menuSelect}">
                     ${isCreator ? html`
                         <sl-menu-item value="edit"><sl-icon slot="prefix" name="pencil"></sl-icon>Edit</sl-menu-item>
+                    ` : nothing}
+                    ${this._canRemind ? html`
+                        <sl-menu-item value="reminder" type="checkbox" ?checked="${this._hasReminder()}">
+                            Remind me
+                        </sl-menu-item>
                     ` : nothing}
                     <sl-menu-item value="hide"><sl-icon slot="prefix" name="eye-slash"></sl-icon>Hide from my list</sl-menu-item>
                     ${isCreator ? html`
@@ -416,7 +444,15 @@ export class ExerciseCard extends ConnectedLitElement {
                 return this._emit(ExerciseCardEvents.hide, this.item);
             case "delete":
                 return this._emit(ExerciseCardEvents.delete, this.item);
+            case "reminder":
+                return this._toggleReminder(e.detail.item);
         }
+    }
+
+    private async _toggleReminder(menuItem: SlMenuItem) {
+        await store.dispatch(setExerciseReminder({exerciseId: this.item.exerciseId, on: menuItem.checked}));
+        // failed: the menu shows the real state again
+        menuItem.checked = this._hasReminder();
     }
 
     private _emit<T>(type: string, detail: T) {

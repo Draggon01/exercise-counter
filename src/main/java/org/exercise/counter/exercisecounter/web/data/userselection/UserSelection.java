@@ -20,6 +20,10 @@ public class UserSelection {
     @Column(name = "position")
     Integer position;
 
+    /** The user gets push reminders for this exercise (see ReminderService). */
+    @Column(name = "remind")
+    boolean remind;
+
     public UserSelection(UserSelectionId userSelectionId) {
         this.userSelectionId = userSelectionId;
         this.position = 0;
@@ -63,6 +67,14 @@ public class UserSelection {
         this.position = position;
     }
 
+    public boolean isRemind() {
+        return this.remind;
+    }
+
+    public void setRemind(boolean remind) {
+        this.remind = remind;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -79,6 +91,6 @@ public class UserSelection {
 
     @Override
     public String toString() {
-        return "UserSelection(userSelectionId=" + this.getUserSelectionId() + ", exercise=" + this.getExercise() + ", position=" + this.getPosition() + ")";
+        return "UserSelection(userSelectionId=" + this.getUserSelectionId() + ", exercise=" + this.getExercise() + ", position=" + this.getPosition() + ", remind=" + this.isRemind() + ")";
     }
 }

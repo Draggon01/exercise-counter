@@ -5,7 +5,9 @@ import org.exercise.counter.exercisecounter.web.data.options.UserOptions;
 import org.exercise.counter.exercisecounter.web.data.options.UserOptionsRepository;
 import org.exercise.counter.exercisecounter.web.data.push.*;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelection;
+import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionId;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
+import org.exercise.counter.exercisecounter.web.rest.error.NotFoundException;
 import org.exercise.counter.exercisecounter.web.scheduler.SchedulerService;
 import org.exercise.counter.exercisecounter.web.service.push.ReminderMessages;
 import org.slf4j.Logger;
@@ -20,7 +22,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Reminds users of exercises on their home list they have not finished yet, a configurable number of
+ * Reminds users of the exercises on their home list they chose ({@link UserSelection#isRemind()}) and have
+ * not finished yet, a configurable number of
  * hours ({@link UserOptions#getReminderHours()}) before the reset. One notification per user and run,
  * each exercise at most once per period ({@link PushReminder}, cleared by the reset).
  */
@@ -69,7 +72,7 @@ public class ReminderService {
         Set<String> alreadyReminded = reminderRepository.findByIdUsernameIn(users).stream()
                 .map(reminder -> key(reminder.getId().username(), reminder.getId().exerciseId()))
                 .collect(Collectors.toSet());
-        Map<String, List<UserSelection>> homeLists = selectionRepository.findWithExerciseByUsernameIn(users).stream()
+        Map<String, List<UserSelection>> homeLists = selectionRepository.findRemindedWithExerciseByUsernameIn(users).stream()
                 .collect(Collectors.groupingBy(selection -> selection.getUserSelectionId().getUsername()));
 
         LocalDateTime now = LocalDateTime.now(clock.withZone(ZoneOffset.UTC));
@@ -104,6 +107,21 @@ public class ReminderService {
             log.info("Sent reminders to {} user(s)", reminded);
         }
         return reminded;
+    }
+
+    /** Ids of the exercises the user gets reminders for. */
+    @Transactional(readOnly = true)
+    public List<UUID> reminderExercises(String username) {
+        return selectionRepository.findRemindedExerciseIdsByUsername(username);
+    }
+
+    /** Turns reminders for one exercise of the user's home list on or off. */
+    @Transactional
+    public void setReminder(String username, UUID exerciseId, boolean on) {
+        UserSelection selection = selectionRepository.findById(new UserSelectionId(username, exerciseId))
+                .orElseThrow(() -> new NotFoundException("This exercise is not on your list"));
+        selection.setRemind(on);
+        selectionRepository.save(selection);
     }
 
     private long secondsLeft(UUID exerciseId) {

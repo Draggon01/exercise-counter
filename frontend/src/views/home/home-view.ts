@@ -33,6 +33,7 @@ import {
     selectChecksPerExercise
 } from "./slice/checkSlice";
 import {loadOptions} from "../options/slice/optionsSlice";
+import {loadPushState, loadReminders} from "../options/slice/pushSlice";
 import {dropIndex, moveItem, shiftFor} from "../../utils/reorder";
 import {LatestValueSync} from "../../utils/latest-value-sync";
 
@@ -118,6 +119,9 @@ export class HomeView extends ConnectedLitElement {
         super.connectedCallback();
         this.load();
         store.dispatch(loadOptions());
+        if (store.getState().push.status === "initial") {
+            store.dispatch(loadPushState()); // the cards offer "Remind me" only on devices that get reminders
+        }
         this.stopRefresh = onAppRefresh(() => this.load());
     }
 
@@ -126,6 +130,7 @@ export class HomeView extends ConnectedLitElement {
             store.dispatch(listExercisesSelected()),
             store.dispatch(listUserChecks()),
             store.dispatch(listChecksPerExercise()),
+            store.dispatch(loadReminders()),
         ]);
     }
 

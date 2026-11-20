@@ -1,6 +1,7 @@
 import {createSlice, Reducer} from "@reduxjs/toolkit";
 import {AsyncStoreState} from "../../../commons";
 import {apiDelete, apiGet, apiPost, apiPut, apiThunk} from "../../../api/http";
+import {deleteExercise, unselectExercise} from "../../home/slice/exerciseSlice";
 import {base64UrlToBytes, currentPushEnvironment, PushSupport, pushSupport} from "../../../utils/push";
 
 /**
@@ -10,7 +11,7 @@ import {base64UrlToBytes, currentPushEnvironment, PushSupport, pushSupport} from
  */
 type PushConfigDto = { enabled: boolean, publicKey: string | null };
 
-type PushState = {
+export type PushState = {
     status: AsyncStoreState;
     /** the server has VAPID keys configured */
     serverEnabled: boolean;
@@ -22,6 +23,10 @@ type PushState = {
     permission: NotificationPermission | "unknown";
     /** switching on/off is in progress */
     busy: boolean;
+    /** exercises of the home list the user gets reminders for (all devices) */
+    reminders: string[];
+    /** reminders have been loaded */
+    remindersLoaded: boolean;
 };
 
 type SliceProjection = { push: PushState };
@@ -35,6 +40,8 @@ const initialState: PushState = {
     subscribed: false,
     permission: "unknown",
     busy: false,
+    reminders: [],
+    remindersLoaded: false,
 };
 
 const SUBSCRIPTIONS = "/api/push/subscriptions";
@@ -43,7 +50,7 @@ async function registration(): Promise<ServiceWorkerRegistration | undefined> {
     return "serviceWorker" in navigator ? navigator.serviceWorker.getRegistration() : undefined;
 }
 
-export const loadPushState = apiThunk<Omit<PushState, "status" | "busy">>('push/load', async () => {
+export const loadPushState = apiThunk<Omit<PushState, "status" | "busy" | "reminders" | "remindersLoaded">>('push/load', async () => {
     const config = await apiGet<PushConfigDto>("/api/push/config");
     const support = pushSupport(currentPushEnvironment());
     const permission = "Notification" in window ? Notification.permission : "unknown";
@@ -94,6 +101,18 @@ export const disableReminders = apiThunk<void>('push/disable', async () => {
 export const sendTestReminder = apiThunk<{ delivered: number }>(
     'push/test', () => apiPost("/api/push/test"));
 
+/** Which exercises the user gets reminders for. */
+export const loadReminders = apiThunk<string[]>('push/reminders', () => apiGet("/api/push/reminders"));
+
+export type ReminderChange = { exerciseId: string, on: boolean };
+
+/** Turns the reminder of one exercise on or off. */
+export const setExerciseReminder = apiThunk<ReminderChange, ReminderChange>('push/reminder', async change => {
+    const url = `/api/push/reminders/${change.exerciseId}`;
+    await (change.on ? apiPut(url) : apiDelete(url));
+    return change;
+});
+
 const pushSlice = createSlice({
     name: "push",
     initialState,
@@ -131,6 +150,22 @@ const pushSlice = createSlice({
             })
             .addCase(disableReminders.rejected, state => {
                 state.busy = false;
+            })
+            .addCase(loadReminders.fulfilled, (state, action) => {
+                state.reminders = action.payload;
+                state.remindersLoaded = true;
+            })
+            // hidden or deleted exercises lose their reminder (the server removes the home list entry)
+            .addCase(unselectExercise.fulfilled, (state, action) => {
+                state.reminders = state.reminders.filter(id => id !== action.payload);
+            })
+            .addCase(deleteExercise.fulfilled, (state, action) => {
+                state.reminders = state.reminders.filter(id => id !== action.payload.exerciseId);
+            })
+            .addCase(setExerciseReminder.fulfilled, (state, action) => {
+                const {exerciseId, on} = action.payload;
+                state.reminders = state.reminders.filter(id => id !== exerciseId);
+                if (on) state.reminders.push(exerciseId);
             });
     },
 });
@@ -138,3 +173,9 @@ const pushSlice = createSlice({
 export const pushReducer: Reducer<PushState> = pushSlice.reducer;
 
 export const selectPush = (state: SliceProjection) => state.push;
+
+/** Reminders can be chosen per exercise: the server offers them and this device gets them. */
+export const selectCanChooseReminders = (state: SliceProjection) =>
+    state.push.status === "idle" && state.push.serverEnabled && state.push.subscribed;
+
+export const selectReminders = (state: SliceProjection) => state.push.reminders;
