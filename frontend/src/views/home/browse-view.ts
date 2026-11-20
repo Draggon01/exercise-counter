@@ -12,6 +12,8 @@ import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from '../../store';
 import {listExercisesAvailable, selectAvailableExercises, selectAvailableStatus, selectExercise} from "./slice/exerciseSlice";
 import {ExerciseDto} from "./models/exerciseDto";
+import {matchesSearch} from "../../utils/search";
+import type {SlInput} from "@shoelace-style/shoelace";
 
 @customElement('browse-view')
 export class BrowseView extends ConnectedLitElement {
@@ -22,11 +24,19 @@ export class BrowseView extends ConnectedLitElement {
     @state()
     private status: AsyncStoreState = "initial";
 
+    /** Filters the loaded list by name (only in the browser). */
+    @state()
+    private search = "";
+
     static styles = [pageStyles, css`
         .browse-list {
             display: flex;
             flex-direction: column;
             gap: var(--app-space-3);
+        }
+
+        .search {
+            margin-bottom: var(--app-space-4);
         }
 
         .skeleton {
@@ -59,6 +69,12 @@ export class BrowseView extends ConnectedLitElement {
         return html`
             <div class="page-container">
                 <page-header heading="Browse Exercises"></page-header>
+                <sl-input class="search" type="search" placeholder="Search by name" clearable
+                          aria-label="Search exercises by name" enterkeyhint="search" .value="${this.search}"
+                          @sl-input="${(e: Event) => this.search = (e.target as SlInput).value}"
+                          @sl-clear="${() => this.search = ""}">
+                    <sl-icon slot="prefix" name="search"></sl-icon>
+                </sl-input>
                 <div class="browse-list">${this.renderList()}</div>
             </div>
         `;
@@ -81,7 +97,15 @@ export class BrowseView extends ConnectedLitElement {
                     <sl-button @click="${() => navigate("/")}">Back to my exercises</sl-button>
                 </empty-state>`;
         }
-        return this.browseExercises.map(exercise => html`
+        const found = this.browseExercises.filter(exercise => matchesSearch(exercise.exerciseTitle, this.search));
+        if (found.length === 0) {
+            return html`
+                <empty-state icon="search" heading="No exercise found"
+                             text="No exercise name contains “${this.search.trim()}”.">
+                    <sl-button @click="${() => this.search = ""}">Clear search</sl-button>
+                </empty-state>`;
+        }
+        return found.map(exercise => html`
             <browse-card .item="${exercise}" @select-exercise="${this.handleExerciseSelect}"></browse-card>
         `);
     }

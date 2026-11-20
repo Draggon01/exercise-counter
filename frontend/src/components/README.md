@@ -62,6 +62,7 @@ Belong to one feature, listed here so they are not built a second time.
 | `getTimerSound` / `setTimerSound`, `isVibrationOn` / `setVibrationOn`, `vibrate(pattern)` | `src/utils/preferences.ts` | Per-device preferences in localStorage. **Always vibrate with `vibrate()`** (respects the Options switch), never `navigator.vibrate` | ✅ |
 | `TIMER_SOUNDS`, `playTimerSound(sound)`, `soundNotes(sound)` | `src/utils/sounds.ts` | Preset sounds for the end of a timer (Web Audio, no files); chosen in Options → Timer | ✅ |
 | `hourLabel(hour)` | `src/utils/push.ts` | "07:00" for full-hour selects (quiet hours) | ✅ |
+| `matchesSearch(name, search)` | `src/utils/search.ts` | Filtering a list by name: ignores case and accents, every word must appear (browse) | ✅ |
 | `browserTimeZone()`, `exerciseTimeZone(exercise)` | `src/utils/exercise.ts` | Time zone sent with an exercise (existing keeps theirs, new get the browser's) | ✅ |
 | `isTimeExercise(type)` / `isRepExercise(type)` / `isIncreaseExercise(type)` | `src/utils/exercise.ts` | Branching on `ExerciseType` (exercise form, exercise card) | ✅ |
 
