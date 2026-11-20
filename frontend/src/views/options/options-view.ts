@@ -13,6 +13,7 @@ import "./elements/account-settings";
 import {customElement, state} from 'lit/decorators.js';
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from '../../store';
+import {selectPush} from "./slice/pushSlice";
 import {clearInviteLinks, generateInviteLink, loadOptions, selectAutoCollapse, selectInviteLinks, selectInviteLinkStatus, setAutoCollapse} from "./slice/optionsSlice";
 
 @customElement('options-view')
@@ -120,6 +121,10 @@ export class OptionsView extends ConnectedLitElement {
     @state()
     private autoCollapse: boolean = true;
 
+    /** The Reminders tab is hidden when the server offers no push reminders. */
+    @state()
+    private remindersAvailable = true;
+
     connectedCallback() {
         super.connectedCallback();
         store.dispatch(loadOptions());
@@ -131,6 +136,8 @@ export class OptionsView extends ConnectedLitElement {
         this.inviteLinkStatus = selectInviteLinkStatus(state);
         this.autoCollapse = selectAutoCollapse(state);
         this.changelog = selectChangelog(state);
+        const push = selectPush(state);
+        this.remindersAvailable = push.status !== "error" && !(push.status === "idle" && !push.serverEnabled);
     }
 
     /** Device-local display preference, stored in localStorage (see styles/color-scheme.ts). */
@@ -170,6 +177,7 @@ export class OptionsView extends ConnectedLitElement {
                 <sl-tab-group placement="top">
                     <!-- Tabs -->
                     <sl-tab slot="nav" panel="general">General</sl-tab>
+                    <sl-tab slot="nav" panel="reminders" ?hidden="${!this.remindersAvailable}">Reminders</sl-tab>
                     <sl-tab slot="nav" panel="invite">Invite Link</sl-tab>
                     <sl-tab slot="nav" panel="timer-sound">Timer Sound</sl-tab>
                     <sl-tab slot="nav" panel="changelog">Changelog</sl-tab>
@@ -204,9 +212,14 @@ export class OptionsView extends ConnectedLitElement {
                                         <sl-option value="dark">Dark</sl-option>
                                     </sl-select>
                                 </div>
-                                <reminder-settings></reminder-settings>
                                 <account-settings></account-settings>
                             </div>
+                        </div>
+                    </sl-tab-panel>
+
+                    <sl-tab-panel name="reminders">
+                        <div class="tab-content">
+                            <reminder-settings></reminder-settings>
                         </div>
                     </sl-tab-panel>
 

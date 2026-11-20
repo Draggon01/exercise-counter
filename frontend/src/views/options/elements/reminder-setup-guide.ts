@@ -22,7 +22,7 @@ const GUIDES: Guide[] = [
                 <li>Tap <b>Share</b> <sl-icon name="box-arrow-up" label="Share"></sl-icon> → <b>Add to Home Screen</b> → <b>Add</b>.</li>
                 <li>Close Safari and open the app from the new icon on your home screen. Reminders do not work in the
                     Safari tab – only in the app.</li>
-                <li>Log in, go to <b>Options → General</b>, turn on <b>Reminders</b> and tap <b>Allow</b>.</li>
+                <li>Log in, go to <b>Options → Reminders</b>, turn on <b>Reminders</b> and tap <b>Allow</b>.</li>
                 <li>Turn on <b>Remind me</b> for your exercises (in the ⋯ menu of a card or below the reminder switch).</li>
                 <li>Tap <b>Send test</b> – a notification should arrive within a few seconds.</li>
             </ol>`,
@@ -40,7 +40,7 @@ const GUIDES: Guide[] = [
         setup: html`
             <ol>
                 <li>You need macOS 13 (Ventura) and Safari 16 or newer.</li>
-                <li>Open <b>Options → General</b>, turn on <b>Reminders</b> and click <b>Allow</b>.</li>
+                <li>Open <b>Options → Reminders</b>, turn on <b>Reminders</b> and click <b>Allow</b>.</li>
                 <li>Optional: <b>File → Add to Dock</b> (macOS 14+) makes it an app that also gets reminders
                     while Safari is closed – turn reminders on again inside that app.</li>
                 <li>Turn on <b>Remind me</b> for your exercises and click <b>Send test</b>.</li>
@@ -59,7 +59,7 @@ const GUIDES: Guide[] = [
             <ol>
                 <li>Open this page in <b>Chrome</b>.</li>
                 <li>Recommended: <b>⋮ → Add to Home screen → Install</b> and open the app from its icon.</li>
-                <li>Go to <b>Options → General</b>, turn on <b>Reminders</b> and tap <b>Allow</b>.</li>
+                <li>Go to <b>Options → Reminders</b>, turn on <b>Reminders</b> and tap <b>Allow</b>.</li>
                 <li>Turn on <b>Remind me</b> for your exercises and tap <b>Send test</b>.</li>
             </ol>`,
         fix: html`
@@ -79,7 +79,7 @@ const GUIDES: Guide[] = [
                 <li>Open this page in <b>Chrome</b> (Edge works the same way).</li>
                 <li>Optional: install it as an app with the install icon <sl-icon name="window-plus" label="Install"></sl-icon>
                     in the address bar.</li>
-                <li>Go to <b>Options → General</b>, turn on <b>Reminders</b> and click <b>Allow</b>.</li>
+                <li>Go to <b>Options → Reminders</b>, turn on <b>Reminders</b> and click <b>Allow</b>.</li>
                 <li>Turn on <b>Remind me</b> for your exercises and click <b>Send test</b>.</li>
             </ol>`,
         fix: html`
