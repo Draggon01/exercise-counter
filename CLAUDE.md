@@ -92,6 +92,7 @@ npm test                # frontend unit tests (vitest, *.test.ts next to the cod
 - The service worker never caches `/api/**`; build assets are cache-first, pages network-first (offline: cached app shell)
 - Bump `CACHE_VERSION` in `sw.js` when its caching logic changes; the web server must serve `/sw.js` from the root
   and answer unknown paths with `index.html` (SPA)
+- `frontend/public/.well-known/security.txt` (RFC 9116) must be served as-is at `/.well-known/security.txt`; renew `Expires` (max. 1 year) – `security-txt.test.ts` fails 30 days before it expires
 
 ## Changelog
 - Every user-facing change adds (or extends) the newest entry in `src/main/resources/changelog.json`

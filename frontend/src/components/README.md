@@ -68,6 +68,7 @@ Belong to one feature, listed here so they are not built a second time.
 | App icons | `public/icons/` | `icon.svg` / `icon-maskable.svg` are the sources; PNGs are rendered from them | ✅ |
 | Service worker | `public/sw.js` | production only (registered in `main.ts`); never caches `/api/**`; bump `CACHE_VERSION` when the caching logic changes | ✅ |
 | Push notifications | `public/sw.js` (`push`, `notificationclick`), `public/icons/badge.svg` → `badge-96.png` | message JSON `{title, body, url, tag}` from the backend; tap focuses / opens the app at `url` (same origin only) | ✅ |
+| security.txt | `public/.well-known/security.txt` | RFC 9116 security contact (GitHub private vulnerability reporting); renew `Expires` yearly – `src/security-txt.test.ts` fails 30 days before | ✅ |
 | Offline start screen | `lit-router.ts` | "Server not reachable" with retry instead of an endless spinner; retries on `online` | ✅ |
 
 ## Styles
