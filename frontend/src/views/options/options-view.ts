@@ -96,11 +96,16 @@ export class OptionsView extends ConnectedLitElement {
             gap: 1rem;
         }
 
+        /* own full-width line under the label: the sound names fit and the select is easy to tap */
         .sound-control {
             display: flex;
             gap: var(--app-space-2);
             align-items: center;
-            flex-shrink: 0;
+            margin-top: var(--app-space-2);
+        }
+
+        .sound-control sl-select {
+            flex: 1;
         }
 
         .planned {
@@ -342,14 +347,12 @@ export class OptionsView extends ConnectedLitElement {
                     <sl-tab-panel name="timer">
                         <div class="tab-content">
                             <div class="timer-form">
-                                <div class="setting-row">
-                                    <div>
-                                        <div class="setting-label">Sound when a timer ends</div>
-                                        <div class="setting-description">Plays when you pick it. Saved on this device.</div>
-                                    </div>
+                                <div>
+                                    <div class="setting-label">Sound when a timer ends</div>
+                                    <div class="setting-description">Plays when you pick it. Saved on this device.</div>
                                     <div class="sound-control">
-                                        <sl-select class="setting-control" size="small" .value="${this.timerSound}"
-                                                   aria-label="Timer sound" @sl-change="${this.handleTimerSound}">
+                                        <sl-select .value="${this.timerSound}" aria-label="Timer sound"
+                                                   @sl-change="${this.handleTimerSound}">
                                             ${TIMER_SOUNDS.map(sound => html`
                                                 <sl-option value="${sound.id}">${sound.label}</sl-option>`)}
                                         </sl-select>
