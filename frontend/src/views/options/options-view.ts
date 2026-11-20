@@ -272,7 +272,7 @@ export class OptionsView extends ConnectedLitElement {
                                             Light or dark colors. "System" follows your device setting.
                                         </div>
                                     </div>
-                                    <sl-select class="setting-control" size="small"
+                                    <sl-select hoist class="setting-control" size="small"
                                                .value="${this.colorScheme}"
                                                @sl-change="${this.handleColorScheme}">
                                         <sl-option value="system">System</sl-option>
@@ -351,7 +351,7 @@ export class OptionsView extends ConnectedLitElement {
                                     <div class="setting-label">Sound when a timer ends</div>
                                     <div class="setting-description">Plays when you pick it. Saved on this device.</div>
                                     <div class="sound-control">
-                                        <sl-select .value="${this.timerSound}" aria-label="Timer sound"
+                                        <sl-select hoist .value="${this.timerSound}" aria-label="Timer sound"
                                                    @sl-change="${this.handleTimerSound}">
                                             ${TIMER_SOUNDS.map(sound => html`
                                                 <sl-option value="${sound.id}">${sound.label}</sl-option>`)}

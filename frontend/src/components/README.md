@@ -45,6 +45,7 @@ Belong to one feature, listed here so they are not built a second time.
 | Shoelace components | `src/shoelace.ts` | Only the imported components are bundled – **add the import there when using a new `<sl-...>` element** (otherwise it renders as an empty tag) | ✅ |
 | `apiGet` / `apiPost` / `apiPut` / `apiDelete`, `apiThunk`, `ApiError` | `src/api/http.ts` | **Every** backend call (inside a Redux slice) | ✅ |
 | `errorToastMiddleware` | `src/shared-slices/notifications/errorToastMiddleware.ts` | Error toast for every rejected `apiThunk` (except 401 and expected failures in `SILENT_ACTIONS`) | ✅ |
+| `<sl-select hoist>` | – | Selects inside `sl-tab-group` (or other scrolling/clipping boxes) need `hoist`, otherwise their dropdown is cut to the height of the tab panel | ✅ |
 | Loading placeholders | `<sl-skeleton effect="pulse">` with `--border-radius: var(--app-radius)` | While a list loads (home, browse) | ✅ |
 | `ConnectedLitElement` | `src/connectedLitElement.ts` | Base class for elements that read the Redux store (`stateChanged`) | ✅ |
 | `navigate(path)` | `src/utils/navigation.ts` | **All** navigation (updates URL + routers; safe in components and tests) | ✅ |

@@ -145,7 +145,7 @@ export class AccountSettings extends ConnectedLitElement {
                     </div>
                 </div>
                 <div class="reset-row">
-                    <sl-select size="small" placeholder="Choose a user" .value="${this.resetFor}"
+                    <sl-select hoist size="small" placeholder="Choose a user" .value="${this.resetFor}"
                                @sl-change="${(e: Event) => this.resetFor = (e.target as SlSelect).value as string}">
                         ${this.usernames.map(name => html`<sl-option value="${name}">${name}</sl-option>`)}
                     </sl-select>

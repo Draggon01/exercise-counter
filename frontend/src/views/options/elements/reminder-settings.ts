@@ -165,7 +165,7 @@ export class ReminderSettings extends ConnectedLitElement {
                         <div class="setting-label">Remind me</div>
                         <div class="setting-description">This long before the reset – the same on all your devices.</div>
                     </div>
-                    <sl-select class="setting-control" size="small" .value="${String(this.hours)}"
+                    <sl-select hoist class="setting-control" size="small" .value="${String(this.hours)}"
                                @sl-change="${this.changeHours}">
                         ${REMINDER_HOURS.map(h => html`<sl-option value="${h}">${reminderHoursLabel(h)}</sl-option>`)}
                     </sl-select>
@@ -202,7 +202,7 @@ export class ReminderSettings extends ConnectedLitElement {
         const quiet = this.quiet;
         const hours = Array.from({length: 24}, (_, hour) => hour);
         const select = (value: number, label: string, change: (hour: number) => QuietHours) => html`
-            <sl-select class="hour-select" size="small" .value="${String(value)}" aria-label="${label}"
+            <sl-select hoist class="hour-select" size="small" .value="${String(value)}" aria-label="${label}"
                        @sl-change="${(e: Event) => this.saveQuiet(e.target as SlSelect, value, change)}">
                 ${hours.map(h => html`<sl-option value="${h}">${hourLabel(h)}</sl-option>`)}
             </sl-select>`;
