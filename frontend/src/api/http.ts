@@ -9,6 +9,9 @@ export type ApiError = {
     message: string;
 };
 
+/** Message of an {@link ApiError} whose request did not reach the server. */
+export const NOT_REACHABLE = "Server not reachable";
+
 /** Thrown by the api* functions for non-2xx responses and network failures. */
 export class ApiRequestError extends Error {
     constructor(readonly status: number, message: string) {
@@ -34,7 +37,7 @@ async function request<T>(method: string, url: string, body?: Body): Promise<T> 
     try {
         res = await fetch(url, init);
     } catch {
-        throw new ApiRequestError(0, "Server not reachable");
+        throw new ApiRequestError(0, NOT_REACHABLE);
     }
     if (!res.ok) {
         throw new ApiRequestError(res.status, await errorMessage(res));

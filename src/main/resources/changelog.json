@@ -12,7 +12,8 @@
       "Invite links can be shared directly to WhatsApp, Signal & co. on phones",
       "Each Options tab has its own address – the back button returns to the previous tab",
       "Delete your account yourself (Options → General): exercises others also use are handed over to the person who does them most often",
-      "Search exercises by name in Browse"
+      "Search exercises by name in Browse",
+      "If reminders cannot be turned on, the message now says why instead of \"Server not reachable\""
     ]
   },
   {

@@ -2,7 +2,7 @@ import {createSlice, Reducer} from "@reduxjs/toolkit";
 import {AsyncStoreState} from "../../../commons";
 import {apiDelete, apiGet, apiPost, apiPut, apiThunk} from "../../../api/http";
 import {deleteExercise, unselectExercise} from "../../home/slice/exerciseSlice";
-import {base64UrlToBytes, currentPushEnvironment, PushSupport, pushSupport} from "../../../utils/push";
+import {base64UrlToBytes, currentPushEnvironment, PushSupport, pushStep, pushSupport} from "../../../utils/push";
 
 /**
  * Reminders by push notification on this device: whether the server offers them, what the browser can
@@ -67,20 +67,24 @@ export const loadPushState = apiThunk<Omit<PushState, "status" | "busy" | "remin
 });
 
 export const enableReminders = apiThunk<NotificationPermission, string>('push/enable', async publicKey => {
-    const permission = await Notification.requestPermission();
+    // every browser step names itself in the error toast and cannot hang the switch forever
+    const permission = await pushStep("Asking for permission", Notification.requestPermission());
     if (permission !== "granted") {
         throw new Error("Notifications are blocked – allow them for this site in your browser settings");
     }
-    const reg = await registration();
+    const reg = await pushStep("Finding the service worker", registration());
     if (!reg) {
         throw new Error("Reminders only work in the installed app");
     }
     // a subscription made with an older server key cannot be reused
-    await (await reg.pushManager.getSubscription())?.unsubscribe();
-    const subscription = await reg.pushManager.subscribe({
+    const old = await pushStep("Reading the old subscription", reg.pushManager.getSubscription());
+    if (old) {
+        await pushStep("Removing the old subscription", old.unsubscribe()).catch(e => console.warn(e));
+    }
+    const subscription = await pushStep("Subscribing at the push service", reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: base64UrlToBytes(publicKey),
-    });
+    }));
     try {
         await apiPut(SUBSCRIPTIONS, subscription.toJSON());
     } catch (e) {

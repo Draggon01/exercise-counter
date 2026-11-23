@@ -49,6 +49,8 @@ describe("errorToastMiddleware", () => {
 describe("errorMessage", () => {
     it("explains network failures", () => {
         expect(errorMessage({status: 0, message: "Server not reachable"})).toBe("Server not reachable. Please check your connection.");
+        expect(errorMessage({status: 0, message: "Subscribing at the push service failed: AbortError – x"}))
+            .toBe("Subscribing at the push service failed: AbortError – x");
         expect(errorMessage(undefined)).toBe("Something went wrong.");
     });
 });

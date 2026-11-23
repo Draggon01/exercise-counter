@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {base64UrlToBytes, hourLabel, PushEnvironment, pushSupport, reminderHoursLabel, setupPlatform} from "./push";
+import {base64UrlToBytes, browserErrorText, hourLabel, PushEnvironment, pushStep, pushSupport, reminderHoursLabel, setupPlatform} from "./push";
 
 const full: PushEnvironment = {hasServiceWorker: true, hasPushManager: true, hasNotification: true, isIos: false, standalone: false};
 
@@ -75,5 +75,29 @@ describe("hourLabel", () => {
         expect(hourLabel(7)).toBe("07:00");
         expect(hourLabel(22)).toBe("22:00");
         expect(hourLabel(0)).toBe("00:00");
+    });
+});
+
+describe("pushStep", () => {
+    it("returns the result of the step", async () => {
+        await expect(pushStep("Step", Promise.resolve(42))).resolves.toBe(42);
+    });
+
+    it("names the step and the browser's reason when it fails", async () => {
+        const error = new DOMException("Registration failed - push service error", "AbortError");
+        await expect(pushStep("Subscribing", Promise.reject(error)))
+            .rejects.toThrow("Subscribing failed: AbortError – Registration failed - push service error");
+    });
+
+    it("fails when the step never finishes", async () => {
+        await expect(pushStep("Subscribing", new Promise(() => undefined), 10))
+            .rejects.toThrow("Subscribing did not finish – please try again");
+    });
+});
+
+describe("browserErrorText", () => {
+    it("keeps plain messages and texts", () => {
+        expect(browserErrorText(new Error("boom"))).toBe("boom");
+        expect(browserErrorText("boom")).toBe("boom");
     });
 });

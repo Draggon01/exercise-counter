@@ -76,3 +76,33 @@ export function setupPlatform(userAgent: string, maxTouchPoints = 0): SetupPlatf
 
 /** "07:00" – quiet hours are full hours. */
 export const hourLabel = (hour: number) => `${String(hour).padStart(2, "0")}:00`;
+
+/** How long a browser step of turning on reminders may take before it counts as stuck. */
+export const PUSH_STEP_TIMEOUT_MS = 20_000;
+
+/**
+ * Runs one browser step of turning on reminders: a failure or a step that never finishes becomes an error
+ * that names the step and the browser's reason (e.g. "Subscribing at the push service failed: AbortError – ...").
+ */
+export async function pushStep<T>(step: string, run: Promise<T>, timeoutMs = PUSH_STEP_TIMEOUT_MS): Promise<T> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${step} did not finish – please try again`)), timeoutMs);
+    });
+    try {
+        return await Promise.race([run, timeout]);
+    } catch (e) {
+        if (e instanceof Error && e.message.startsWith(step)) throw e;
+        throw new Error(`${step} failed: ${browserErrorText(e)}`);
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+/** "AbortError – Registration failed - push service error" for DOMExceptions, else the message. */
+export function browserErrorText(e: unknown): string {
+    if (e instanceof Error) {
+        return e.name && e.name !== "Error" ? `${e.name} – ${e.message}` : e.message;
+    }
+    return String(e);
+}

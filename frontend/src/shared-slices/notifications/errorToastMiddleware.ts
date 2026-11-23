@@ -1,5 +1,5 @@
 import {createListenerMiddleware, isRejectedWithValue} from "@reduxjs/toolkit";
-import {ApiError} from "../../api/http";
+import {ApiError, NOT_REACHABLE} from "../../api/http";
 import {toast} from "../../components/toast";
 
 /**
@@ -14,7 +14,10 @@ const SILENT_ACTIONS = new Set(["auth/checkStatus", "user/login", "user/data", "
 
 export function errorMessage(error?: ApiError): string {
     if (!error) return "Something went wrong.";
-    if (error.status === 0) return "Server not reachable. Please check your connection.";
+    // status 0 is also used for errors of the browser itself (e.g. push) – those keep their own message
+    if (error.status === 0 && (!error.message || error.message === NOT_REACHABLE)) {
+        return "Server not reachable. Please check your connection.";
+    }
     return error.message || "Something went wrong.";
 }
 
