@@ -40,3 +40,20 @@ export function formatTimeLeft(seconds?: number | null): string {
 
 /** Less than 6 hours until the reset. */
 export const isUrgent = (seconds?: number | null) => seconds != null && seconds < 6 * 3600;
+
+/** Seconds of a step: "30 s", from a minute on "1:30 min". */
+const formatSeconds = (seconds: number) => seconds < 60 ? `${seconds} s` : `${formatDuration(seconds)} min`;
+
+/** How much of a step: "3 × 12", "12 reps", "3 × 30 s", "2 sets · 15 s rest"; empty if nothing is set. */
+export function formatTarget(step: {
+    sets?: number | null, reps?: number | null, durationSeconds?: number | null, restSeconds?: number | null
+}): string {
+    const {sets, reps, durationSeconds, restSeconds} = step;
+    const amount = reps != null ? String(reps) : durationSeconds != null ? formatSeconds(durationSeconds) : "";
+    let target = "";
+    if (sets != null && amount) target = `${sets} × ${amount}`;
+    else if (sets != null) target = `${sets} ${sets === 1 ? "set" : "sets"}`;
+    else if (reps != null) target = `${reps} ${reps === 1 ? "rep" : "reps"}`;
+    else target = amount;
+    return [target, restSeconds ? `${formatSeconds(restSeconds)} rest` : ""].filter(Boolean).join(" · ");
+}

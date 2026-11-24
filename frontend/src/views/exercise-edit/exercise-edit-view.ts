@@ -5,6 +5,7 @@ import {RootState, store} from "../../store";
 import {ExerciseDto} from "../home/models/exerciseDto";
 import {listExercisesSelected, saveExercise, selectAllExercises, selectExercisesStatus} from "../home/slice/exerciseSlice";
 import {listUserMappings, selectUserMappingByUser} from "../groups/slice/groupSlice";
+import {selectNewExerciseView} from "../options/slice/optionsSlice";
 import {selectCurrentUser} from "../login/slice/userSlice";
 import {AsyncStoreState} from "../../commons";
 import {pageStyles} from "../../styles/page";
@@ -103,7 +104,9 @@ export class ExerciseEditView extends ConnectedLitElement {
         this.saving = false;
         if (saveExercise.fulfilled.match(result)) {
             toast(this.exerciseId ? "Changes saved" : `"${e.detail.exerciseTitle}" created`, "success");
-            navigate(this.back);
+            // new exercise view: its page offers to add description and steps
+            const showNew = !this.exerciseId && selectNewExerciseView(store.getState());
+            navigate(showNew ? `/exercises/${result.payload.exerciseId}` : this.back);
         }
     }
 }

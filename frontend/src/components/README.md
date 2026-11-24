@@ -28,7 +28,11 @@ Belong to one feature, listed here so they are not built a second time.
 |---|---|---|---|
 | `<exercise-card>` | `views/home/elements/exercise-card.ts` | One exercise on the home page (goal, time left, progress, finishers, done toggle, ⋯ menu with "Remind me" when this device gets reminders, bell in the subtitle when on). Events (`ExerciseCardEvents`): `move-up`, `move-down`, `hide-exercise`, `delete-exercise`, `edit-exercise` (detail ExerciseDto), `check-changed` (detail boolean) | ✅ |
 | `<exercise-view>` | `views/exercise/exercise-view.ts` | Page `/exercises/:id` (new exercise view): everything about one exercise, also for exercises not on the list ("Add to my list"); slice `exerciseDetailSlice` | ✅ |
-| `<exercise-menu>` | `views/home/elements/exercise-menu.ts` | ⋯ menu of an exercise (Edit, Remind me, Hide, Delete); events `menu-edit`, `menu-hide`, `menu-delete` (home card, exercise page) | ✅ |
+| `<exercise-content-view>` | `views/exercise/exercise-content-view.ts` | Page `/exercises/:id/content` (creator): description and steps, saved right away | ✅ |
+| `<exercise-description>` | `views/exercise/elements/exercise-description.ts` | Text with "Show more" after 3 lines (prop `text`) | ✅ |
+| `<exercise-steps>` / `<exercise-step>` | `views/exercise/elements/` | Steps: list on computers, swiped on phones (props `steps` / `step`, `number`) | ✅ |
+| `<step-dialog>` | `views/exercise/elements/step-dialog.ts` | Add / edit a step (props `open`, `step`, `saving`; events `save-step`, `cancel`) | ✅ |
+| `<exercise-menu>` | `views/home/elements/exercise-menu.ts` | ⋯ menu of an exercise (Edit, Description & steps with `withContent`, Remind me, Hide, Delete); events `menu-edit`, `menu-content`, `menu-hide`, `menu-delete` (home card, exercise page) | ✅ |
 | `<exercise-confirm>` | `views/home/elements/exercise-confirm.ts` | Asks before delete / hide and does it: prop `action` (`{kind, exercise}`), event `closed` (detail: done?) | ✅ |
 | `<exercise-finishers>` | `views/home/elements/exercise-finishers.ts` | "Finished by" chips (props `checks`, `max` = only the first ones + "+2") | ✅ |
 | `<exercise-progress>` | `views/home/elements/exercise-progress.ts` | Timer or rep counter + bar by exercise type (props `item`, `value`, `done`; event `progress-changed`) | ✅ |
@@ -72,6 +76,8 @@ Belong to one feature, listed here so they are not built a second time.
 | `Countdown` | `src/utils/countdown.ts` | Countdown without UI: clock based, wake lock, finish sound, `report` for saving | ✅ |
 | `runningTimer` | `src/utils/running-timer.ts` | The app's one running exercise timer (survives card ↔ exercise page, pauses and saves elsewhere) | ✅ |
 | `saveProgress(exerciseId, value)` | `src/views/home/slice/progressSaver.ts` | Progress just made: shown at once and saved | ✅ |
+| `SortableController` | `src/utils/sortable.ts` | Drag & drop sorting of a vertical list (home edit order, steps) with `<exercise-sort-controls>` | ✅ |
+| `formatTarget(step)` | `src/utils/format.ts` | "3 × 30 s · 15 s rest" of a step | ✅ |
 | `LatestValueSync` | `src/utils/latest-value-sync.ts` | Saving a toggle per item without flooding the server: shown at once, one request at a time, only the latest wish is sent (home: "Mark as done") | ✅ |
 | `placeTooltip(anchor, size, area)` | `src/utils/tooltip.ts` | Position of a custom tooltip: above (below if no room), always inside the visible area (statistics grid) | ✅ |
 | `newPasswordProblem(password, repeated)`, `MIN_PASSWORD_LENGTH` | `src/utils/password.ts` | New-password checks (same minimum as the backend): change password, reset page | ✅ |

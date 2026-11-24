@@ -21,7 +21,6 @@ import './elements/exercise-confirm'
 import {ExerciseConfirmAction} from './elements/exercise-confirm'
 import '../../components/empty-state'
 import {navigate} from "../../utils/navigation";
-import {vibrate} from "../../utils/preferences";
 import {AsyncStoreState} from "../../commons";
 import {UserDto} from '../login/models/userDto';
 import {selectCurrentUser} from "../login/slice/userSlice";
@@ -34,23 +33,10 @@ import {
 } from "./slice/checkSlice";
 import {loadOptions, selectNewExerciseView, selectOptionsReady} from "../options/slice/optionsSlice";
 import {loadPushState, loadReminders} from "../options/slice/pushSlice";
-import {dropIndex, moveItem, shiftFor} from "../../utils/reorder";
+import {moveItem} from "../../utils/reorder";
+import {SortableController} from "../../utils/sortable";
 import {scrollParent} from "../../utils/scroll";
 import {createDoneSync} from "./slice/doneSync";
-
-/** State of a running drag (edit order): positions are relative to the list's top, so scrolling does not matter. */
-interface DragState {
-    pointerId: number;
-    from: number;
-    to: number;
-    startY: number;
-    cards: HTMLElement[];
-    centers: number[];
-    /** height of the dragged card + gap = how far the other cards move to make room */
-    step: number;
-    list: HTMLElement;
-    scroller?: HTMLElement;
-}
 
 /** Scroll position of the list when an exercise was opened (the view itself is replaced by the page). */
 let scrollBeforeOpen: number | undefined;
@@ -204,7 +190,7 @@ export class HomeView extends ConnectedLitElement {
                 `}
             </page-header>
 
-            <div class="exercise-list" @pointerdown="${this.dragStart}">${this.renderItems()}</div>
+            <div class="exercise-list" @pointerdown="${this.sortable.start}">${this.renderItems()}</div>
             </div>
             ${this.editMode || this.newExerciseView || !this.optionsReady ? nothing : html`<fab-button label="New exercise" @click="${() => this.openForm()}"></fab-button>`}
             <exercise-confirm .action="${this.confirmAction}" @closed="${() => this.confirmAction = undefined}"></exercise-confirm>
@@ -321,96 +307,17 @@ export class HomeView extends ConnectedLitElement {
         store.dispatch(reorderExercises(newOrder.map(e => e.exerciseId)));
     }
 
-    // ---- drag & drop (edit order)
-
-    private drag?: DragState;
-
-    private dragStart = (e: PointerEvent) => {
-        if (!this.editMode || this.drag || (e.pointerType === "mouse" && e.button !== 0)) return;
-        const path = e.composedPath() as HTMLElement[];
-        if (!path.some(el => el.dataset?.dragHandle !== undefined)) return;
-        const list = e.currentTarget as HTMLElement;
-        const cards = [...list.querySelectorAll<HTMLElement>("[data-exercise-card]")];
-        const from = cards.findIndex(card => path.includes(card));
-        if (from < 0) return;
-        e.preventDefault();
-        const listTop = list.getBoundingClientRect().top;
-        const rects = cards.map(card => card.getBoundingClientRect());
-        const gap = rects.length > 1 ? rects[1].top - rects[0].bottom : 0;
-        this.drag = {
-            pointerId: e.pointerId, from, to: from, startY: e.clientY - listTop, list, cards,
-            centers: rects.map(r => r.top - listTop + r.height / 2),
-            step: rects[from].height + gap,
-            scroller: scrollParent(list),
-        };
-        cards[from].toggleAttribute("dragging", true);
-        cards.forEach((card, i) => card.style.transition = i === from ? "none" : "transform 0.15s ease");
-        window.addEventListener("pointermove", this.dragMove);
-        window.addEventListener("pointerup", this.dragEnd);
-        window.addEventListener("pointercancel", this.dragCancel);
-    }
-
-    private dragMove = (e: PointerEvent) => {
-        const drag = this.drag;
-        if (!drag || e.pointerId !== drag.pointerId) return;
-        const dy = e.clientY - drag.list.getBoundingClientRect().top - drag.startY;
-        drag.to = dropIndex(drag.centers, drag.from, drag.centers[drag.from] + dy);
-        drag.cards.forEach((card, i) => {
-            card.style.transform = i === drag.from
-                ? `translateY(${dy}px)`
-                : `translateY(${shiftFor(i, drag.from, drag.to) * drag.step}px)`;
-        });
-        this.autoScroll(drag, e.clientY);
-    }
-
-    /** Scrolls the page while the card is dragged near the top or bottom edge. */
-    private autoScroll(drag: DragState, y: number) {
-        if (!drag.scroller) return;
-        const box = drag.scroller.getBoundingClientRect();
-        const edge = 60;
-        if (y < box.top + edge) drag.scroller.scrollBy(0, -12);
-        else if (y > box.bottom - edge) drag.scroller.scrollBy(0, 12);
-    }
-
-    private dragEnd = async (e: PointerEvent) => {
-        const drag = this.drag;
-        if (!drag || e.pointerId !== drag.pointerId) return;
-        this.stopDragListeners();
-        if (drag.to !== drag.from) {
-            const order = moveItem(this.sortedExercises(), drag.from, drag.to);
-            vibrate(10);
-            await store.dispatch(reorderExercises(order.map(ex => ex.exerciseId)));
-            await this.updateComplete; // the cards show the new order now – remove the offsets without animation
-        }
-        this.resetDrag(drag);
-    }
-
-    private dragCancel = () => {
-        if (!this.drag) return;
-        this.stopDragListeners();
-        this.resetDrag(this.drag);
-    }
-
-    private stopDragListeners() {
-        window.removeEventListener("pointermove", this.dragMove);
-        window.removeEventListener("pointerup", this.dragEnd);
-        window.removeEventListener("pointercancel", this.dragCancel);
-    }
-
-    private resetDrag(drag: DragState) {
-        drag.cards.forEach(card => {
-            card.style.transition = "";
-            card.style.transform = "";
-            card.removeAttribute("dragging");
-        });
-        this.drag = undefined;
-    }
-
     disconnectedCallback() {
         super.disconnectedCallback();
         this.stopRefresh?.();
-        this.dragCancel();
     }
+
+    private sortable = new SortableController(this, {
+        items: "[data-exercise-card]",
+        enabled: () => this.editMode,
+        move: (from, to) =>
+            store.dispatch(reorderExercises(moveItem(this.sortedExercises(), from, to).map(e => e.exerciseId))),
+    });
 
     private doneSync = createDoneSync(() => this.requestUpdate());
 

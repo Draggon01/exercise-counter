@@ -25,13 +25,15 @@ import {saveProgress} from "../home/slice/progressSaver";
 import {createDoneSync} from "../home/slice/doneSync";
 import {selectCurrentUser} from "../login/slice/userSlice";
 import {loadPushState, loadReminders, selectCanChooseReminders, selectReminders} from "../options/slice/pushSlice";
-import {ExerciseDetailState, loadExercise, selectExerciseDetail} from "./slice/exerciseDetailSlice";
+import {ExerciseDetailState, loadDetails, loadExercise, selectExerciseDetail} from "./slice/exerciseDetailSlice";
 import "../../components/page-header";
 import "../../components/empty-state";
 import "../home/elements/exercise-confirm";
 import "../home/elements/exercise-finishers";
 import "../home/elements/exercise-menu";
 import "../home/elements/exercise-progress";
+import "./elements/exercise-description";
+import "./elements/exercise-steps";
 
 /**
  * Page of one exercise (/exercises/:id): timer / rep counter, who finished it, statistics and everything else
@@ -96,6 +98,18 @@ export class ExerciseView extends ConnectedLitElement {
             padding: var(--app-space-3) 0;
             background: var(--app-bg);
             border-top: 1px solid var(--app-divider);
+        }
+
+        .add-content {
+            align-self: flex-start;
+        }
+
+        .details-failed {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--app-space-2);
+            color: var(--app-text-muted);
         }
 
         .skeleton {
@@ -194,6 +208,7 @@ export class ExerciseView extends ConnectedLitElement {
     private load() {
         return Promise.all([
             store.dispatch(loadExercise(this.exerciseId)),
+            store.dispatch(loadDetails(this.exerciseId)),
             store.dispatch(listUserChecks()),
             store.dispatch(listChecksPerExercise()),
             store.dispatch(loadReminders()),
@@ -219,7 +234,8 @@ export class ExerciseView extends ConnectedLitElement {
             <div class="page-container">
                 <page-header heading="${exercise?.exerciseTitle ?? "Exercise"}" backTo="${this.back}">
                     ${exercise && this.isOnList(exercise) ? html`
-                        <exercise-menu slot="actions" .item="${exercise}"
+                        <exercise-menu slot="actions" .item="${exercise}" withContent
+                                       @menu-content="${this.editContent}"
                                        @menu-edit="${() => navigate(withBack(`/exercises/${this.exerciseId}/edit`, `/exercises/${this.exerciseId}`))}"
                                        @menu-hide="${() => this.confirmAction = {kind: "hide", exercise}}"
                                        @menu-delete="${() => this.confirmAction = {kind: "delete", exercise}}"></exercise-menu>
@@ -279,8 +295,9 @@ export class ExerciseView extends ConnectedLitElement {
                                                @progress-changed="${this.saveProgress(this.exerciseId)}"></exercise-progress>
                         `)}
                     </div>
-                    <exercise-finishers .checks="${finishers}"></exercise-finishers>
                 ` : nothing}
+                ${this.renderDetails(exercise)}
+                ${onList ? html`<exercise-finishers .checks="${finishers}"></exercise-finishers>` : nothing}
                 <div class="actions">
                     <sl-button @click="${() => navigate(withBack(`/statistics/${this.exerciseId}`, `/exercises/${this.exerciseId}`))}">
                         <sl-icon slot="prefix" name="bar-chart"></sl-icon>
@@ -302,6 +319,32 @@ export class ExerciseView extends ConnectedLitElement {
             </div>
         `;
     }
+
+    private renderDetails(exercise: ExerciseDto) {
+        const details = this.detail?.details;
+        if (!details) {
+            return this.detail?.detailsFailed ? html`
+                <div class="details-failed">
+                    Could not load description and steps.
+                    <sl-button size="small" @click="${() => store.dispatch(loadDetails(this.exerciseId))}">Try again</sl-button>
+                </div>` : html`<sl-skeleton effect="pulse"></sl-skeleton>`;
+        }
+        if (!details.description && details.steps.length === 0) {
+            return exercise.creator !== this.username ? nothing : html`
+                <sl-button class="add-content" variant="text" size="small" @click="${this.editContent}">
+                    <sl-icon slot="prefix" name="plus-lg"></sl-icon>
+                    Add description or steps
+                </sl-button>`;
+        }
+        return html`
+            ${details.description ? html`
+                <exercise-description .text="${details.description}"></exercise-description>` : nothing}
+            ${details.steps.length > 0 ? keyed(this.exerciseId, html`
+                <exercise-steps .steps="${details.steps}"></exercise-steps>`) : nothing}
+        `;
+    }
+
+    private editContent = () => navigate(`/exercises/${this.exerciseId}/content`);
 
     /** Only exercises on the home list have a position. */
     private isOnList(exercise: ExerciseDto) {

@@ -7,6 +7,7 @@ import "./views/groups/groups-view"
 import "./views/home/browse-view"
 import "./views/options/options-view"
 import "./views/exercise/exercise-view"
+import "./views/exercise/exercise-content-view"
 import "./views/exercise-edit/exercise-edit-view"
 import {isPublicPage, navigate} from "./utils/navigation";
 
@@ -42,6 +43,10 @@ export const routes: RouteConfig[] = [
     {
         path: '/exercises/:id/edit', render: (params) => html`
             <exercise-edit-view .exerciseId="${params["id"]}"></exercise-edit-view>`
+    },
+    {
+        path: '/exercises/:id/content', render: (params) => html`
+            <exercise-content-view .exerciseId="${params["id"]}"></exercise-content-view>`
     },
     {
         // after /exercises/new

@@ -1,7 +1,8 @@
 import {createSlice, Reducer} from "@reduxjs/toolkit";
 import {AsyncStoreState} from "../../../commons";
-import {apiGet, apiThunk} from "../../../api/http";
+import {apiDelete, apiGet, apiPost, apiPut, apiThunk} from "../../../api/http";
 import {ExerciseDto} from "../../home/models/exerciseDto";
+import {ExerciseDetailsDto, ExerciseStepDto, ExerciseStepRequest} from "../models/exerciseDetailsDto";
 import {saveExercise} from "../../home/slice/exerciseSlice";
 import {logoutUser} from "../../login/slice/userSlice";
 
@@ -12,15 +13,45 @@ export type ExerciseDetailState = {
     /** unknown, deleted, or not shared with the user */
     notFound: boolean;
     exercise?: ExerciseDto;
+    /** description and steps; undefined until loaded */
+    details?: ExerciseDetailsDto;
+    detailsFailed: boolean;
 };
 
 type SliceProjection = { exerciseDetail: ExerciseDetailState };
 
-const initialState: ExerciseDetailState = {exerciseId: "", status: "initial", notFound: false};
+const initialState: ExerciseDetailState = {exerciseId: "", status: "initial", notFound: false, detailsFailed: false};
 
 /** The exercise of the exercise page (does not have to be on the home list). Failures are shown on the page. */
 export const loadExercise = apiThunk<ExerciseDto, string>(
     'exerciseDetail/load', exerciseId => apiGet(`/api/exercises/${encodeURIComponent(exerciseId)}`));
+
+const detailsUrl = (exerciseId: string) => `/api/exercises/${encodeURIComponent(exerciseId)}`;
+
+/** Steps an exercise can have (the backend enforces it). */
+export const MAX_STEPS = 12;
+
+export const loadDetails = apiThunk<ExerciseDetailsDto, string>(
+    'exerciseDetail/loadDetails', exerciseId => apiGet(`${detailsUrl(exerciseId)}/details`));
+
+export const saveDescription = apiThunk<ExerciseDetailsDto, { exerciseId: string, description: string }>(
+    'exerciseDetail/saveDescription', ({exerciseId, description}) =>
+        apiPut(`${detailsUrl(exerciseId)}/details`, {description}));
+
+export const addStep = apiThunk<ExerciseStepDto, { exerciseId: string, step: ExerciseStepRequest }>(
+    'exerciseDetail/addStep', ({exerciseId, step}) => apiPost(`${detailsUrl(exerciseId)}/steps`, step));
+
+export const updateStep = apiThunk<ExerciseStepDto, { exerciseId: string, stepId: string, step: ExerciseStepRequest }>(
+    'exerciseDetail/updateStep', ({exerciseId, stepId, step}) =>
+        apiPut(`${detailsUrl(exerciseId)}/steps/${stepId}`, step));
+
+export const deleteStep = apiThunk<void, { exerciseId: string, stepId: string }>(
+    'exerciseDetail/deleteStep', ({exerciseId, stepId}) => apiDelete(`${detailsUrl(exerciseId)}/steps/${stepId}`));
+
+/** The ids of all steps in their new order. */
+export const reorderSteps = apiThunk<ExerciseDetailsDto, { exerciseId: string, stepIds: string[] }>(
+    'exerciseDetail/reorderSteps', ({exerciseId, stepIds}) =>
+        apiPut(`${detailsUrl(exerciseId)}/steps/order`, stepIds));
 
 const exerciseDetailSlice = createSlice({
     name: 'exerciseDetail',
@@ -32,7 +63,7 @@ const exerciseDetailSlice = createSlice({
                 // loading the same exercise again keeps showing it; another one starts empty
                 return state.exerciseId === action.meta.arg
                     ? {...state, status: "loading"}
-                    : {exerciseId: action.meta.arg, status: "loading", notFound: false};
+                    : {exerciseId: action.meta.arg, status: "loading", notFound: false, detailsFailed: false};
             })
             .addCase(loadExercise.fulfilled, (state, action) => {
                 if (state.exerciseId !== action.meta.arg) return; // answer for a page that was left
@@ -45,6 +76,36 @@ const exerciseDetailSlice = createSlice({
                 state.status = "error";
                 state.notFound = action.payload?.status === 404 || action.payload?.status === 400;
                 if (state.notFound) state.exercise = undefined;
+            })
+            .addCase(loadDetails.pending, (state, action) => {
+                if (state.exerciseId === action.meta.arg) state.detailsFailed = false;
+            })
+            .addCase(loadDetails.fulfilled, (state, action) => {
+                if (state.exerciseId === action.meta.arg) state.details = action.payload;
+            })
+            .addCase(loadDetails.rejected, (state, action) => {
+                if (state.exerciseId === action.meta.arg) state.detailsFailed = true;
+            })
+            .addCase(saveDescription.fulfilled, (state, action) => {
+                // only the description: a step may have been changed at the same time
+                if (state.exerciseId === action.meta.arg.exerciseId && state.details) {
+                    state.details.description = action.payload.description;
+                }
+            })
+            .addCase(addStep.fulfilled, (state, action) => {
+                if (state.exerciseId === action.meta.arg.exerciseId) state.details?.steps.push(action.payload);
+            })
+            .addCase(updateStep.fulfilled, (state, action) => {
+                if (state.exerciseId !== action.meta.arg.exerciseId || !state.details) return;
+                state.details.steps = state.details.steps.map(step =>
+                    step.stepId === action.payload.stepId ? action.payload : step);
+            })
+            .addCase(deleteStep.fulfilled, (state, action) => {
+                if (state.exerciseId !== action.meta.arg.exerciseId || !state.details) return;
+                state.details.steps = state.details.steps.filter(step => step.stepId !== action.meta.arg.stepId);
+            })
+            .addCase(reorderSteps.fulfilled, (state, action) => {
+                if (state.exerciseId === action.meta.arg.exerciseId) state.details = action.payload;
             })
             .addCase(saveExercise.fulfilled, (state, action) => {
                 if (state.exerciseId === action.payload.exerciseId) state.exercise = action.payload;

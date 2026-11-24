@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {formatDuration, formatTimeLeft, isUrgent} from "./format";
+import {formatDuration, formatTimeLeft, isUrgent, formatTarget} from "./format";
 
 describe("formatDuration", () => {
     it.each([
@@ -39,4 +39,16 @@ describe("isUrgent", () => {
         expect(isUrgent(6 * 3600)).toBe(false);
         expect(isUrgent(undefined)).toBe(false);
     });
+});
+
+describe("formatTarget", () => {
+    it.each([
+        [{sets: 3, reps: 12}, "3 × 12"],
+        [{reps: 1}, "1 rep"],
+        [{sets: 3, durationSeconds: 30, restSeconds: 15}, "3 × 30 s · 15 s rest"],
+        [{durationSeconds: 90}, "1:30 min"],
+        [{sets: 2}, "2 sets"],
+        [{restSeconds: 60}, "1:00 min rest"],
+        [{sets: null, reps: null, durationSeconds: null, restSeconds: 0}, ""],
+    ])("%o → %s", (step, text) => expect(formatTarget(step)).toBe(text));
 });

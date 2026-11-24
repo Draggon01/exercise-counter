@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {exerciseDetailReducer, loadExercise, selectExerciseDetail} from "./exerciseDetailSlice";
+import {addStep, deleteStep, exerciseDetailReducer, loadDetails, loadExercise, selectExerciseDetail, updateStep} from "./exerciseDetailSlice";
 import {ExerciseDto} from "../../home/models/exerciseDto";
 import {saveExercise} from "../../home/slice/exerciseSlice";
 
@@ -27,6 +27,24 @@ describe("exerciseDetail slice", () => {
     it("404: not found, the exercise is gone", () => {
         const state = exerciseDetailReducer(loaded, loadExercise.rejected(null, "r2", "a", {status: 404, message: "x"}));
         expect(state).toMatchObject({notFound: true, exercise: undefined});
+    });
+
+    it("keeps the steps up to date, only of the exercise that is shown", () => {
+        const step = (id: string, title = id) =>
+            ({stepId: id, title, hints: "", sets: null, reps: null, durationSeconds: null, restSeconds: null});
+        const arg = {exerciseId: "a", stepId: "1", step: step("1")};
+        const details = {description: "", guidedMode: "OFF" as const, steps: [step("1")]};
+        let state = exerciseDetailReducer(loaded, loadDetails.fulfilled(details, "r", "a"));
+        state = exerciseDetailReducer(state, addStep.fulfilled(step("2"), "r", arg));
+        state = exerciseDetailReducer(state, updateStep.fulfilled(step("1", "new"), "r", arg));
+        state = exerciseDetailReducer(state, addStep.fulfilled(step("9"), "r", {...arg, exerciseId: "other"}));
+        expect(state.details?.steps.map(s => s.title)).toEqual(["new", "2"]);
+
+        state = exerciseDetailReducer(state, deleteStep.fulfilled(undefined, "r", arg));
+        expect(state.details?.steps.map(s => s.title)).toEqual(["2"]);
+
+        // another exercise starts without details
+        expect(exerciseDetailReducer(state, loadExercise.pending("r", "b")).details).toBeUndefined();
     });
 
     it("takes over saved changes", () => {

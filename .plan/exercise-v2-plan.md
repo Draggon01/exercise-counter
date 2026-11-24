@@ -158,7 +158,7 @@ Today the timer covers everything with its focus view when started; then no vide
 - Tests: permissions, order, limits, "editing details keeps `lastSchedulerRun` and the scheduler", query count.
 - `AccountDeletionTest`: handed-over exercise keeps its details, deleted exercise loses them.
 
-### [ ] T11.2 🎨 Show description and steps (M)
+### [x] T11.2 🎨 Show description and steps (M)
 - `views/exercise/elements/exercise-steps.ts` + `exercise-step.ts`. Layout as sketched: list with media left and
   text right from 769 px; below that horizontal CSS scroll-snap with a peek of the next step and dots.
 - A step without video shows its number / title over the full width (no empty video box). One step: no dots.
@@ -166,7 +166,7 @@ Today the timer covers everything with its focus view when started; then no vide
 - Swiping sideways must not trigger pull to refresh (`overlay-view.pullStart`: check its ignore rule).
 - Description: first 3 lines + "Show more". Nothing at all if empty (creator: "Add description or videos").
 
-### [ ] T11.3 🎨 Edit description and steps (M)
+### [x] T11.3 🎨 Edit description and steps (M)
 - Separate page `/exercises/:id/content` (creator only; ⋯ → "Description & videos"), so the already long
   `exercise-form` does not grow. After creating an exercise: open its page with the "Add …" hint.
 - Add / edit / delete steps; reorder with the existing `moveItem` / `dropIndex` helpers (move the drag code out of
@@ -336,7 +336,7 @@ Default on first (users can still turn it off), later remove the old card, its c
 | Phase | Tasks | Done |
 |---|---|---|
 | 10 – Page and toggle | 5 | 5 |
-| 11 – Description, steps, notes | 4 | 1 |
+| 11 – Description, steps, notes | 4 | 3 |
 | 12 – Videos: backend and server | 6 | 0 |
 | 13 – Videos: frontend, guided workout, photos | 4 | 0 |
 | 14 – Try out and switch over | 4 | 0 |

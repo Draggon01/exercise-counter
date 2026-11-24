@@ -260,6 +260,7 @@ export class OverlayView extends ConnectedLitElement {
     private refreshing = false;
 
     private pullStartY?: number;
+    private pullStartX = 0;
 
     private renderPull() {
         const shown = this.refreshing ? PULL_THRESHOLD : this.pull;
@@ -280,6 +281,7 @@ export class OverlayView extends ConnectedLitElement {
         const ignored = path.some(el => el.getAttribute?.("role") === "dialog" || el.dataset?.dragHandle !== undefined);
         if (main.scrollTop > 0 || this.refreshing || ignored || e.touches.length !== 1) return;
         this.pullStartY = e.touches[0].clientY;
+        this.pullStartX = e.touches[0].clientX;
     }
 
     private pullMove = (e: TouchEvent) => {
@@ -290,7 +292,13 @@ export class OverlayView extends ConnectedLitElement {
             this.pull = 0;
             return;
         }
-        const next = pullDistance(e.touches[0].clientY - this.pullStartY);
+        const dx = Math.abs(e.touches[0].clientX - this.pullStartX);
+        const dy = e.touches[0].clientY - this.pullStartY;
+        if (this.pull === 0 && dx > Math.abs(dy)) {
+            this.pullStartY = undefined; // swiping sideways, e.g. through the steps of an exercise
+            return;
+        }
+        const next = pullDistance(dy);
         if (this.pull < PULL_THRESHOLD && next >= PULL_THRESHOLD) vibrate(10);
         this.pull = next;
     }

@@ -12,6 +12,7 @@ import {ExerciseDto} from "../models/exerciseDto";
 /** Events of `<exercise-menu>`, without detail. */
 export const ExerciseMenuEvents = {
     edit: "menu-edit",
+    content: "menu-content",
     hide: "menu-hide",
     delete: "menu-delete",
 } as const;
@@ -36,6 +37,10 @@ export class ExerciseMenu extends ConnectedLitElement {
 
     @property({attribute: false})
     item: ExerciseDto = {exerciseId: "", exerciseTitle: "", creator: ""} as ExerciseDto;
+
+    /** Offer "Description & steps" (creator only, exercise page). */
+    @property({type: Boolean})
+    withContent = false;
 
     @state()
     private user?: UserDto;
@@ -62,6 +67,11 @@ export class ExerciseMenu extends ConnectedLitElement {
                 <sl-menu @sl-select="${this.select}">
                     ${isCreator ? html`
                         <sl-menu-item value="edit"><sl-icon slot="prefix" name="pencil"></sl-icon>Edit</sl-menu-item>
+                        ${this.withContent ? html`
+                            <sl-menu-item value="content">
+                                <sl-icon slot="prefix" name="card-text"></sl-icon>Description & steps
+                            </sl-menu-item>
+                        ` : nothing}
                     ` : nothing}
                     ${this.canRemind ? html`
                         <sl-menu-item value="reminder" type="checkbox" ?checked="${this.hasReminder()}">
@@ -88,6 +98,8 @@ export class ExerciseMenu extends ConnectedLitElement {
         switch (e.detail.item.value) {
             case "edit":
                 return this.emit(ExerciseMenuEvents.edit);
+            case "content":
+                return this.emit(ExerciseMenuEvents.content);
             case "hide":
                 return this.emit(ExerciseMenuEvents.hide);
             case "delete":
