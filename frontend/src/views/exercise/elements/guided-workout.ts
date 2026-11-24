@@ -33,6 +33,7 @@ export class GuidedWorkout extends LitElement {
             background: var(--app-bg);
             color: var(--app-text);
             outline: none;
+            --ring-size: min(70vw, 40vh, 320px);
         }
 
         .top {
@@ -90,7 +91,7 @@ export class GuidedWorkout extends LitElement {
 
         sl-progress-ring {
             flex-shrink: 0;
-            --size: min(70vw, 40vh, 320px);
+            --size: var(--ring-size);
             --track-width: 12px;
             --indicator-width: 12px;
             --track-color: var(--app-chart-track);
@@ -109,6 +110,12 @@ export class GuidedWorkout extends LitElement {
 
         .ring {
             font-family: var(--app-font-mono);
+            /* has to fit into the ring: "10:00", "1:00:00" */
+            font-size: calc(var(--ring-size) * 0.24);
+        }
+
+        .ring.long {
+            font-size: calc(var(--ring-size) * 0.17);
         }
 
         .finished {
@@ -218,7 +225,7 @@ export class GuidedWorkout extends LitElement {
                 </div>
                 ${left !== undefined && seconds !== undefined ? html`
                     <sl-progress-ring value="${left / seconds * 100}" label="Time left">
-                        <span class="big ring">${formatDuration(left)}</span>
+                        <span class="big ring ${left >= 3600 ? "long" : ""}">${formatDuration(left)}</span>
                     </sl-progress-ring>` : amount ? html`<div class="big">${amount}</div>` : nothing}
                 ${!rest && step.hints ? html`<p class="hints">${step.hints}</p>` : nothing}
                 ${rest && amount ? html`<div class="muted">${amount}</div>` : nothing}
