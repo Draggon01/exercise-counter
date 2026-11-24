@@ -54,17 +54,17 @@ Exercise page, phone (swipe) / computer (list):
 
 ---
 
-## Decisions (defaults used below – change them before the task starts)
+## Decisions (confirmed by Leon, 2026-11-24)
 
-| # | Question | Default |
+| # | Question | Decision |
 |---|---|---|
 | D1 | Subview or dialog? | Own page `/exercises/:id`: back button, deep links and reminders work, no nested dialogs |
 | D2 | Who edits description / steps? | Only the creator (as with Edit today); everybody who can see the exercise can watch |
 | D3 | Where is the toggle stored? | Account-wide (`options`), so phone and computer match |
-| D4 | Where are videos stored? | Files on the server outside the web root and the database (`app.media.dir`), only streamed by the backend after a permission check |
+| D4 | Where are videos stored? | Files on the server outside the web root and the database (`app.media.dir`), only streamed by the backend after a permission check. Starts on the Hetzner server, may move to the private Raspberry Pi later (T12.5) |
 | D5 | Who shrinks videos? | `ffmpeg` on the server: one format that plays everywhere (iPhones record HEVC `.mov`), and it removes the recording location. Shrinking in the browser is slow and unreliable on iPhones |
 | D6 | Limits | Clips are meant to be about 3 s (said in the upload dialog), at most 15 s. Finished clip ≤ 1.5 MB, 12 steps per exercise, one video per step, **50 MB of finished videos per user** (`app.media.user-quota`, easy to raise). Raw upload ≤ 90 MB (Cloudflare's free plan stops at 100 MB) |
-| D7 | Result | MP4 H.264, longest side ≤ 640 px, 30 fps, **with sound if it fits** (AAC mono 64 kbit/s), `+faststart`, JPEG poster. About 0.3 MB for 3 s. Too large: lower video quality once → drop the sound → FAILED with a clear message |
+| D7 | Result | MP4 H.264, longest side ≤ 640 px, 30 fps, **with sound if it fits** (AAC mono 64 kbit/s), `+faststart`, JPEG poster. About 0.3 MB for 3 s. Too large: lower video quality once → drop the sound → FAILED with a clear message. **Quality must be tested with real clips first (T12.0)** |
 | D8 | What is on the card? | Title, goal · time left, own streak, reminder bell, thin progress bar, done circle, **quick control: start / pause (time) or − value + (reps)**. Moves to the page: full timer / counter, finishers, statistics, ⋯ menu, collapse |
 | D9 | Guided workout | Optional. The creator chooses per exercise: **off** (default), **fixed order** or **shuffled**. Everybody can change order and skip steps before starting, or ignore it and use the normal timer |
 
@@ -171,6 +171,11 @@ Today the timer covers everything with its focus view when started; then no vide
 
 ## Phase 12 – Videos: backend and server
 
+### [ ] T12.0 🛠 Try the video quality (S) – before T12.2
+- Convert 4–5 real clips (iPhone and Android, portrait / landscape, fast movement, bad light) with the D7 settings and with
+  640 / 720 px and 800 / 1200 / 1600 kbit/s; watch them on a phone, small and full screen, and note the sizes.
+- Leon picks one; write the result into D6 / D7 (keep it a config value). Real clips are not committed.
+
 ### [ ] T12.1 🛠 Server preparation (S) – done by Leon, the plan only supplies the snippets
 - `apt install ffmpeg`; folder `/opt/exercise-counter/media`, owned by the backend's user, outside the web root
   and **not** inside a folder the deploy replaces; `APP_MEDIA_DIR` in `excountvars.env`.
@@ -213,6 +218,17 @@ Cascades delete rows, **not** files – every path needs it:
 - Handed-over exercise keeps its videos and counts towards the new creator's quota (quota = videos of own exercises).
 - Nightly job deletes files without a row older than 24 h (safety net). It must do nothing if the database is unreachable.
 - Tests: `AccountDeletionTest`, delete paths, rollback keeps files.
+
+---
+
+### [ ] T12.5 🛠 Move the videos to the Raspberry Pi (M) – later, optional
+Not needed for the start (50 MB per user is little), but must not become a rewrite:
+- T12.2 hides storage behind the `MediaStorage` interface (write, open a byte range, delete, list); the rest never sees paths.
+- To decide: Pi (10.0.0.2, WireGuard) as a small internal storage service vs. a network mount. Prefer the service:
+  a hanging mount blocks backend threads. Reachable only through WireGuard, never public; the backend still checks permissions.
+- Pi offline: exercise page works, videos show "currently not available" (short timeouts); cleanup must not treat it as "no files".
+- Home upload speed limits playback – measure it. Optional: cache on the Hetzner server.
+- Cheaper first step: keep the videos on Hetzner and use the Pi as the **backup** target (T12.1).
 
 ---
 
@@ -289,7 +305,7 @@ Default on first (users can still turn it off), later remove the old card, its c
 
 1. **Phase 10** → can go live behind the toggle (T10.1 → T10.2 → T10.3 → T10.4 → T10.5)
 2. **Phase 11** → usable without videos → **T13.3** (guided workout) any time after Phase 11
-3. **T12.1** any time before Phase 12 goes live; **T12.2 → T12.3 → T12.4 → T13.1 → T13.2** go live together
+3. **T12.0** and **T12.1** before T12.2 goes live; **T12.2 → T12.3 → T12.4 → T13.1 → T13.2** go live together
 4. **T6.2** (backup, `feature-plan.md`) before the first real videos
 5. **Phase 14**
 
@@ -299,6 +315,6 @@ Default on first (users can still turn it off), later remove the old card, its c
 |---|---|---|
 | 10 – Page and toggle | 5 | 0 |
 | 11 – Description and steps | 3 | 0 |
-| 12 – Videos: backend and server | 4 | 0 |
+| 12 – Videos: backend and server | 6 | 0 |
 | 13 – Videos: frontend, guided workout | 3 | 0 |
 | 14 – Try out and switch over | 4 | 0 |
