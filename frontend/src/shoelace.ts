@@ -5,6 +5,7 @@
 import {setBasePath} from "@shoelace-style/shoelace/dist/utilities/base-path.js";
 import "@shoelace-style/shoelace/dist/components/alert/alert.js";
 import "@shoelace-style/shoelace/dist/components/avatar/avatar.js";
+import "@shoelace-style/shoelace/dist/components/badge/badge.js";
 import "@shoelace-style/shoelace/dist/components/button/button.js";
 import "@shoelace-style/shoelace/dist/components/checkbox/checkbox.js";
 import "@shoelace-style/shoelace/dist/components/dialog/dialog.js";

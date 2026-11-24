@@ -1,6 +1,7 @@
 import {AsyncStoreState} from "../../../commons";
 import {createSlice, Reducer} from "@reduxjs/toolkit";
 import {browserTimeZone} from "../../../utils/exercise";
+import {logoutUser} from "../../login/slice/userSlice";
 import {apiGet, apiPost, apiPut, apiThunk} from "../../../api/http";
 
 type SliceState = {
@@ -13,6 +14,10 @@ type SliceState = {
     reminderHours: number;
     /** no reminders from quietFrom to quietUntil (full hours, the user's time zone) */
     quietHours: QuietHours;
+    /** beta: compact cards and a page per exercise (off for everyone who did not turn it on) */
+    newExerciseView: boolean;
+    /** the options of this user were loaded (or failed to load) once: views can be shown with them */
+    optionsReady: boolean;
     optionsStatus: AsyncStoreState;
 }
 
@@ -30,6 +35,8 @@ const initialState: SliceState = {
     autoCollapse: true,
     reminderHours: 3,
     quietHours: {on: false, from: 22, until: 7},
+    newExerciseView: false,
+    optionsReady: false,
     optionsStatus: "initial",
 }
 
@@ -38,7 +45,8 @@ export const generateInviteLink = apiThunk<string>(
 
 type OptionsDto = {
     autoCollapse: boolean, reminderHours: number,
-    quietHours: boolean, quietFrom: number, quietUntil: number, timeZone: string | null
+    quietHours: boolean, quietFrom: number, quietUntil: number, timeZone: string | null,
+    newExerciseView: boolean
 };
 
 const toQuietHours = (dto: OptionsDto): QuietHours => ({on: dto.quietHours, from: dto.quietFrom, until: dto.quietUntil});
@@ -53,6 +61,10 @@ export const setAutoCollapse = apiThunk<boolean, boolean>(
 export const setReminderHours = apiThunk<number, number>(
     'options/setReminderHours', async reminderHours =>
         (await apiPut<OptionsDto>("/api/options", {reminderHours})).reminderHours);
+
+export const setNewExerciseView = apiThunk<boolean, boolean>(
+    'options/setNewExerciseView', async newExerciseView =>
+        (await apiPut<OptionsDto>("/api/options", {newExerciseView})).newExerciseView);
 
 /** Sends the browser's time zone along: the hours are meant in local time. */
 export const setQuietHours = apiThunk<QuietHours, QuietHours>(
@@ -86,16 +98,24 @@ const optionsSlice = createSlice({
             })
             .addCase(loadOptions.fulfilled, (state, action) => {
                 state.optionsStatus = "idle";
+                state.optionsReady = true;
+                state.newExerciseView = action.payload.newExerciseView;
                 state.autoCollapse = action.payload.autoCollapse;
                 state.reminderHours = action.payload.reminderHours;
                 state.quietHours = toQuietHours(action.payload);
             })
             .addCase(loadOptions.rejected, (state) => {
                 state.optionsStatus = "error";
+                state.optionsReady = true;
             })
             .addCase(setAutoCollapse.fulfilled, (state, action) => {
                 state.autoCollapse = action.payload;
             })
+            .addCase(setNewExerciseView.fulfilled, (state, action) => {
+                state.newExerciseView = action.payload;
+            })
+            // the next user on this device must not start with these options
+            .addCase(logoutUser.fulfilled, () => initialState)
             .addCase(setReminderHours.fulfilled, (state, action) => {
                 state.reminderHours = action.payload;
             })
@@ -111,5 +131,8 @@ export const {clearInviteLinks} = optionsSlice.actions;
 export const selectInviteLinks = (state: SliceProjection) => state.options.inviteLinks.values;
 export const selectInviteLinkStatus = (state: SliceProjection) => state.options.inviteLinks.status;
 export const selectAutoCollapse = (state: SliceProjection) => state.options.autoCollapse;
+export const selectNewExerciseView = (state: SliceProjection) => state.options.newExerciseView;
+/** False until the options were loaded (or failed) once: do not render anything that depends on them yet. */
+export const selectOptionsReady = (state: SliceProjection) => state.options.optionsReady;
 export const selectReminderHours = (state: SliceProjection) => state.options.reminderHours;
 export const selectQuietHours = (state: SliceProjection) => state.options.quietHours;

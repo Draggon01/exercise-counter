@@ -29,7 +29,8 @@ public class OptionsController {
 
     /** A PUT only changes the fields that are set (null = keep). */
     public record OptionsDto(Boolean autoCollapse, Integer reminderHours,
-                             Boolean quietHours, Integer quietFrom, Integer quietUntil, String timeZone) {}
+                             Boolean quietHours, Integer quietFrom, Integer quietUntil, String timeZone,
+                             Boolean newExerciseView) {}
 
     @GetMapping
     public OptionsDto getOptions(@AuthenticationPrincipal UserDetails user) {
@@ -52,6 +53,9 @@ public class OptionsController {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Reminders can be sent 1, 2, 3, 6 or 12 hours before the reset");
             }
             options.setReminderHours(dto.reminderHours());
+        }
+        if (dto.newExerciseView() != null) {
+            options.setNewExerciseView(dto.newExerciseView());
         }
         applyQuietHours(dto, options);
         userOptionsRepository.save(options);
@@ -81,6 +85,7 @@ public class OptionsController {
 
     private static OptionsDto toDto(UserOptions options) {
         return new OptionsDto(options.isAutoCollapse(), options.getReminderHours(), options.isQuietHours(),
-                options.getQuietFrom(), options.getQuietUntil(), options.getTimeZone());
+                options.getQuietFrom(), options.getQuietUntil(), options.getTimeZone(),
+                options.isNewExerciseView());
     }
 }

@@ -76,7 +76,7 @@ Exercise page, phone (swipe) / computer (list):
 
 ## Phase 10 – Page and toggle (no videos yet; already useful on its own)
 
-### [ ] T10.1 🧱 Option `newExerciseView` (S)
+### [x] T10.1 🧱 Option `newExerciseView` (S)
 - Migration: `ALTER TABLE options ADD COLUMN new_exercise_view BOOLEAN NOT NULL DEFAULT FALSE`.
 - `UserOptions`, `OptionsController.OptionsDto` (null = keep, as for the others); `optionsSlice` +
   `setNewExerciseView` / `selectNewExerciseView`.
@@ -334,7 +334,7 @@ Default on first (users can still turn it off), later remove the old card, its c
 
 | Phase | Tasks | Done |
 |---|---|---|
-| 10 – Page and toggle | 5 | 0 |
+| 10 – Page and toggle | 5 | 1 |
 | 11 – Description, steps, notes | 4 | 0 |
 | 12 – Videos: backend and server | 6 | 0 |
 | 13 – Videos: frontend, guided workout, photos | 4 | 0 |

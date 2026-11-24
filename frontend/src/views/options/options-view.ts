@@ -18,7 +18,7 @@ import {playTimerSound, TIMER_SOUNDS, TimerSound} from "../../utils/sounds";
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from '../../store';
 import {selectPush} from "./slice/pushSlice";
-import {clearInviteLinks, generateInviteLink, loadOptions, selectAutoCollapse, selectInviteLinks, selectInviteLinkStatus, setAutoCollapse} from "./slice/optionsSlice";
+import {clearInviteLinks, generateInviteLink, loadOptions, selectAutoCollapse, selectInviteLinks, selectInviteLinkStatus, selectNewExerciseView, setAutoCollapse, setNewExerciseView} from "./slice/optionsSlice";
 
 /** Tabs of the options page; each has its own URL (/options/<tab>, General: /options). */
 export const OPTIONS_TABS = ["general", "reminders", "invite", "timer", "changelog"] as const;
@@ -140,6 +140,9 @@ export class OptionsView extends ConnectedLitElement {
     private autoCollapse: boolean = true;
 
     @state()
+    private newExerciseView = false;
+
+    @state()
     private timerSound: TimerSound = getTimerSound();
 
     @state()
@@ -161,6 +164,7 @@ export class OptionsView extends ConnectedLitElement {
         this.inviteLinks = selectInviteLinks(state);
         this.inviteLinkStatus = selectInviteLinkStatus(state);
         this.autoCollapse = selectAutoCollapse(state);
+        this.newExerciseView = selectNewExerciseView(state);
         this.changelog = selectChangelog(state);
         const push = selectPush(state);
         this.remindersAvailable = push.status !== "error" && !(push.status === "idle" && !push.serverEnabled);
@@ -176,6 +180,12 @@ export class OptionsView extends ConnectedLitElement {
     private handleColorScheme = (e: Event) => {
         this.colorScheme = (e.target as SlSelect).value as ColorScheme;
         setColorScheme(this.colorScheme);
+    }
+
+    private handleNewExerciseView = async (e: Event) => {
+        const toggle = e.target as SlSwitch;
+        await store.dispatch(setNewExerciseView(toggle.checked));
+        toggle.checked = this.newExerciseView; // failed: the switch shows the real state again
     }
 
     private async handleGenerateLink() {
@@ -266,6 +276,20 @@ export class OptionsView extends ConnectedLitElement {
                                             ?checked="${this.autoCollapse}"
                                             @sl-change="${(e: Event) => store.dispatch(setAutoCollapse((e.target as SlSwitch).checked))}"
                                     ></sl-switch>
+                                </div>
+                                <div class="setting-row">
+                                    <div>
+                                        <div class="setting-label">
+                                            Try the new exercise view
+                                            <sl-badge pill>Beta</sl-badge>
+                                        </div>
+                                        <div class="setting-description">
+                                            Simpler cards; tap one to see everything about the exercise on its own page.
+                                            You can switch back at any time.
+                                        </div>
+                                    </div>
+                                    <sl-switch ?checked="${this.newExerciseView}" aria-label="Try the new exercise view"
+                                               @sl-change="${this.handleNewExerciseView}"></sl-switch>
                                 </div>
                                 <div class="setting-row">
                                     <div>

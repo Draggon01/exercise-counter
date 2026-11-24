@@ -65,7 +65,7 @@ class OptionsControllerTest {
 
     @Test
     void saveOptions_persistsChange() {
-        optionsController.saveOptions(new OptionsController.OptionsDto(false, null, null, null, null, null), authentication);
+        optionsController.saveOptions(new OptionsController.OptionsDto(false, null, null, null, null, null, null), authentication);
 
         UserOptions saved = userOptionsRepository.findById("testuser").orElseThrow();
         assertFalse(saved.isAutoCollapse());
@@ -73,7 +73,7 @@ class OptionsControllerTest {
 
     @Test
     void saveOptions_returnsUpdatedValue() {
-        var result = optionsController.saveOptions(new OptionsController.OptionsDto(false, null, null, null, null, null), authentication);
+        var result = optionsController.saveOptions(new OptionsController.OptionsDto(false, null, null, null, null, null, null), authentication);
 
         assertFalse(result.autoCollapse());
     }
@@ -85,9 +85,9 @@ class OptionsControllerTest {
 
     @Test
     void saveOptions_changesOnlyTheGivenField() {
-        optionsController.saveOptions(new OptionsController.OptionsDto(false, null, null, null, null, null), authentication);
+        optionsController.saveOptions(new OptionsController.OptionsDto(false, null, null, null, null, null, null), authentication);
 
-        var result = optionsController.saveOptions(new OptionsController.OptionsDto(null, 6, null, null, null, null), authentication);
+        var result = optionsController.saveOptions(new OptionsController.OptionsDto(null, 6, null, null, null, null, null), authentication);
 
         assertFalse(result.autoCollapse(), "autoCollapse must be kept");
         assertEquals(6, result.reminderHours());
@@ -97,7 +97,7 @@ class OptionsControllerTest {
     @Test
     void saveOptions_rejectsUnsupportedReminderHours() {
         var error = assertThrows(ResponseStatusException.class,
-                () -> optionsController.saveOptions(new OptionsController.OptionsDto(null, 5, null, null, null, null), authentication));
+                () -> optionsController.saveOptions(new OptionsController.OptionsDto(null, 5, null, null, null, null, null), authentication));
 
         assertEquals(400, error.getStatusCode().value());
     }
@@ -105,14 +105,14 @@ class OptionsControllerTest {
     @Test
     void saveOptions_storesQuietHoursAndTheTimeZone() {
         var result = optionsController.saveOptions(
-                new OptionsController.OptionsDto(null, null, true, 21, 8, "Europe/Vienna"), authentication);
+                new OptionsController.OptionsDto(null, null, true, 21, 8, "Europe/Vienna", null), authentication);
 
         assertTrue(result.quietHours());
         assertEquals(21, result.quietFrom());
         assertEquals(8, result.quietUntil());
         assertEquals("Europe/Vienna", result.timeZone());
 
-        var off = optionsController.saveOptions(new OptionsController.OptionsDto(null, null, false, null, null, null), authentication);
+        var off = optionsController.saveOptions(new OptionsController.OptionsDto(null, null, false, null, null, null, null), authentication);
         assertFalse(off.quietHours());
         assertEquals(21, off.quietFrom(), "the times are kept for next time");
     }
@@ -120,11 +120,30 @@ class OptionsControllerTest {
     @Test
     void saveOptions_rejectsBrokenQuietHours() {
         for (var dto : List.of(
-                new OptionsController.OptionsDto(null, null, true, 24, 7, null),
-                new OptionsController.OptionsDto(null, null, true, 7, 7, null),
-                new OptionsController.OptionsDto(null, null, true, 22, 7, "Mars/Olympus"))) {
+                new OptionsController.OptionsDto(null, null, true, 24, 7, null, null),
+                new OptionsController.OptionsDto(null, null, true, 7, 7, null, null),
+                new OptionsController.OptionsDto(null, null, true, 22, 7, "Mars/Olympus", null))) {
             var error = assertThrows(ResponseStatusException.class, () -> optionsController.saveOptions(dto, authentication));
             assertEquals(400, error.getStatusCode().value(), dto.toString());
         }
+    }
+
+    @Test
+    void newExerciseView_isOffByDefault() {
+        assertFalse(optionsController.getOptions(authentication).newExerciseView());
+    }
+
+    @Test
+    void newExerciseView_canBeChangedAndIsKeptByOtherChanges() {
+        var on = optionsController.saveOptions(
+                new OptionsController.OptionsDto(null, null, null, null, null, null, true), authentication);
+        assertTrue(on.newExerciseView());
+        assertTrue(on.autoCollapse(), "autoCollapse must be kept");
+
+        optionsController.saveOptions(new OptionsController.OptionsDto(false, null, null, null, null, null, null), authentication);
+        assertTrue(optionsController.getOptions(authentication).newExerciseView());
+
+        optionsController.saveOptions(new OptionsController.OptionsDto(null, null, null, null, null, null, false), authentication);
+        assertFalse(optionsController.getOptions(authentication).newExerciseView());
     }
 }

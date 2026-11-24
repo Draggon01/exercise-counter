@@ -41,6 +41,10 @@ public class UserOptions {
     @Column(name = "time_zone")
     private String timeZone;
 
+    /** Beta: compact cards and a page per exercise instead of everything on the card. */
+    @Column(name = "new_exercise_view", nullable = false)
+    private boolean newExerciseView;
+
     public UserOptions() {
     }
 
@@ -113,6 +117,14 @@ public class UserOptions {
         this.timeZone = timeZone;
     }
 
+    public boolean isNewExerciseView() {
+        return newExerciseView;
+    }
+
+    public void setNewExerciseView(boolean newExerciseView) {
+        this.newExerciseView = newExerciseView;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -124,19 +136,20 @@ public class UserOptions {
                 isQuietHours() == other.isQuietHours() &&
                 getQuietFrom() == other.getQuietFrom() &&
                 getQuietUntil() == other.getQuietUntil() &&
-                Objects.equals(getTimeZone(), other.getTimeZone());
+                Objects.equals(getTimeZone(), other.getTimeZone()) &&
+                isNewExerciseView() == other.isNewExerciseView();
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(isAutoCollapse(), getUsername(), getLastSeenChangelog(), getReminderHours(),
-                isQuietHours(), getQuietFrom(), getQuietUntil(), getTimeZone());
+                isQuietHours(), getQuietFrom(), getQuietUntil(), getTimeZone(), isNewExerciseView());
     }
 
     @Override
     public String toString() {
         return "UserOptions(username=" + this.getUsername() + ", autoCollapse=" + this.isAutoCollapse() + ", lastSeenChangelog=" + this.getLastSeenChangelog() + ", reminderHours=" + this.getReminderHours() +
                 ", quietHours=" + this.isQuietHours() + " " + this.getQuietFrom() + "-" + this.getQuietUntil() +
-                ", timeZone=" + this.getTimeZone() + ")";
+                ", timeZone=" + this.getTimeZone() + ", newExerciseView=" + this.isNewExerciseView() + ")";
     }
 }

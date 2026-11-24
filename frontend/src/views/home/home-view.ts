@@ -33,7 +33,7 @@ import {
     selectAllChecks,
     selectChecksPerExercise
 } from "./slice/checkSlice";
-import {loadOptions} from "../options/slice/optionsSlice";
+import {loadOptions, selectOptionsReady} from "../options/slice/optionsSlice";
 import {loadPushState, loadReminders} from "../options/slice/pushSlice";
 import {dropIndex, moveItem, shiftFor} from "../../utils/reorder";
 import {LatestValueSync} from "../../utils/latest-value-sync";
@@ -114,6 +114,10 @@ export class HomeView extends ConnectedLitElement {
     @state()
     private exercisesStatus: AsyncStoreState = "initial";
 
+    /** Which cards to show depends on the options: skeletons until they are known. */
+    @state()
+    private optionsReady = false;
+
     private stopRefresh?: () => void;
 
     connectedCallback() {
@@ -137,6 +141,7 @@ export class HomeView extends ConnectedLitElement {
 
     stateChanged(state: RootState) {
         this.exercisesStatus = selectExercisesStatus(state);
+        this.optionsReady = selectOptionsReady(state);
         if (state.checks.checks.status === "idle") {
             this.listChecks = selectAllChecks(state);
         }
@@ -222,7 +227,7 @@ export class HomeView extends ConnectedLitElement {
                     <sl-button @click="${() => store.dispatch(listExercisesSelected())}">Try again</sl-button>
                 </empty-state>`;
         }
-        if (this.exercisesStatus !== "idle" || !this.checksSelected) {
+        if (this.exercisesStatus !== "idle" || !this.checksSelected || !this.optionsReady) {
             return [1, 2].map(() => html`<sl-skeleton effect="pulse" class="skeleton"></sl-skeleton>`);
         }
         if (this.listExercises.length === 0) {
