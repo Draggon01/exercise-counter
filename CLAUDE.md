@@ -13,8 +13,8 @@ The database is PostgreSQL.
 The frontend is bundled with Vite and uses Lit components, Redux and Shoelace UI.
 The frontend routing is done with lit/labs router
 
-Spring Boot 4.0.3 
-Maven build, Java 23, PostgreSQL database.
+Spring Boot 4.1.3
+Maven build, Java 25, PostgreSQL database.
 
 ## Build & Test
 For backend
