@@ -267,7 +267,7 @@ Not needed for the start (50 MB per user is little), but must not become a rewri
 
 ---
 
-### [ ] T13.3 🎨 Guided workout (L)
+### [x] T13.3 🎨 Guided workout (L)
 Needs only Phases 10–11 (videos are shown if there are any).
 - Editor: "Guided workout" = Off / Fixed order / Shuffled, per exercise (`guided_mode`).
 - Page: "Start guided workout" next to the normal timer, only if not off and there are steps. Nothing starts by itself.
@@ -338,5 +338,5 @@ Default on first (users can still turn it off), later remove the old card, its c
 | 10 – Page and toggle | 5 | 5 |
 | 11 – Description, steps, notes | 4 | 4 |
 | 12 – Videos: backend and server | 6 | 0 |
-| 13 – Videos: frontend, guided workout, photos | 4 | 0 |
+| 13 – Videos: frontend, guided workout, photos | 4 | 1 |
 | 14 – Try out and switch over | 4 | 0 |

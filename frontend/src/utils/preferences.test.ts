@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import {afterEach, describe, expect, it, vi} from "vitest";
-import {getTimerSound, isVibrationOn, setTimerSound, setVibrationOn, vibrate} from "./preferences";
+import {getTimerSound, getWorkoutSetup, isVibrationOn, setTimerSound, setVibrationOn, vibrate} from "./preferences";
 
 describe("device preferences", () => {
     afterEach(() => {
@@ -23,6 +23,14 @@ describe("device preferences", () => {
         expect(isVibrationOn()).toBe(true);
         setVibrationOn(false);
         expect(isVibrationOn()).toBe(false);
+    });
+
+    it("workout setup survives broken or missing entries", () => {
+        expect(getWorkoutSetup("x")).toEqual({order: undefined, skipped: []});
+        for (const broken of ["{", "null", '{"order":5,"skipped":"a"}']) {
+            localStorage.setItem("exercise-counter.workout.x", broken);
+            expect(getWorkoutSetup("x")).toEqual({order: undefined, skipped: []});
+        }
     });
 
     it("vibrate only calls the device when vibration is on", () => {

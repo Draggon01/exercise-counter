@@ -6,7 +6,7 @@ import {RootState, store} from "../../store";
 import {pageStyles} from "../../styles/page";
 import {toast} from "../../components/toast";
 import {backPath, navigate, withBack} from "../../utils/navigation";
-import {formatGoal, streakOf} from "../../utils/exercise";
+import {exerciseTarget, formatGoal, isTimeExercise, streakOf} from "../../utils/exercise";
 import {formatTimeLeft, isUrgent} from "../../utils/format";
 import {vibrate} from "../../utils/preferences";
 import {onAppRefresh} from "../../utils/refresh";
@@ -25,6 +25,7 @@ import {saveProgress} from "../home/slice/progressSaver";
 import {createDoneSync} from "../home/slice/doneSync";
 import {selectCurrentUser} from "../login/slice/userSlice";
 import {loadPushState, loadReminders, selectCanChooseReminders, selectReminders} from "../options/slice/pushSlice";
+import {ExerciseStepDto} from "./models/exerciseDetailsDto";
 import {ExerciseDetailState, loadDetails, loadExercise, loadNote, saveNote, selectExerciseDetail} from "./slice/exerciseDetailSlice";
 import "../../components/page-header";
 import "../../components/empty-state";
@@ -35,6 +36,8 @@ import "../home/elements/exercise-progress";
 import "./elements/exercise-description";
 import "./elements/exercise-note";
 import "./elements/exercise-steps";
+import "./elements/guided-workout";
+import "./elements/workout-dialog";
 
 /**
  * Page of one exercise (/exercises/:id): timer / rep counter, who finished it, statistics and everything else
@@ -101,6 +104,11 @@ export class ExerciseView extends ConnectedLitElement {
             border-top: 1px solid var(--app-divider);
         }
 
+        .guided {
+            display: block;
+            margin-top: var(--app-space-3);
+        }
+
         .add-content {
             align-self: flex-start;
         }
@@ -163,6 +171,16 @@ export class ExerciseView extends ConnectedLitElement {
     @state()
     private adding = false;
 
+    @state()
+    private workoutDialogOpen = false;
+
+    /** The steps of the guided workout that is running. */
+    @state()
+    private workoutSteps?: ExerciseStepDto[];
+
+    /** Saves the workout time of the running workout. */
+    private saveWorkout: (seconds: number) => void = () => undefined;
+
     private back = backPath();
 
     private doneSync = createDoneSync(() => this.requestUpdate());
@@ -191,6 +209,8 @@ export class ExerciseView extends ConnectedLitElement {
     protected willUpdate(changed: PropertyValues<this>) {
         if (changed.has("exerciseId") && this.exerciseId) {
             this.back = backPath();
+            this.workoutDialogOpen = false;
+            this.workoutSteps = undefined;
             this.updateTimerRunning();
             void this.open(this.exerciseId);
             this.stateChanged(store.getState());
@@ -236,7 +256,7 @@ export class ExerciseView extends ConnectedLitElement {
     render() {
         const exercise = this.detail?.exercise;
         return html`
-            <div class="page-container">
+            <div class="page-container" ?inert="${this.workoutSteps !== undefined}">
                 <page-header heading="${exercise?.exerciseTitle ?? "Exercise"}" backTo="${this.back}">
                     ${exercise && this.isOnList(exercise) ? html`
                         <exercise-menu slot="actions" .item="${exercise}" withContent
@@ -249,6 +269,14 @@ export class ExerciseView extends ConnectedLitElement {
                 ${exercise ? this.renderExercise(exercise) : this.renderMissing()}
             </div>
             <exercise-confirm .action="${this.confirmAction}" @closed="${this.confirmClosed}"></exercise-confirm>
+            <workout-dialog .open="${this.workoutDialogOpen}" .exerciseId="${this.exerciseId}"
+                            .steps="${this.detail?.details?.steps ?? []}" .mode="${this.detail?.details?.guidedMode ?? "OFF"}"
+                            @start-workout="${this.startWorkout}" @cancel="${() => this.workoutDialogOpen = false}"></workout-dialog>
+            ${this.workoutSteps ? html`
+                <guided-workout .steps="${this.workoutSteps}" .label="${exercise?.exerciseTitle ?? ""}"
+                                ?offerDone="${this.ownChecks !== undefined && !this.isDone()}" @mark-done="${this.toggleDone}"
+                                @workout-progress="${(e: CustomEvent<number>) => this.saveWorkout(e.detail)}"
+                                @workout-closed="${() => this.workoutSteps = undefined}"></guided-workout>` : nothing}
         `;
     }
 
@@ -299,6 +327,11 @@ export class ExerciseView extends ConnectedLitElement {
                                                compact shared @mark-done="${this.toggleDone}"
                                                @progress-changed="${this.saveProgress(this.exerciseId)}"></exercise-progress>
                         `)}
+                        ${this.progress !== undefined && this.detail?.details?.steps.length && this.detail.details.guidedMode !== "OFF" ? html`
+                            <sl-button class="guided" size="large" @click="${() => this.workoutDialogOpen = true}">
+                                <sl-icon slot="prefix" name="list-ol"></sl-icon>
+                                Guided workout
+                            </sl-button>` : nothing}
                     </div>
                 ` : nothing}
                 ${this.renderDetails(exercise)}
@@ -350,6 +383,23 @@ export class ExerciseView extends ConnectedLitElement {
             ${details.steps.length > 0 ? keyed(this.exerciseId, html`
                 <exercise-steps .steps="${details.steps}"></exercise-steps>`) : nothing}
         `;
+    }
+
+    private startWorkout = (e: CustomEvent<ExerciseStepDto[]>) => {
+        const exercise = this.detail?.exercise;
+        this.workoutDialogOpen = false;
+        if (!exercise) return;
+        runningTimer.pause(); // never two timers; saves first, so the workout counts on top
+        const exerciseId = this.exerciseId;
+        const before = this.progress ?? 0;
+        const target = exerciseTarget(exercise);
+        // time exercises: the workout time counts; reps are up to the user
+        this.saveWorkout = seconds => {
+            if (isTimeExercise(exercise.exerciseType) && before < target) {
+                saveProgress(exerciseId, Math.min(target, before + seconds));
+            }
+        };
+        this.workoutSteps = e.detail;
     }
 
     private saveNote = async (e: CustomEvent<string>) => {

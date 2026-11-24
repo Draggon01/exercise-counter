@@ -1,4 +1,5 @@
 import {getTimerSound, vibrate} from "./preferences";
+import {ScreenLock} from "./screen-lock";
 import {playTimerSound} from "./sounds";
 
 /**
@@ -16,7 +17,7 @@ export class Countdown {
 
     private endsAt = 0;
     private interval?: ReturnType<typeof setInterval>;
-    private wakeLock?: WakeLockSentinel;
+    private readonly screenLock = new ScreenLock();
     private readonly listeners = new Set<() => void>();
 
     get finished() {
@@ -47,7 +48,7 @@ export class Countdown {
         this.endsAt = Date.now() + this.secondsLeft * 1000;
         this.interval = setInterval(this.tick, 1000);
         document.addEventListener("visibilitychange", this.onVisibilityChange);
-        void this.keepScreenOn();
+        this.screenLock.on();
         this.changed();
     }
 
@@ -86,29 +87,11 @@ export class Countdown {
         clearInterval(this.interval);
         this.interval = undefined;
         document.removeEventListener("visibilitychange", this.onVisibilityChange);
-        void this.wakeLock?.release().catch(() => undefined);
-        this.wakeLock = undefined;
+        this.screenLock.off();
     }
 
-    /** The browser releases the wake lock when the app is hidden. */
     private onVisibilityChange = () => {
-        if (document.visibilityState === "visible") {
-            void this.keepScreenOn();
-            this.tick();
-        }
-    }
-
-    private async keepScreenOn() {
-        try {
-            const lock = await navigator.wakeLock?.request("screen");
-            if (this.running) {
-                this.wakeLock = lock;
-            } else {
-                void lock?.release().catch(() => undefined); // paused in the meantime
-            }
-        } catch {
-            // denied (e.g. battery saver) – the timer works anyway
-        }
+        if (document.visibilityState === "visible") this.tick();
     }
 
     private changed() {

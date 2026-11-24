@@ -32,6 +32,8 @@ Belong to one feature, listed here so they are not built a second time.
 | `<exercise-description>` | `views/exercise/elements/exercise-description.ts` | Text with "Show more" after 3 lines (prop `text`) | ✅ |
 | `<exercise-steps>` / `<exercise-step>` | `views/exercise/elements/` | Steps: list on computers, swiped on phones (props `steps` / `step`, `number`) | ✅ |
 | `<exercise-note>` | `views/exercise/elements/exercise-note.ts` | The user's own note: one tap to edit (props `text`, `saving`; event `save-note`) | ✅ |
+| `<workout-dialog>` | `views/exercise/elements/workout-dialog.ts` | Before a guided workout: order, skip, shuffle; remembered on the device (props `open`, `exerciseId`, `steps`, `mode`; events `start-workout` (detail steps), `cancel`) | ✅ |
+| `<guided-workout>` | `views/exercise/elements/guided-workout.ts` | Full screen through the steps (props `steps`, `label`, `offerDone`; events `GuidedWorkoutEvents`) | ✅ |
 | `<step-dialog>` | `views/exercise/elements/step-dialog.ts` | Add / edit a step (props `open`, `step`, `saving`; events `save-step`, `cancel`) | ✅ |
 | `<exercise-menu>` | `views/home/elements/exercise-menu.ts` | ⋯ menu of an exercise (Edit, Description & steps with `withContent`, Remind me, Hide, Delete); events `menu-edit`, `menu-content`, `menu-hide`, `menu-delete` (home card, exercise page) | ✅ |
 | `<exercise-confirm>` | `views/home/elements/exercise-confirm.ts` | Asks before delete / hide and does it: prop `action` (`{kind, exercise}`), event `closed` (detail: done?) | ✅ |
@@ -72,6 +74,9 @@ Belong to one feature, listed here so they are not built a second time.
 | `formatGoal`, `exerciseTarget`, `progressPercent`, `streakOf` | `src/utils/exercise.ts` | Goal text, target, progress and own streak of an exercise | ✅ |
 | `withBack(path, back)` / `backPath()` | `src/utils/navigation.ts` | A sub page whose Back leads to the page it was opened from (exercise page, Browse) instead of home | ✅ |
 | `isPlainClick(e)` | `src/utils/navigation.ts` | Link click the app handles itself (not "open in new tab") | ✅ |
+| `workoutPhases`, `applyOrder`, `shuffle`, `GuidedRun` | `src/utils/guided-workout.ts` | Sequence and clock of a guided workout, without UI | ✅ |
+| `ScreenLock` | `src/utils/screen-lock.ts` | Keep the screen on while something runs (`on()` / `off()`) | ✅ |
+| `playStepSound(kind, sound)` | `src/utils/sounds.ts` | Short go / rest signal | ✅ |
 | `scrollParent(el)` | `src/utils/scroll.ts` | The scrolling ancestor across shadow roots (the app shell's main) | ✅ |
 | `createDoneSync(onChange)` | `src/views/home/slice/doneSync.ts` | "Mark as done" for a view (LatestValueSync + check slice) | ✅ |
 | `Countdown` | `src/utils/countdown.ts` | Countdown without UI: clock based, wake lock, finish sound, `report` for saving | ✅ |

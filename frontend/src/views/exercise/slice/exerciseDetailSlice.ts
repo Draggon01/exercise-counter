@@ -2,7 +2,7 @@ import {createSlice, Reducer} from "@reduxjs/toolkit";
 import {AsyncStoreState} from "../../../commons";
 import {apiDelete, apiGet, apiPost, apiPut, apiThunk} from "../../../api/http";
 import {ExerciseDto} from "../../home/models/exerciseDto";
-import {ExerciseDetailsDto, ExerciseStepDto, ExerciseStepRequest} from "../models/exerciseDetailsDto";
+import {ExerciseDetailsDto, ExerciseStepDto, ExerciseStepRequest, GuidedMode} from "../models/exerciseDetailsDto";
 import {saveExercise} from "../../home/slice/exerciseSlice";
 import {logoutUser} from "../../login/slice/userSlice";
 
@@ -39,6 +39,10 @@ export const loadDetails = apiThunk<ExerciseDetailsDto, string>(
 export const saveDescription = apiThunk<ExerciseDetailsDto, { exerciseId: string, description: string }>(
     'exerciseDetail/saveDescription', ({exerciseId, description}) =>
         apiPut(`${detailsUrl(exerciseId)}/details`, {description}));
+
+export const saveGuidedMode = apiThunk<ExerciseDetailsDto, { exerciseId: string, guidedMode: GuidedMode }>(
+    'exerciseDetail/saveGuidedMode', ({exerciseId, guidedMode}) =>
+        apiPut(`${detailsUrl(exerciseId)}/details`, {guidedMode}));
 
 export const addStep = apiThunk<ExerciseStepDto, { exerciseId: string, step: ExerciseStepRequest }>(
     'exerciseDetail/addStep', ({exerciseId, step}) => apiPost(`${detailsUrl(exerciseId)}/steps`, step));
@@ -100,6 +104,11 @@ const exerciseDetailSlice = createSlice({
                 // only the description: a step may have been changed at the same time
                 if (state.exerciseId === action.meta.arg.exerciseId && state.details) {
                     state.details.description = action.payload.description;
+                }
+            })
+            .addCase(saveGuidedMode.fulfilled, (state, action) => {
+                if (state.exerciseId === action.meta.arg.exerciseId && state.details) {
+                    state.details.guidedMode = action.payload.guidedMode;
                 }
             })
             .addCase(addStep.fulfilled, (state, action) => {

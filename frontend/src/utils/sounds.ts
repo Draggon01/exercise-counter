@@ -44,8 +44,15 @@ export function soundNotes(sound: TimerSound): Note[] {
     }
 }
 
-export function playTimerSound(sound: TimerSound) {
-    const notes = soundNotes(sound);
+export const playTimerSound = (sound: TimerSound) => playNotes(soundNotes(sound));
+
+/** Short signal between the parts of a guided workout: high = go, low = rest. Silent if the timer has no sound. */
+export function playStepSound(kind: "work" | "rest", sound: TimerSound) {
+    if (sound === "none") return;
+    playNotes([{at: 0, frequency: kind === "work" ? 1047 : 523, length: 0.35, type: "sine"}]);
+}
+
+function playNotes(notes: Note[]) {
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AudioCtx || notes.length === 0) return;
     const ctx = new AudioCtx();

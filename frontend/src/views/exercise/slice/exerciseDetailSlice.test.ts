@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {addStep, deleteStep, exerciseDetailReducer, loadDetails, loadExercise, loadNote, saveNote, selectExerciseDetail, updateStep} from "./exerciseDetailSlice";
+import {addStep, deleteStep, exerciseDetailReducer, loadDetails, loadExercise, loadNote, saveGuidedMode, saveNote, selectExerciseDetail, updateStep} from "./exerciseDetailSlice";
 import {ExerciseDto} from "../../home/models/exerciseDto";
 import {saveExercise} from "../../home/slice/exerciseSlice";
 
@@ -45,6 +45,14 @@ describe("exerciseDetail slice", () => {
 
         // another exercise starts without details
         expect(exerciseDetailReducer(state, loadExercise.pending("r", "b")).details).toBeUndefined();
+    });
+
+    it("takes over only the guided mode when that is saved", () => {
+        const details = {description: "old", guidedMode: "OFF" as const, steps: []};
+        let state = exerciseDetailReducer(loaded, loadDetails.fulfilled(details, "r", "a"));
+        const saved = {description: "other", guidedMode: "SHUFFLED" as const, steps: []};
+        state = exerciseDetailReducer(state, saveGuidedMode.fulfilled(saved, "r", {exerciseId: "a", guidedMode: "SHUFFLED"}));
+        expect(state.details).toEqual({...details, guidedMode: "SHUFFLED"});
     });
 
     it("keeps the own note of the exercise that is shown", () => {

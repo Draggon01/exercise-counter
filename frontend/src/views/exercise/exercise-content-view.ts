@@ -1,7 +1,8 @@
 import {css, html, nothing} from "lit";
 import {customElement, property, state} from "lit/decorators.js";
+import {live} from "lit/directives/live.js";
 import {repeat} from "lit/directives/repeat.js";
-import type {SlTextarea} from "@shoelace-style/shoelace";
+import type {SlRadioGroup, SlTextarea} from "@shoelace-style/shoelace";
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from "../../store";
 import {pageStyles} from "../../styles/page";
@@ -12,7 +13,7 @@ import {navigate} from "../../utils/navigation";
 import {moveItem} from "../../utils/reorder";
 import {SortableController} from "../../utils/sortable";
 import {selectCurrentUser} from "../login/slice/userSlice";
-import {ExerciseStepDto, ExerciseStepRequest} from "./models/exerciseDetailsDto";
+import {ExerciseStepDto, ExerciseStepRequest, GuidedMode} from "./models/exerciseDetailsDto";
 import {
     addStep,
     deleteStep,
@@ -22,6 +23,7 @@ import {
     MAX_STEPS,
     reorderSteps,
     saveDescription,
+    saveGuidedMode,
     selectExerciseDetail,
     updateStep
 } from "./slice/exerciseDetailSlice";
@@ -99,6 +101,15 @@ export class ExerciseContentView extends ConnectedLitElement {
             align-self: flex-start;
         }
 
+        sl-radio-group::part(button-group),
+        sl-radio-group::part(button-group__base) {
+            width: 100%;
+        }
+
+        sl-radio-button {
+            flex: 1;
+        }
+
         .skeleton {
             --border-radius: var(--app-radius);
             height: 120px;
@@ -137,6 +148,9 @@ export class ExerciseContentView extends ConnectedLitElement {
 
     @state()
     private stepToDelete?: ExerciseStepDto;
+
+    /** The last save of the description (resolves also if it failed). */
+    private descriptionSaved?: Promise<unknown>;
 
     private sortable = new SortableController(this, {
         items: ".step",
@@ -228,6 +242,14 @@ export class ExerciseContentView extends ConnectedLitElement {
                         Add step
                     </sl-button>
                 ` : html`<p class="muted">An exercise can have up to ${MAX_STEPS} steps.</p>`}
+                ${steps.length > 0 ? html`
+                    <sl-radio-group label="Guided workout" .value="${live(details.guidedMode)}"
+                                    help-text="Leads through the steps one by one, with rests. Everybody can change the order or leave out steps."
+                                    @sl-change="${this.saveGuidedMode}">
+                        <sl-radio-button value="OFF">Off</sl-radio-button>
+                        <sl-radio-button value="ORDERED">Fixed order</sl-radio-button>
+                        <sl-radio-button value="SHUFFLED">Shuffled</sl-radio-button>
+                    </sl-radio-group>` : nothing}
             </div>
         `;
     }
@@ -240,8 +262,20 @@ export class ExerciseContentView extends ConnectedLitElement {
     private saveDescription = async (e: Event) => {
         const description = (e.target as SlTextarea).value.trim();
         if (description === this.detail?.details?.description) return;
-        const result = await store.dispatch(saveDescription({exerciseId: this.exerciseId, description}));
+        const saving = store.dispatch(saveDescription({exerciseId: this.exerciseId, description}));
+        this.descriptionSaved = saving;
+        const result = await saving;
         if (saveDescription.fulfilled.match(result)) toast("Description saved", "success", 2000);
+    }
+
+    private saveGuidedMode = async (e: Event) => {
+        const guidedMode = (e.target as SlRadioGroup).value as GuidedMode;
+        const exerciseId = this.exerciseId;
+        // tapping here leaves the description field: both belong to one row, so one after the other
+        await this.descriptionSaved;
+        const result = await store.dispatch(saveGuidedMode({exerciseId, guidedMode}));
+        if (saveGuidedMode.fulfilled.match(result)) toast("Guided workout saved", "success", 2000);
+        else this.requestUpdate(); // shows the saved value again
     }
 
     private saveStep = async (e: CustomEvent<ExerciseStepRequest>) => {

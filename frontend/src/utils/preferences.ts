@@ -47,3 +47,27 @@ export function vibrate(pattern: number | number[]) {
         navigator.vibrate?.(pattern);
     }
 }
+
+/** The user's own order of a guided workout and the steps left out. */
+export interface WorkoutSetup {
+    /** step ids; undefined: the creator's order */
+    order?: string[];
+    skipped: string[];
+}
+
+const workoutKey = (exerciseId: string) => `exercise-counter.workout.${exerciseId}`;
+
+const strings = (value: unknown) => Array.isArray(value) ? value.filter(v => typeof v === "string") as string[] : undefined;
+
+export function getWorkoutSetup(exerciseId: string): WorkoutSetup {
+    try {
+        const stored = JSON.parse(read(workoutKey(exerciseId)) ?? "{}") as { order?: unknown, skipped?: unknown } | null;
+        return {order: strings(stored?.order), skipped: strings(stored?.skipped) ?? []};
+    } catch {
+        return {skipped: []};
+    }
+}
+
+export function setWorkoutSetup(exerciseId: string, setup: WorkoutSetup) {
+    write(workoutKey(exerciseId), JSON.stringify(setup));
+}
