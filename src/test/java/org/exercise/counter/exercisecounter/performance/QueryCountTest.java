@@ -102,6 +102,13 @@ class QueryCountTest {
     }
 
     @Test
+    void oneExercise_constantQueries() {
+        long small = measure(2, () -> exerciseService.get(created.getFirst().getExerciseId(), USER));
+        long large = measure(6, () -> exerciseService.get(created.getFirst().getExerciseId(), USER));
+        assertEquals(small, large, "one exercise must not depend on how many others there are");
+    }
+
+    @Test
     void checksWithStreaks_constantQueries() {
         long small = measure(2, () -> checkService.listPerSelectedExercise(USER));
         long large = measure(6, () -> checkService.listPerSelectedExercise(USER));

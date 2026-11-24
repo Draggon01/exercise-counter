@@ -35,19 +35,22 @@ public class ExerciseService {
     private final UserSelectionRepository userSelectionRepository;
     private final SchedulerService schedulerService;
     private final SelectionService selectionService;
+    private final ExerciseAccess exerciseAccess;
 
     public ExerciseService(ExerciseRepository exerciseRepository,
                            ExerciseGroupMappingRepository exerciseGroupMappingRepository,
                            UserGroupMappingRepository userGroupMappingRepository,
                            UserSelectionRepository userSelectionRepository,
                            SchedulerService schedulerService,
-                           SelectionService selectionService) {
+                           SelectionService selectionService,
+                           ExerciseAccess exerciseAccess) {
         this.exerciseRepository = exerciseRepository;
         this.exerciseGroupMappingRepository = exerciseGroupMappingRepository;
         this.userGroupMappingRepository = userGroupMappingRepository;
         this.userSelectionRepository = userSelectionRepository;
         this.schedulerService = schedulerService;
         this.selectionService = selectionService;
+        this.exerciseAccess = exerciseAccess;
     }
 
     /**
@@ -72,6 +75,17 @@ public class ExerciseService {
         return userSelectionRepository.findWithExerciseByUsername(username).stream()
                 .map(selection -> toDto(selection.getExercise(), selection.getPosition(), groupsByExercise))
                 .toList();
+    }
+
+    /**
+     * One exercise; its position is set if it is on the user's home page. 404 if the user may not see it.
+     */
+    @Transactional(readOnly = true)
+    public ExerciseDto get(UUID exerciseId, String username) {
+        Exercise exercise = exerciseAccess.requireVisible(exerciseId, username);
+        Integer position = userSelectionRepository.findById(new UserSelectionId(username, exerciseId))
+                .map(UserSelection::getPosition).orElse(null);
+        return toDto(exercise, position, Map.of(exerciseId, groupNames(exerciseId)));
     }
 
     /**
@@ -184,7 +198,7 @@ public class ExerciseService {
     }
 
     private List<String> groupNames(UUID exerciseId) {
-        return exerciseGroupMappingRepository.findByExerciseGroupMappingId_ExerciseId(exerciseId).stream()
+        return exerciseGroupMappingRepository.findWithGroupByExerciseId(exerciseId).stream()
                 .map(mapping -> mapping.getGroup().getGroupName())
                 .toList();
     }

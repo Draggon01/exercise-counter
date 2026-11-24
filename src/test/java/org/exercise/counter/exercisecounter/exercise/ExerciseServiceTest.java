@@ -12,8 +12,13 @@ import org.exercise.counter.exercisecounter.web.data.userselection.UserSelection
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionId;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
 import org.exercise.counter.exercisecounter.web.rest.error.ForbiddenException;
+import org.exercise.counter.exercisecounter.web.rest.error.NotFoundException;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
+import org.exercise.counter.exercisecounter.web.rest.log.ExerciseLogController;
+import org.exercise.counter.exercisecounter.web.rest.log.dto.ExerciseLogRequest;
+import org.exercise.counter.exercisecounter.web.service.ExerciseAccess;
 import org.exercise.counter.exercisecounter.web.service.ExerciseService;
+import org.exercise.counter.exercisecounter.web.service.SelectionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +29,7 @@ import org.springframework.context.annotation.Import;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,6 +44,9 @@ class ExerciseServiceTest {
     private static final String GROUP = "svc-group";
 
     @Autowired private ExerciseService exerciseService;
+    @Autowired private ExerciseAccess exerciseAccess;
+    @Autowired private SelectionService selectionService;
+    @Autowired private ExerciseLogController logController;
     @Autowired private ExerciseRepository exerciseRepository;
     @Autowired private UserRepository userRepository;
     @Autowired private GroupRepository groupRepository;
@@ -101,6 +110,51 @@ class ExerciseServiceTest {
 
         assertEquals(Set.of("group"), titles(exerciseService.listAvailable(BOB)));
         assertEquals(Set.of("public"), titles(exerciseService.listSelected(BOB)));
+    }
+
+    @Test
+    void get_onlyWhatTheUserMaySee() {
+        assertEquals("public", exerciseService.get(publicEx.getExerciseId(), CAROL).exerciseTitle());
+        assertEquals("private", exerciseService.get(privateEx.getExerciseId(), ALICE).exerciseTitle());
+        assertEquals(List.of(GROUP), exerciseService.get(groupEx.getExerciseId(), BOB).groups());
+
+        assertThrows(NotFoundException.class, () -> exerciseService.get(privateEx.getExerciseId(), BOB));
+        assertThrows(NotFoundException.class, () -> exerciseService.get(groupEx.getExerciseId(), CAROL), "only invited");
+        assertThrows(NotFoundException.class, () -> exerciseService.get(UUID.randomUUID(), ALICE));
+    }
+
+    @Test
+    void get_staysVisibleOnTheHomeList_withItsPosition() {
+        assertNull(exerciseService.get(publicEx.getExerciseId(), BOB).position());
+        userSelectionRepository.save(new UserSelection(new UserSelectionId(BOB, privateEx.getExerciseId()), 3));
+
+        assertEquals(3, exerciseService.get(privateEx.getExerciseId(), BOB).position());
+    }
+
+    @Test
+    void select_onlyWhatIsShared() {
+        assertThrows(NotFoundException.class, () -> selectionService.select(privateEx.getExerciseId(), BOB));
+        assertThrows(NotFoundException.class, () -> selectionService.select(groupEx.getExerciseId(), CAROL));
+
+        selectionService.select(groupEx.getExerciseId(), BOB);
+        assertEquals(Set.of("group"), titles(exerciseService.listSelected(BOB)));
+    }
+
+    @Test
+    void progress_onlyForVisibleExercises() {
+        var bob = org.springframework.security.core.userdetails.User.withUsername(BOB).password("x").roles("USER").build();
+
+        assertThrows(NotFoundException.class,
+                () -> logController.saveLog(privateEx.getExerciseId(), new ExerciseLogRequest(5), bob));
+        assertThrows(NotFoundException.class, () -> logController.getLog(privateEx.getExerciseId(), bob));
+        assertNull(logController.getLog(publicEx.getExerciseId(), bob).value());
+    }
+
+    @Test
+    void requireCreator_forbiddenIfVisible_notFoundOtherwise() {
+        assertEquals("private", exerciseAccess.requireCreator(privateEx.getExerciseId(), ALICE).getExerciseTitle());
+        assertThrows(ForbiddenException.class, () -> exerciseAccess.requireCreator(publicEx.getExerciseId(), BOB));
+        assertThrows(NotFoundException.class, () -> exerciseAccess.requireCreator(privateEx.getExerciseId(), BOB));
     }
 
     @Test

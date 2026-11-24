@@ -85,7 +85,7 @@ Exercise page, phone (swipe) / computer (list):
   If it fails, use the old card.
 - Tests: `OptionsControllerTest` (default off, other PUTs keep it), slice test.
 
-### [ ] T10.2 🧱 Read one exercise (S)
+### [x] T10.2 🧱 Read one exercise (S)
 - `GET /api/exercises/{id}` → `ExerciseDto`; 404 if unknown **or not visible** (does not reveal that it exists).
 - `ExerciseAccess` (service): `requireVisible(id, user)` = visible (`isVisibleTo`, pulled out of `ExerciseService`)
   or on the user's home list (an exercise made private later stays on the list today); `requireCreator(id, user)`.
@@ -334,7 +334,7 @@ Default on first (users can still turn it off), later remove the old card, its c
 
 | Phase | Tasks | Done |
 |---|---|---|
-| 10 – Page and toggle | 5 | 1 |
+| 10 – Page and toggle | 5 | 2 |
 | 11 – Description, steps, notes | 4 | 0 |
 | 12 – Videos: backend and server | 6 | 0 |
 | 13 – Videos: frontend, guided workout, photos | 4 | 0 |

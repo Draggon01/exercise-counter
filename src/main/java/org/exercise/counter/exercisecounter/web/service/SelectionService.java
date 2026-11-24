@@ -16,14 +16,17 @@ import java.util.UUID;
 public class SelectionService {
 
     private final UserSelectionRepository userSelectionRepository;
+    private final ExerciseAccess exerciseAccess;
 
-    public SelectionService(UserSelectionRepository userSelectionRepository) {
+    public SelectionService(UserSelectionRepository userSelectionRepository, ExerciseAccess exerciseAccess) {
         this.userSelectionRepository = userSelectionRepository;
+        this.exerciseAccess = exerciseAccess;
     }
 
-    /** Adds the exercise to the end of the user's list. */
+    /** Adds the exercise to the end of the user's list (404 if it is not shared with the user). */
     @Transactional
     public void select(UUID exerciseId, String username) {
+        exerciseAccess.requireShared(exerciseId, username);
         int nextPosition = userSelectionRepository.findMaxPositionByUsername(username)
                 .map(max -> max + 1)
                 .orElse(0);

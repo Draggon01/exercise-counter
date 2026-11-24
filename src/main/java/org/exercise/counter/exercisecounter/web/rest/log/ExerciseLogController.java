@@ -5,6 +5,7 @@ import org.exercise.counter.exercisecounter.web.data.log.ExerciseLogId;
 import org.exercise.counter.exercisecounter.web.data.log.ExerciseLogRepository;
 import org.exercise.counter.exercisecounter.web.rest.log.dto.ExerciseLogDto;
 import org.exercise.counter.exercisecounter.web.rest.log.dto.ExerciseLogRequest;
+import org.exercise.counter.exercisecounter.web.service.ExerciseAccess;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,13 +22,16 @@ import java.util.UUID;
 public class ExerciseLogController {
 
     private final ExerciseLogRepository exerciseLogRepository;
+    private final ExerciseAccess exerciseAccess;
 
-    public ExerciseLogController(ExerciseLogRepository exerciseLogRepository) {
+    public ExerciseLogController(ExerciseLogRepository exerciseLogRepository, ExerciseAccess exerciseAccess) {
+        this.exerciseAccess = exerciseAccess;
         this.exerciseLogRepository = exerciseLogRepository;
     }
 
     @GetMapping("/{exerciseId}")
     public ExerciseLogDto getLog(@PathVariable UUID exerciseId, @AuthenticationPrincipal UserDetails user) {
+        exerciseAccess.requireVisible(exerciseId, user.getUsername());
         return exerciseLogRepository.findById(new ExerciseLogId(exerciseId, user.getUsername()))
                 .map(log -> new ExerciseLogDto(log.getValue()))
                 .orElse(new ExerciseLogDto(null));
@@ -37,6 +41,7 @@ public class ExerciseLogController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void saveLog(@PathVariable UUID exerciseId, @RequestBody ExerciseLogRequest request,
                         @AuthenticationPrincipal UserDetails user) {
+        exerciseAccess.requireVisible(exerciseId, user.getUsername());
         ExerciseLogId logId = new ExerciseLogId(exerciseId, user.getUsername());
         exerciseLogRepository.save(new ExerciseLog(logId, request.value(), LocalDateTime.now()));
     }

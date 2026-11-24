@@ -42,6 +42,12 @@ public class ExerciseController {
         return exerciseService.listAvailable(user.getUsername());
     }
 
+    /** One exercise, 404 if the current user may not see it. */
+    @GetMapping("/{exerciseId}")
+    public ExerciseDto get(@PathVariable UUID exerciseId, @AuthenticationPrincipal UserDetails user) {
+        return exerciseService.get(exerciseId, user.getUsername());
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ExerciseDto create(@RequestBody ExerciseDto exercise, @AuthenticationPrincipal UserDetails user) {
