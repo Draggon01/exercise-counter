@@ -20,7 +20,9 @@ import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelection;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionId;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
+import org.exercise.counter.exercisecounter.web.rest.detail.dto.ExerciseStepRequest;
 import org.exercise.counter.exercisecounter.web.service.CheckService;
+import org.exercise.counter.exercisecounter.web.service.ExerciseDetailService;
 import org.exercise.counter.exercisecounter.web.service.ExerciseService;
 import org.exercise.counter.exercisecounter.web.service.GroupService;
 import org.exercise.counter.exercisecounter.web.service.StatisticService;
@@ -53,6 +55,7 @@ class QueryCountTest {
 
     @Autowired private EntityManagerFactory entityManagerFactory;
     @Autowired private ExerciseService exerciseService;
+    @Autowired private ExerciseDetailService exerciseDetailService;
     @Autowired private CheckService checkService;
     @Autowired private StatisticService statisticService;
     @Autowired private GroupService groupService;
@@ -109,6 +112,20 @@ class QueryCountTest {
     }
 
     @Test
+    void exerciseDetails_constantQueries() {
+        assertEquals(measureDetails(1), measureDetails(6), "details must not issue one query per step");
+    }
+
+    private long measureDetails(int steps) {
+        return measure(1, () -> exerciseDetailService.load(created.getFirst().getExerciseId(), USER), () -> {
+            for (int i = 0; i < steps; i++) {
+                exerciseDetailService.addStep(created.getFirst().getExerciseId(),
+                        new ExerciseStepRequest("step " + i, null, null, null, null, null), OTHER);
+            }
+        });
+    }
+
+    @Test
     void checksWithStreaks_constantQueries() {
         long small = measure(2, () -> checkService.listPerSelectedExercise(USER));
         long large = measure(6, () -> checkService.listPerSelectedExercise(USER));
@@ -137,8 +154,13 @@ class QueryCountTest {
 
     /** Creates {@code n} exercises (with groups, selections, checks, periods) and counts the statements of {@code action}. */
     private long measure(int n, Runnable action) {
+        return measure(n, action, () -> { });
+    }
+
+    private long measure(int n, Runnable action, Runnable moreSeed) {
         cleanup();
         seed(n);
+        moreSeed.run();
         Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
         statistics.clear();
         action.run();

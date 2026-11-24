@@ -30,6 +30,10 @@ import org.exercise.counter.exercisecounter.web.data.userselection.UserSelection
 import org.exercise.counter.exercisecounter.web.scheduler.SchedulerService;
 import org.exercise.counter.exercisecounter.web.service.AccountDeletionService;
 import org.exercise.counter.exercisecounter.web.service.GroupService;
+import org.exercise.counter.exercisecounter.web.data.detail.ExerciseStepRepository;
+import org.exercise.counter.exercisecounter.web.rest.detail.dto.ExerciseDetailsRequest;
+import org.exercise.counter.exercisecounter.web.rest.detail.dto.ExerciseStepRequest;
+import org.exercise.counter.exercisecounter.web.service.ExerciseDetailService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,6 +66,8 @@ class AccountDeletionTest {
     @Autowired private PeriodRepository periodRepository;
     @Autowired private FinishedUserRepository finishedUserRepository;
     @Autowired private CheckRepository checkRepository;
+    @Autowired private ExerciseDetailService detailService;
+    @Autowired private ExerciseStepRepository stepRepository;
     @Autowired private ExerciseLogRepository logRepository;
     @Autowired private UserOptionsRepository optionsRepository;
     @Autowired private PushSubscriptionRepository subscriptionRepository;
@@ -100,11 +106,13 @@ class AccountDeletionTest {
         Exercise solo = exercise("Solo plank");
         onHomeList(LEO, solo);
         period(solo, LEO);
+        detailService.addStep(solo.getExerciseId(), step("Hold"), LEO);
 
         var result = deletionService.deleteAccount(LEO, PASSWORD);
 
         assertEquals(List.of(solo.getExerciseId()), result.deleted());
         assertFalse(exerciseRepository.existsById(solo.getExerciseId()));
+        assertTrue(stepRepository.findByExerciseIdOrderByPosition(solo.getExerciseId()).isEmpty());
         assertFalse(schedulerService.isScheduled(solo.getExerciseId()), "scheduler stopped");
         assertTrue(userRepository.findByUsername(LEO).isEmpty());
     }
@@ -118,12 +126,16 @@ class AccountDeletionTest {
         period(pushUps, LEO, ANNA, BEN);
         period(pushUps, LEO, BEN);
         period(pushUps, BEN);
+        detailService.update(pushUps.getExerciseId(), new ExerciseDetailsRequest("Elbows in", null), LEO);
+        detailService.addStep(pushUps.getExerciseId(), step("Warm up"), LEO);
 
         var result = deletionService.deleteAccount(LEO, PASSWORD);
 
         assertEquals(Map.of(pushUps.getExerciseId(), BEN), result.handedOver());
         Exercise kept = exerciseRepository.findById(pushUps.getExerciseId()).orElseThrow();
         assertEquals(BEN, kept.getCreator());
+        assertEquals("Elbows in", detailService.load(kept.getExerciseId(), BEN).description());
+        assertEquals("Warm up", detailService.load(kept.getExerciseId(), BEN).steps().getFirst().title());
         assertTrue(schedulerService.isScheduled(kept.getExerciseId()), "keeps running for the others");
         assertEquals(List.of(ANNA, BEN), selectionRepository.findUsernamesByExerciseId(kept.getExerciseId()));
         assertTrue(finishedUserRepository.findFinishersByExerciseIds(List.of(kept.getExerciseId())).stream()
@@ -193,6 +205,10 @@ class AccountDeletionTest {
     }
 
     // ---- helpers
+
+    private static ExerciseStepRequest step(String title) {
+        return new ExerciseStepRequest(title, null, null, null, null, null);
+    }
 
     private Exercise exercise(String title) {
         Exercise e = new Exercise();

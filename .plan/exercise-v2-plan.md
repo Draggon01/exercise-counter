@@ -140,7 +140,7 @@ Today the timer covers everything with its focus view when started; then no vide
 
 ## Phase 11 – Description and steps (text)
 
-### [ ] T11.1 🧱 Data model and API (M)
+### [x] T11.1 🧱 Data model and API (M)
 - Migration:
   - `exercise_detail (exercise_id UUID PK → exercise ON DELETE CASCADE, description TEXT, guided_mode OFF|ORDERED|SHUFFLED DEFAULT OFF)`
   - `exercise_step (step_id UUID PK, exercise_id → exercise ON DELETE CASCADE, position INT, title, hints, sets INT, reps INT, duration_seconds INT, rest_seconds INT)`
@@ -336,7 +336,7 @@ Default on first (users can still turn it off), later remove the old card, its c
 | Phase | Tasks | Done |
 |---|---|---|
 | 10 – Page and toggle | 5 | 5 |
-| 11 – Description, steps, notes | 4 | 0 |
+| 11 – Description, steps, notes | 4 | 1 |
 | 12 – Videos: backend and server | 6 | 0 |
 | 13 – Videos: frontend, guided workout, photos | 4 | 0 |
 | 14 – Try out and switch over | 4 | 0 |
