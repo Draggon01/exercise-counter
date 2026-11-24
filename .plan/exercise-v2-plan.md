@@ -93,7 +93,7 @@ Exercise page, phone (swipe) / computer (list):
 - Also use `requireVisible` in `ExerciseLogController`: it accepts any exercise id today.
 - Tests: public / private / group member / invited only / home list; extend `QueryCountTest`.
 
-### [ ] T10.3 🎨 Exercise page (L)
+### [x] T10.3 🎨 Exercise page (L)
 - `views/exercise/exercise-view.ts`, `views/exercise/slice/exerciseDetailSlice.ts` (attach to `store.ts`),
   route `/exercises/:id` **after** `/exercises/new`.
 - Content: `page-header` (Back → `/`, ⋯ menu: Edit, Remind me, Hide, Delete), goal / time left / streak,
@@ -334,7 +334,7 @@ Default on first (users can still turn it off), later remove the old card, its c
 
 | Phase | Tasks | Done |
 |---|---|---|
-| 10 – Page and toggle | 5 | 2 |
+| 10 – Page and toggle | 5 | 3 |
 | 11 – Description, steps, notes | 4 | 0 |
 | 12 – Videos: backend and server | 6 | 0 |
 | 13 – Videos: frontend, guided workout, photos | 4 | 0 |

@@ -8,7 +8,7 @@ import {listUserMappings, selectUserMappingByUser} from "../groups/slice/groupSl
 import {selectCurrentUser} from "../login/slice/userSlice";
 import {AsyncStoreState} from "../../commons";
 import {pageStyles} from "../../styles/page";
-import {navigate} from "../../utils/navigation";
+import {backPath, navigate} from "../../utils/navigation";
 import {toast} from "../../components/toast";
 import "../../components/page-header";
 import "../../components/empty-state";
@@ -32,6 +32,9 @@ export class ExerciseEditView extends ConnectedLitElement {
     /** Id of the exercise to edit; empty for a new exercise. */
     @property()
     exerciseId = "";
+
+    /** The page it was opened from (exercise page), otherwise home. */
+    private back = backPath();
 
     @state()
     private exercise?: ExerciseDto;
@@ -71,7 +74,7 @@ export class ExerciseEditView extends ConnectedLitElement {
         const editing = !!this.exerciseId;
         return html`
             <div class="page-container">
-                <page-header heading="${editing ? "Edit exercise" : "New exercise"}" backTo="/"></page-header>
+                <page-header heading="${editing ? "Edit exercise" : "New exercise"}" backTo="${this.back}"></page-header>
                 ${this.renderContent(editing)}
             </div>
         `;
@@ -90,7 +93,7 @@ export class ExerciseEditView extends ConnectedLitElement {
         }
         return html`
             <exercise-form .exercise="${this.exercise}" .groups="${this.groups}" ?saving="${this.saving}"
-                           @save="${this.save}" @cancel="${() => navigate("/")}"></exercise-form>
+                           @save="${this.save}" @cancel="${() => navigate(this.back)}"></exercise-form>
         `;
     }
 
@@ -100,7 +103,7 @@ export class ExerciseEditView extends ConnectedLitElement {
         this.saving = false;
         if (saveExercise.fulfilled.match(result)) {
             toast(this.exerciseId ? "Changes saved" : `"${e.detail.exerciseTitle}" created`, "success");
-            navigate("/");
+            navigate(this.back);
         }
     }
 }

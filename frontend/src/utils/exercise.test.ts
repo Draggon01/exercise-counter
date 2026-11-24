@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {exerciseTimeZone, isIncreaseExercise, isRepExercise, isTimeExercise} from "./exercise";
+import {exerciseTimeZone, isIncreaseExercise, isRepExercise, isTimeExercise, exerciseTarget, formatGoal, progressPercent, streakOf} from "./exercise";
 
 describe("exercise type helpers", () => {
     it.each([
@@ -26,5 +26,25 @@ describe("exerciseTimeZone", () => {
 
     it("old exercise without zone gets the browser's when saved", () => {
         expect(exerciseTimeZone({timeZone: null}, "Europe/Vienna")).toBe("Europe/Vienna");
+    });
+});
+
+describe("goal and progress", () => {
+    it("formats the goal by type", () => {
+        expect(formatGoal({exerciseType: "TIMEREPEAT", exerciseValue: "1200"})).toBe("20:00");
+        expect(formatGoal({exerciseType: "NUMBERINCREASE", exerciseValue: "40"})).toBe("40 reps");
+        expect(formatGoal({exerciseType: "NUMBERREPEAT", exerciseValue: ""})).toBe("No goal set");
+    });
+
+    it("target and percent stay in range", () => {
+        expect(exerciseTarget({exerciseValue: "abc"})).toBe(0);
+        expect(progressPercent(10, 40)).toBe(25);
+        expect(progressPercent(50, 40)).toBe(100);
+        expect(progressPercent(5, 0)).toBe(0);
+    });
+
+    it("finds the user's own streak", () => {
+        expect(streakOf([{user: "a", streak: 3}, {user: "b", streak: 5}], "b")).toBe(5);
+        expect(streakOf([], "b")).toBeUndefined();
     });
 });

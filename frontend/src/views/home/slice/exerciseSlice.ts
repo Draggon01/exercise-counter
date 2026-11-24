@@ -1,7 +1,8 @@
 import {AsyncStoreState} from "../../../commons";
 import {ExerciseDto} from "../models/exerciseDto";
-import {createEntityAdapter, createSlice, EntityState, Reducer} from "@reduxjs/toolkit";
+import {createEntityAdapter, createSlice, EntityState, PayloadAction, Reducer} from "@reduxjs/toolkit";
 import {ExerciseLogDto} from "../models/exerciseLogDto";
+import {logoutUser} from "../../login/slice/userSlice";
 import {apiDelete, apiGet, apiPost, apiPut, apiThunk} from "../../../api/http";
 
 type ExerciseList = {
@@ -18,6 +19,8 @@ type SliceState = {
     available: ExerciseList,
     /** All exercises the user may see (options: missed entries). */
     visible: ExerciseList,
+    /** Progress of the current period per exercise (seconds or reps done); missing until loaded. */
+    progress: Record<string, number>,
 }
 
 type SliceProjection = {
@@ -32,6 +35,7 @@ const initialState: SliceState = {
     },
     available: {status: "initial", items: []},
     visible: {status: "initial", items: []},
+    progress: {},
 }
 
 /** All exercises the user may see. */
@@ -85,7 +89,12 @@ export const saveExerciseLog = apiThunk<void, ExerciseLogDto>(
 export const exerciseSlice = createSlice({
     name: 'exercise',
     initialState: initialState,
-    reducers: {},
+    reducers: {
+        /** What the user just did (timer, counter): shown at once, saved with {@link saveExerciseLog}. */
+        progressChanged(state, action: PayloadAction<{ exerciseId: string, value: number }>) {
+            state.progress[action.payload.exerciseId] = action.payload.value;
+        },
+    },
     // list loads track their status; mutations only change data on success (their errors are shown as toasts)
     extraReducers: builder => {
         builder
@@ -117,6 +126,15 @@ export const exerciseSlice = createSlice({
             .addCase(listExercises.fulfilled, (state, action) => {
                 state.visible = {status: 'idle', items: action.payload};
             })
+            .addCase(loadExerciseLog.fulfilled, (state, action) => {
+                state.progress[action.meta.arg] = action.payload.value ?? 0;
+            })
+            .addCase(loadExerciseLog.rejected, (state, action) => {
+                state.progress[action.meta.arg] ??= 0;
+            })
+            .addCase(logoutUser.fulfilled, state => {
+                state.progress = {};
+            })
             .addCase(saveExercise.fulfilled, (state, action) => {
                 exerciseAdapter.upsertOne(state.exercises, action.payload);
             })
@@ -144,6 +162,10 @@ export const {
     selectAll: selectAllExercises
 } = exerciseAdapter.getSelectors((state: SliceProjection) => state.exercise.exercises);
 
+export const {progressChanged} = exerciseSlice.actions;
+
+export const selectProgress = (state: SliceProjection, exerciseId: string): number | undefined =>
+    state.exercise.progress[exerciseId];
 export const selectExercisesStatus = (state: SliceProjection) => state.exercise.exercises.status;
 export const selectAvailableExercises = (state: SliceProjection) => state.exercise.available.items;
 export const selectAvailableStatus = (state: SliceProjection) => state.exercise.available.status;

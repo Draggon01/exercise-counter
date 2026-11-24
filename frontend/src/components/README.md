@@ -27,6 +27,11 @@ Belong to one feature, listed here so they are not built a second time.
 | Tag | File | Purpose | Status |
 |---|---|---|---|
 | `<exercise-card>` | `views/home/elements/exercise-card.ts` | One exercise on the home page (goal, time left, progress, finishers, done toggle, ⋯ menu with "Remind me" when this device gets reminders, bell in the subtitle when on). Events (`ExerciseCardEvents`): `move-up`, `move-down`, `hide-exercise`, `delete-exercise`, `edit-exercise` (detail ExerciseDto), `check-changed` (detail boolean) | ✅ |
+| `<exercise-view>` | `views/exercise/exercise-view.ts` | Page `/exercises/:id` (new exercise view): everything about one exercise, also for exercises not on the list ("Add to my list"); slice `exerciseDetailSlice` | ✅ |
+| `<exercise-menu>` | `views/home/elements/exercise-menu.ts` | ⋯ menu of an exercise (Edit, Remind me, Hide, Delete); events `menu-edit`, `menu-hide`, `menu-delete` (home card, exercise page) | ✅ |
+| `<exercise-confirm>` | `views/home/elements/exercise-confirm.ts` | Asks before delete / hide and does it: prop `action` (`{kind, exercise}`), event `closed` (detail: done?) | ✅ |
+| `<exercise-finishers>` | `views/home/elements/exercise-finishers.ts` | "Finished by" chips (prop `checks`) | ✅ |
+| `<exercise-progress>` | `views/home/elements/exercise-progress.ts` | Timer or rep counter + bar by exercise type (props `item`, `value`, `done`; event `progress-changed`) | ✅ |
 | `<browse-card>` | `views/home/elements/browse-card.ts` | One exercise in the browse list (title, creator · goal, Add button). Event (`BrowseCardEvents`): `select-exercise` (detail ExerciseDto) | ✅ |
 | `<exercise-form>` | `views/home/elements/exercise-form.ts` | Create / edit form: "what do you count" + "increase" → type (`toExerciseType`), time picker, sharing; sticky Cancel / Save bar (props `exercise`, `groups`, `saving`; events `save` (ExerciseDto), `cancel`) | ✅ |
 | `<exercise-edit-view>` | `views/exercise-edit/exercise-edit-view.ts` | Page `/exercises/new` and `/exercises/:id/edit` around `<exercise-form>` (loads exercise + groups, saves, toasts) | ✅ |
@@ -56,6 +61,10 @@ Belong to one feature, listed here so they are not built a second time.
 | `moveItem`, `dropIndex`, `shiftFor` | `src/utils/reorder.ts` | Sorting a list by drag & drop (home edit order: grip handle `data-drag-handle` on the card, pointer events in the view) | ✅ |
 | `onAppRefresh(load)` / `requestAppRefresh()`, `pullDistance` | `src/utils/refresh.ts` | Pull to refresh: pages register their loader in `connectedCallback` (call the returned function in `disconnectedCallback`); the app shell shows the indicator until the loaders are done | ✅ |
 | `pushSupport(env)`, `currentPushEnvironment()`, `base64UrlToBytes`, `REMINDER_HOURS`, `reminderHoursLabel`, `setupPlatform(userAgent, maxTouchPoints)` | `src/utils/push.ts` | Push reminders: what the browser can do, the server key for `pushManager.subscribe`, which setup guide tab fits the browser | ✅ |
+| `formatGoal`, `exerciseTarget`, `progressPercent`, `streakOf` | `src/utils/exercise.ts` | Goal text, target, progress and own streak of an exercise | ✅ |
+| `withBack(path, back)` / `backPath()` | `src/utils/navigation.ts` | A sub page whose Back leads to the page it was opened from (exercise page, Browse) instead of home | ✅ |
+| `scrollParent(el)` | `src/utils/scroll.ts` | The scrolling ancestor across shadow roots (the app shell's main) | ✅ |
+| `createDoneSync(onChange)` | `src/views/home/slice/doneSync.ts` | "Mark as done" for a view (LatestValueSync + check slice) | ✅ |
 | `LatestValueSync` | `src/utils/latest-value-sync.ts` | Saving a toggle per item without flooding the server: shown at once, one request at a time, only the latest wish is sent (home: "Mark as done") | ✅ |
 | `placeTooltip(anchor, size, area)` | `src/utils/tooltip.ts` | Position of a custom tooltip: above (below if no room), always inside the visible area (statistics grid) | ✅ |
 | `newPasswordProblem(password, repeated)`, `MIN_PASSWORD_LENGTH` | `src/utils/password.ts` | New-password checks (same minimum as the backend): change password, reset page | ✅ |

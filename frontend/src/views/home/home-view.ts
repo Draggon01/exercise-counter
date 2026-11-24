@@ -8,16 +8,15 @@ import {customElement, state} from "lit/decorators.js";
 import {RootState, store} from '../../store';
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {
-    deleteExercise,
     listExercisesSelected,
     reorderExercises,
     selectAllExercises,
-    selectExercisesStatus,
-    unselectExercise
+    selectExercisesStatus
 } from './slice/exerciseSlice';
 import {ExerciseDto} from "./models/exerciseDto";
 import './elements/exercise-card'
-import '../../components/confirm-dialog'
+import './elements/exercise-confirm'
+import {ExerciseConfirmAction} from './elements/exercise-confirm'
 import '../../components/empty-state'
 import {navigate} from "../../utils/navigation";
 import {vibrate} from "../../utils/preferences";
@@ -26,17 +25,16 @@ import {UserDto} from '../login/models/userDto';
 import {selectCurrentUser} from "../login/slice/userSlice";
 import {CheckDto} from "./models/checkDto";
 import {
-    deleteCheck,
     listChecksPerExercise,
     listUserChecks,
-    saveCheck,
     selectAllChecks,
     selectChecksPerExercise
 } from "./slice/checkSlice";
 import {loadOptions, selectOptionsReady} from "../options/slice/optionsSlice";
 import {loadPushState, loadReminders} from "../options/slice/pushSlice";
 import {dropIndex, moveItem, shiftFor} from "../../utils/reorder";
-import {LatestValueSync} from "../../utils/latest-value-sync";
+import {scrollParent} from "../../utils/scroll";
+import {createDoneSync} from "./slice/doneSync";
 
 /** State of a running drag (edit order): positions are relative to the list's top, so scrolling does not matter. */
 interface DragState {
@@ -66,10 +64,7 @@ export class HomeView extends ConnectedLitElement {
     private user?: UserDto;
 
     @state()
-    private exerciseToDelete?: ExerciseDto;
-
-    @state()
-    private exerciseToHide?: ExerciseDto;
+    private confirmAction?: ExerciseConfirmAction;
 
     @state()
     private editMode = false;
@@ -182,41 +177,12 @@ export class HomeView extends ConnectedLitElement {
             <div class="exercise-list" @pointerdown="${this.dragStart}">${this.renderItems()}</div>
             </div>
             ${this.editMode ? nothing : html`<fab-button label="New exercise" @click="${() => this.openForm()}"></fab-button>`}
-            <confirm-dialog label="Delete exercise" confirmLabel="Delete Exercise" cancelLabel="Close"
-                            .open="${this.exerciseToDelete !== undefined}"
-                            @confirm="${this.confirmDelete}"
-                            @cancel="${() => this.exerciseToDelete = undefined}">
-                You are about to delete this exercise. This action cannot be undone.
-                Are you sure you want to proceed?
-            </confirm-dialog>
-            <confirm-dialog label="Hide exercise" confirmLabel="Hide Exercise" variant="warning"
-                            .open="${this.exerciseToHide !== undefined}"
-                            @confirm="${this.confirmHide}"
-                            @cancel="${() => this.exerciseToHide = undefined}">
-                You are about to hide this exercise from your list.
-                You can add it back at any time from the Browse view.
-                Are you sure you want to proceed?
-            </confirm-dialog>
-
+            <exercise-confirm .action="${this.confirmAction}" @closed="${() => this.confirmAction = undefined}"></exercise-confirm>
         `;
     }
 
     private toggleEditMode = () => {
         this.editMode = !this.editMode;
-    }
-
-    private confirmDelete = () => {
-        if (this.exerciseToDelete) {
-            store.dispatch(deleteExercise(this.exerciseToDelete));
-        }
-        this.exerciseToDelete = undefined;
-    }
-
-    private confirmHide = () => {
-        if (this.exerciseToHide?.exerciseId) {
-            store.dispatch(unselectExercise(this.exerciseToHide.exerciseId));
-        }
-        this.exerciseToHide = undefined;
     }
 
     private renderItems() {
@@ -255,10 +221,10 @@ export class HomeView extends ConnectedLitElement {
                             .editMode="${this.editMode}"
                             @move-up="${() => this.move(exerciseDtos, index, -1)}"
                             @move-down="${() => this.move(exerciseDtos, index, 1)}"
-                            @delete-exercise="${(e: CustomEvent<ExerciseDto>) => this.exerciseToDelete = e.detail}"
+                            @delete-exercise="${(e: CustomEvent<ExerciseDto>) => this.confirmAction = {kind: "delete", exercise: e.detail}}"
                             @edit-exercise="${(e: CustomEvent<ExerciseDto>) => this.openForm(e.detail)}"
                             @check-changed="${(e: CustomEvent<boolean>) => this.setFinished(element, e.detail)}"
-                            @hide-exercise="${(e: CustomEvent<ExerciseDto>) => this.exerciseToHide = e.detail}"
+                            @hide-exercise="${(e: CustomEvent<ExerciseDto>) => this.confirmAction = {kind: "hide", exercise: e.detail}}"
                     ></exercise-card>`;
             })}
         `;
@@ -384,30 +350,10 @@ export class HomeView extends ConnectedLitElement {
         this.dragCancel();
     }
 
-    /** "Mark as done" / "Done": shown at once, saved one request at a time (fast clicks send only the last state). */
-    private doneSync = new LatestValueSync<boolean>(async (exerciseId, done) => {
-        const check: CheckDto = {exerciseId, user: this.user?.username ?? "", streak: -1};
-        const result = done ? await store.dispatch(saveCheck(check)) : await store.dispatch(deleteCheck(check));
-        const saved = saveCheck.fulfilled.match(result) || deleteCheck.fulfilled.match(result);
-        if (saved) {
-            store.dispatch(listChecksPerExercise()); // "Finished by" chips and streaks
-        }
-        return saved;
-    }, () => this.requestUpdate());
+    private doneSync = createDoneSync(() => this.requestUpdate());
 
     private setFinished(exercise: ExerciseDto, finished: boolean) {
         this.doneSync.set(exercise.exerciseId, finished, this.isSavedAsDone(exercise.exerciseId));
     }
 
-}
-
-/** The nearest scrolling ancestor, also across shadow roots and slots (the app shell's main). */
-function scrollParent(el: HTMLElement): HTMLElement | undefined {
-    let node: Element | null = el;
-    while (node) {
-        const next: Element | null = node.assignedSlot ?? node.parentElement ?? ((node.getRootNode() as ShadowRoot).host ?? null);
-        if (next instanceof HTMLElement && /(auto|scroll)/.test(getComputedStyle(next).overflowY)) return next;
-        node = next;
-    }
-    return undefined;
 }

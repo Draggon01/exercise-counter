@@ -1,6 +1,7 @@
 import {combineReducers, configureStore} from "@reduxjs/toolkit";
 import {userReducer} from "./views/login/slice/userSlice";
 import {exerciseReducer} from "./views/home/slice/exerciseSlice";
+import {exerciseDetailReducer} from "./views/exercise/slice/exerciseDetailSlice";
 import {checkReducer} from "./views/home/slice/checkSlice";
 import {statisticReducer} from "./views/statistics/slice/statisticSlice";
 import {groupReducer} from "./views/groups/slice/groupSlice";
@@ -17,6 +18,7 @@ import {registerReducer} from "./views/register/slice/registerSlice";
 const rootReducer = combineReducers({
     user: userReducer,
     exercise: exerciseReducer,
+    exerciseDetail: exerciseDetailReducer,
     checks: checkReducer,
     statistic: statisticReducer,
     group: groupReducer,

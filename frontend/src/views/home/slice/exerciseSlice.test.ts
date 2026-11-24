@@ -4,6 +4,8 @@ import {
     exerciseReducer,
     listExercisesAvailable,
     listExercisesSelected,
+    loadExerciseLog,
+    progressChanged,
     saveExercise,
     selectExercise,
 } from "./exerciseSlice";
@@ -37,6 +39,15 @@ describe("exerciseSlice", () => {
 
         expect(state.exercises.status).toBe("idle");
         expect(state.exercises.ids).toEqual(["a"]);
+    });
+
+    it("keeps the progress per exercise", () => {
+        let state = exerciseReducer(init(), loadExerciseLog.fulfilled({exerciseId: "a", value: 30}, "r1", "a"));
+        state = exerciseReducer(state, loadExerciseLog.fulfilled({exerciseId: "b", value: null}, "r2", "b"));
+        expect(state.progress).toEqual({a: 30, b: 0});
+
+        state = exerciseReducer(state, progressChanged({exerciseId: "a", value: 45}));
+        expect(state.progress.a).toBe(45);
     });
 
     it("selecting removes the exercise from the browse list", () => {

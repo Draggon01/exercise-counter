@@ -13,6 +13,7 @@ import {selectCurrentUser} from "../login/slice/userSlice";
 import {AsyncStoreState} from "../../commons";
 import {pageStyles} from "../../styles/page";
 import {addableDays, closedPeriods, CURRENT_PERIOD, MISSED_ENTRY_PERIODS, participants, PeriodRow, summarize, UserSummary, visiblePeople} from "../../utils/statistics";
+import {backPath} from "../../utils/navigation";
 import "../../components/page-header";
 import "../../components/empty-state";
 import "../../components/confirm-dialog";
@@ -366,6 +367,9 @@ export class StatisticsView extends ConnectedLitElement {
         this.hideTip();
     }
 
+    /** The page it was opened from (exercise page), otherwise home. */
+    private back = backPath();
+
     connectedCallback() {
         super.connectedCallback();
         store.dispatch(loadStatistic(this.exerciseId));
@@ -386,7 +390,7 @@ export class StatisticsView extends ConnectedLitElement {
     render() {
         return html`
             <div class="page-container">
-                <page-header heading="${this.exerciseTitle || "Statistics"}" backTo="/"></page-header>
+                <page-header heading="${this.exerciseTitle || "Statistics"}" backTo="${this.back}"></page-header>
                 ${this.renderContent()}
             </div>
             ${this.tip ? html`

@@ -11,12 +11,12 @@ import {CheckDto} from "../models/checkDto";
 import {RootState, store} from "../../../store";
 import {loadExerciseLog, saveExerciseLog} from "../slice/exerciseSlice";
 import {selectAutoCollapse} from "../../options/slice/optionsSlice";
-import {selectCanChooseReminders, selectReminders, setExerciseReminder} from "../../options/slice/pushSlice";
-import type {SlMenuItem, SlSelectEvent} from "@shoelace-style/shoelace";
-import {formatDuration, formatTimeLeft, isUrgent} from "../../../utils/format";
-import {isRepExercise, isTimeExercise} from "../../../utils/exercise";
-import "./exercise-timer";
-import "./rep-counter";
+import {selectCanChooseReminders, selectReminders} from "../../options/slice/pushSlice";
+import {formatTimeLeft, isUrgent} from "../../../utils/format";
+import {formatGoal, streakOf} from "../../../utils/exercise";
+import "./exercise-finishers";
+import "./exercise-menu";
+import "./exercise-progress";
 
 /**
  * Events of {@link ExerciseCard}. Detail is the card's {@link ExerciseDto}, except for
@@ -157,46 +157,6 @@ export class ExerciseCard extends ConnectedLitElement {
             color: var(--app-text-subtle);
         }
 
-        .danger-item::part(base) {
-            color: var(--app-danger);
-        }
-
-        /* ---- body */
-        .progress {
-            display: flex;
-            flex-direction: column;
-            gap: var(--app-space-2);
-        }
-
-        sl-progress-bar {
-            --height: 6px;
-            --indicator-color: var(--app-accent);
-        }
-
-        .done sl-progress-bar {
-            --indicator-color: var(--app-success);
-        }
-
-        .finishers {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: var(--app-space-1) var(--app-space-2);
-            font-size: 0.85em;
-            color: var(--app-text-muted);
-        }
-
-        .finisher {
-            padding: 2px var(--app-space-2);
-            border-radius: var(--app-radius-pill);
-            background: var(--app-success-soft);
-            color: var(--app-success-strong);
-        }
-
-        .no-finisher {
-            color: var(--app-text-subtle);
-        }
-
         /* ---- footer */
         .card-footer {
             display: flex;
@@ -275,25 +235,8 @@ export class ExerciseCard extends ConnectedLitElement {
         }
     }
 
-    /** Target of the current period: seconds for time exercises, reps otherwise. */
-    private _target(): number {
-        return parseInt(this.item.exerciseValue ?? '0', 10) || 0;
-    }
-
-    private _formatGoal(): string {
-        if (!this.item.exerciseValue) return 'No goal set';
-        if (isTimeExercise(this.item.exerciseType)) {
-            const secs = parseInt(this.item.exerciseValue, 10);
-            return isNaN(secs) ? this.item.exerciseValue : formatDuration(secs);
-        }
-        if (isRepExercise(this.item.exerciseType)) {
-            return `${this.item.exerciseValue} reps`;
-        }
-        return this.item.exerciseValue;
-    }
-
     private _myStreak(): number | undefined {
-        return this.finishedUser.find(check => check.user === this.user?.username)?.streak;
+        return streakOf(this.finishedUser, this.user?.username);
     }
 
     private async _loadLog() {
@@ -324,7 +267,7 @@ export class ExerciseCard extends ConnectedLitElement {
                     <div class="title">
                         <h2 class="headline">${this.item.exerciseTitle}</h2>
                         <div class="subtitle">
-                            <span>${this._formatGoal()}</span>
+                            <span>${formatGoal(this.item)}</span>
                             <span>·</span>
                             ${this.checked
                                     ? html`<span>Done for this period</span>`
@@ -360,42 +303,19 @@ export class ExerciseCard extends ConnectedLitElement {
     }
 
     private _renderMenu() {
-        const isCreator = this.user?.username === this.item.creator;
         return html`
-            <sl-dropdown placement="bottom-end">
-                <sl-icon-button slot="trigger" name="three-dots-vertical" label="More actions"></sl-icon-button>
-                <sl-menu @sl-select="${this._menuSelect}">
-                    ${isCreator ? html`
-                        <sl-menu-item value="edit"><sl-icon slot="prefix" name="pencil"></sl-icon>Edit</sl-menu-item>
-                    ` : nothing}
-                    ${this._canRemind ? html`
-                        <sl-menu-item value="reminder" type="checkbox" ?checked="${this._hasReminder()}">
-                            Remind me
-                        </sl-menu-item>
-                    ` : nothing}
-                    <sl-menu-item value="hide"><sl-icon slot="prefix" name="eye-slash"></sl-icon>Hide from my list</sl-menu-item>
-                    ${isCreator ? html`
-                        <sl-divider></sl-divider>
-                        <sl-menu-item value="delete" class="danger-item">
-                            <sl-icon slot="prefix" name="trash"></sl-icon>Delete
-                        </sl-menu-item>
-                    ` : nothing}
-                </sl-menu>
-            </sl-dropdown>
+            <exercise-menu .item="${this.item}"
+                           @menu-edit="${() => this._emit(ExerciseCardEvents.edit, this.item)}"
+                           @menu-hide="${() => this._emit(ExerciseCardEvents.hide, this.item)}"
+                           @menu-delete="${() => this._emit(ExerciseCardEvents.delete, this.item)}"></exercise-menu>
         `;
     }
 
     private _renderBody() {
         return html`
-            ${this._renderProgress()}
-            <div class="finishers">
-                <span>Finished by</span>
-                ${this.finishedUser.length === 0
-                        ? html`<span class="no-finisher">nobody yet</span>`
-                        : this.finishedUser.map(check => html`
-                            <span class="finisher">${check.user}${check.streak > 1 ? ` 🔥${check.streak}` : ""}</span>
-                        `)}
-            </div>
+            <exercise-progress .item="${this.item}" .value="${this._progress}" ?done="${this.checked}"
+                               @progress-changed="${this._saveProgress}"></exercise-progress>
+            <exercise-finishers .checks="${this.finishedUser}"></exercise-finishers>
             <div class="card-footer">
                 <sl-button variant="text" size="small" @click="${() => navigate('/statistics/' + this.item.exerciseId)}">
                     <sl-icon slot="prefix" name="bar-chart"></sl-icon>
@@ -410,50 +330,9 @@ export class ExerciseCard extends ConnectedLitElement {
         `;
     }
 
-    private _renderProgress() {
-        if (isTimeExercise(this.item.exerciseType)) {
-            return html`
-                <div class="progress">
-                    <exercise-timer .targetSeconds="${this._target()}" .completedSeconds="${this._progress}"
-                                    .label="${this.item.exerciseTitle}"
-                                    @progress-changed="${this._saveProgress}"></exercise-timer>
-                </div>`;
-        }
-        if (isRepExercise(this.item.exerciseType)) {
-            const target = this._target();
-            const percent = target > 0 ? Math.min(100, Math.round(this._progress / target * 100)) : 0;
-            return html`
-                <div class="progress">
-                    <rep-counter .target="${target}" .value="${this._progress}"
-                                 @progress-changed="${this._saveProgress}"></rep-counter>
-                    <sl-progress-bar value="${percent}" label="Progress"></sl-progress-bar>
-                </div>`;
-        }
-        return nothing;
-    }
-
     private _toggleCollapse = () => {
         if (!this._autoCollapse) return;
         this._collapsed = !this._collapsed;
-    }
-
-    private _menuSelect = (e: SlSelectEvent) => {
-        switch (e.detail.item.value) {
-            case "edit":
-                return this._emit(ExerciseCardEvents.edit, this.item);
-            case "hide":
-                return this._emit(ExerciseCardEvents.hide, this.item);
-            case "delete":
-                return this._emit(ExerciseCardEvents.delete, this.item);
-            case "reminder":
-                return this._toggleReminder(e.detail.item);
-        }
-    }
-
-    private async _toggleReminder(menuItem: SlMenuItem) {
-        await store.dispatch(setExerciseReminder({exerciseId: this.item.exerciseId, on: menuItem.checked}));
-        // failed: the menu shows the real state again
-        menuItem.checked = this._hasReminder();
     }
 
     private _emit<T>(type: string, detail: T) {
