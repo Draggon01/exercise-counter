@@ -11,12 +11,16 @@ public final class ReminderMessages {
     private ReminderMessages() {
     }
 
-    /** One notification for all exercises of a user that are due now. */
-    public static PushMessage reminder(List<String> exerciseTitles, long secondsLeft) {
+    /**
+     * One notification for all exercises of a user that are due now.
+     *
+     * @param singleUrl opened if it is about a single exercise (several always open the home page)
+     */
+    public static PushMessage reminder(List<String> exerciseTitles, long secondsLeft, String singleUrl) {
         String left = timeLeft(secondsLeft);
         if (exerciseTitles.size() == 1) {
             return new PushMessage(exerciseTitles.getFirst() + " is not done yet",
-                    left + " – keep your streak going 🔥", "/", REMINDER_TAG);
+                    left + " – keep your streak going 🔥", singleUrl, REMINDER_TAG);
         }
         return new PushMessage(exerciseTitles.size() + " exercises are not done yet",
                 String.join(", ", exerciseTitles) + " · " + left, "/", REMINDER_TAG);

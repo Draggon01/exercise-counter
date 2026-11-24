@@ -12,6 +12,32 @@ export const REP_SAVE_DEBOUNCE_MS = 500;
 export class RepCounter extends LitElement {
 
     static styles = css`
+        .compact {
+            display: grid;
+            grid-template-columns: minmax(56px, 1fr) minmax(72px, 1fr) minmax(56px, 1fr);
+            align-items: center;
+            gap: var(--app-space-2);
+        }
+
+        .compact sl-button::part(base) {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 56px;
+            font-size: 1.6rem;
+        }
+
+        .compact sl-input {
+            --sl-input-height-large: 56px;
+            --sl-input-font-size-large: 1.6rem;
+        }
+
+        .compact sl-input::part(input) {
+            text-align: center;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
         .rep-section {
             display: flex;
             align-items: center;
@@ -39,6 +65,10 @@ export class RepCounter extends LitElement {
     @property({type: Number})
     value = 0;
 
+    /** Big − / + buttons around the value (calm card). */
+    @property({type: Boolean})
+    compact = false;
+
     private debounce?: ReturnType<typeof setTimeout>;
 
     disconnectedCallback() {
@@ -47,6 +77,7 @@ export class RepCounter extends LitElement {
     }
 
     render() {
+        if (this.compact) return this.renderCompact();
         return html`
             <div class="rep-section">
                 <sl-input class="rep-input" type="number" inputmode="numeric" size="small" min="0" max="${this.target}" no-spin-buttons
@@ -57,9 +88,27 @@ export class RepCounter extends LitElement {
         `;
     }
 
+    private renderCompact() {
+        return html`
+            <div class="compact">
+                <sl-button size="large" aria-label="One less" ?disabled="${this.value <= 0}"
+                           @click="${() => this.change(this.value - 1)}">−</sl-button>
+                <sl-input type="number" inputmode="numeric" size="large" min="0" no-spin-buttons
+                          aria-label="Repetitions done" .value="${String(this.value)}"
+                          @sl-change="${this.onChange}"></sl-input>
+                <sl-button size="large" aria-label="One more"
+                           @click="${() => this.change(this.value + 1)}">+</sl-button>
+            </div>
+        `;
+    }
+
     private onChange = (e: Event) => {
         const parsed = parseInt((e.target as HTMLInputElement).value, 10);
-        this.value = Math.max(0, isNaN(parsed) ? 0 : parsed);
+        this.change(isNaN(parsed) ? 0 : parsed);
+    }
+
+    private change(value: number) {
+        this.value = Math.max(0, value);
         if (this.debounce) clearTimeout(this.debounce);
         this.debounce = setTimeout(() => this.report(), REP_SAVE_DEBOUNCE_MS);
     }

@@ -101,7 +101,11 @@ public class ReminderService {
             }
             long soonest = due.stream().mapToLong(s -> secondsLeft(s.getUserSelectionId().getExerciseId())).min().orElse(0);
             List<String> titles = due.stream().map(s -> s.getExercise().getExerciseTitle()).toList();
-            int delivered = pushService.send(devicesByUser.get(username), ReminderMessages.reminder(titles, soonest));
+            String singleUrl = options != null && options.isNewExerciseView()
+                    ? "/exercises/" + due.getFirst().getUserSelectionId().getExerciseId()
+                    : "/";
+            int delivered = pushService.send(devicesByUser.get(username),
+                    ReminderMessages.reminder(titles, soonest, singleUrl));
             if (delivered > 0) {
                 // only when it arrived somewhere – otherwise the next run tries again
                 reminderRepository.saveAll(due.stream()

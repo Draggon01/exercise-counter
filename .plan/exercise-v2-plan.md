@@ -118,7 +118,7 @@ Today the timer covers everything with its focus view when started; then no vide
 - Timer finished → offer "Mark as done" in place (no automatic check).
 - Tests: `running-timer.test.ts` (survives card → page → card, second timer pauses the first), extend `exercise-timer.test.ts`.
 
-### [ ] T10.5 🎨 Calm card (M)
+### [x] T10.5 🎨 Calm card (M)
 - `views/home/elements/exercise-card-compact.ts`, shown by `home-view` if the option is on. Content: D8.
 - Title is the real link (keyboard, screen reader) stretched over the card; start / pause, − / +, the value and the done
   circle are separate controls that never open the page. Start / pause and − / + ≥ 56 px high (− / + also ≥ 56 px wide),
@@ -334,7 +334,7 @@ Default on first (users can still turn it off), later remove the old card, its c
 
 | Phase | Tasks | Done |
 |---|---|---|
-| 10 – Page and toggle | 5 | 4 |
+| 10 – Page and toggle | 5 | 5 |
 | 11 – Description, steps, notes | 4 | 0 |
 | 12 – Videos: backend and server | 6 | 0 |
 | 13 – Videos: frontend, guided workout, photos | 4 | 0 |

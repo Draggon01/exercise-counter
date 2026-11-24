@@ -32,6 +32,9 @@ Belong to one feature, listed here so they are not built a second time.
 | `<exercise-confirm>` | `views/home/elements/exercise-confirm.ts` | Asks before delete / hide and does it: prop `action` (`{kind, exercise}`), event `closed` (detail: done?) | ✅ |
 | `<exercise-finishers>` | `views/home/elements/exercise-finishers.ts` | "Finished by" chips (prop `checks`) | ✅ |
 | `<exercise-progress>` | `views/home/elements/exercise-progress.ts` | Timer or rep counter + bar by exercise type (props `item`, `value`, `done`; event `progress-changed`) | ✅ |
+| `<exercise-card-compact>` | `views/home/elements/exercise-card-compact.ts` | Calm card of the new exercise view: opens the exercise, big start / − + controls, done circle (`ExerciseCardCompactEvents`) | ✅ |
+| `<exercise-sort-controls>` | `views/home/elements/exercise-sort-controls.ts` | Edit order: grip handle + arrows (events `move-up`, `move-down`) | ✅ |
+| `cardStyles` | `views/home/elements/card-styles.ts` | Styles both exercise cards share | ✅ |
 | `<browse-card>` | `views/home/elements/browse-card.ts` | One exercise in the browse list (title, creator · goal, Add button). Event (`BrowseCardEvents`): `select-exercise` (detail ExerciseDto) | ✅ |
 | `<exercise-form>` | `views/home/elements/exercise-form.ts` | Create / edit form: "what do you count" + "increase" → type (`toExerciseType`), time picker, sharing; sticky Cancel / Save bar (props `exercise`, `groups`, `saving`; events `save` (ExerciseDto), `cancel`) | ✅ |
 | `<exercise-edit-view>` | `views/exercise-edit/exercise-edit-view.ts` | Page `/exercises/new` and `/exercises/:id/edit` around `<exercise-form>` (loads exercise + groups, saves, toasts) | ✅ |
@@ -63,6 +66,7 @@ Belong to one feature, listed here so they are not built a second time.
 | `pushSupport(env)`, `currentPushEnvironment()`, `base64UrlToBytes`, `REMINDER_HOURS`, `reminderHoursLabel`, `setupPlatform(userAgent, maxTouchPoints)` | `src/utils/push.ts` | Push reminders: what the browser can do, the server key for `pushManager.subscribe`, which setup guide tab fits the browser | ✅ |
 | `formatGoal`, `exerciseTarget`, `progressPercent`, `streakOf` | `src/utils/exercise.ts` | Goal text, target, progress and own streak of an exercise | ✅ |
 | `withBack(path, back)` / `backPath()` | `src/utils/navigation.ts` | A sub page whose Back leads to the page it was opened from (exercise page, Browse) instead of home | ✅ |
+| `isPlainClick(e)` | `src/utils/navigation.ts` | Link click the app handles itself (not "open in new tab") | ✅ |
 | `scrollParent(el)` | `src/utils/scroll.ts` | The scrolling ancestor across shadow roots (the app shell's main) | ✅ |
 | `createDoneSync(onChange)` | `src/views/home/slice/doneSync.ts` | "Mark as done" for a view (LatestValueSync + check slice) | ✅ |
 | `Countdown` | `src/utils/countdown.ts` | Countdown without UI: clock based, wake lock, finish sound, `report` for saving | ✅ |

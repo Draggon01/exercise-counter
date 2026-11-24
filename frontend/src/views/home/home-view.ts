@@ -8,6 +8,7 @@ import {customElement, state} from "lit/decorators.js";
 import {RootState, store} from '../../store';
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {
+    listExerciseLogs,
     listExercisesSelected,
     reorderExercises,
     selectAllExercises,
@@ -15,6 +16,7 @@ import {
 } from './slice/exerciseSlice';
 import {ExerciseDto} from "./models/exerciseDto";
 import './elements/exercise-card'
+import './elements/exercise-card-compact'
 import './elements/exercise-confirm'
 import {ExerciseConfirmAction} from './elements/exercise-confirm'
 import '../../components/empty-state'
@@ -30,7 +32,7 @@ import {
     selectAllChecks,
     selectChecksPerExercise
 } from "./slice/checkSlice";
-import {loadOptions, selectOptionsReady} from "../options/slice/optionsSlice";
+import {loadOptions, selectNewExerciseView, selectOptionsReady} from "../options/slice/optionsSlice";
 import {loadPushState, loadReminders} from "../options/slice/pushSlice";
 import {dropIndex, moveItem, shiftFor} from "../../utils/reorder";
 import {scrollParent} from "../../utils/scroll";
@@ -50,6 +52,8 @@ interface DragState {
     scroller?: HTMLElement;
 }
 
+/** Scroll position of the list when an exercise was opened (the view itself is replaced by the page). */
+let scrollBeforeOpen: number | undefined;
 
 @customElement("home-view")
 export class HomeView extends ConnectedLitElement {
@@ -113,16 +117,24 @@ export class HomeView extends ConnectedLitElement {
     @state()
     private optionsReady = false;
 
+    @state()
+    private newExerciseView = false;
+
+    private logsRequested = false;
+
     private stopRefresh?: () => void;
 
     connectedCallback() {
         super.connectedCallback();
-        this.load();
         store.dispatch(loadOptions());
+        this.load();
         if (store.getState().push.status === "initial") {
             store.dispatch(loadPushState()); // the cards offer "Remind me" only on devices that get reminders
         }
-        this.stopRefresh = onAppRefresh(() => this.load());
+        this.stopRefresh = onAppRefresh(() => Promise.all([
+            this.load(),
+            ...(this.newExerciseView ? [store.dispatch(listExerciseLogs())] : []),
+        ]));
     }
 
     private load() {
@@ -137,6 +149,12 @@ export class HomeView extends ConnectedLitElement {
     stateChanged(state: RootState) {
         this.exercisesStatus = selectExercisesStatus(state);
         this.optionsReady = selectOptionsReady(state);
+        this.newExerciseView = selectNewExerciseView(state);
+        // the calm cards need the progress; with the old view every card loads its own
+        if (this.optionsReady && this.newExerciseView && !this.logsRequested) {
+            this.logsRequested = true;
+            store.dispatch(listExerciseLogs());
+        }
         if (state.checks.checks.status === "idle") {
             this.listChecks = selectAllChecks(state);
         }
@@ -193,7 +211,7 @@ export class HomeView extends ConnectedLitElement {
                     <sl-button @click="${() => store.dispatch(listExercisesSelected())}">Try again</sl-button>
                 </empty-state>`;
         }
-        if (this.exercisesStatus !== "idle" || !this.checksSelected || !this.optionsReady) {
+        if (!this.listReady()) {
             return [1, 2].map(() => html`<sl-skeleton effect="pulse" class="skeleton"></sl-skeleton>`);
         }
         if (this.listExercises.length === 0) {
@@ -213,8 +231,23 @@ export class HomeView extends ConnectedLitElement {
         const exerciseDtos = this.sortedExercises();
         return html`
             ${exerciseDtos.map((element, index) => {
+                if (this.newExerciseView) {
+                    return html`
+                        <exercise-card-compact
+                                data-exercise-card
+                                .item="${element}"
+                                .checked="${this.getChecked(element)}"
+                                .finishedUser="${this.checks[element.exerciseId] ?? []}"
+                                .editMode="${this.editMode}"
+                                @move-up="${() => this.move(exerciseDtos, index, -1)}"
+                                @move-down="${() => this.move(exerciseDtos, index, 1)}"
+                                @open-exercise="${(e: CustomEvent<ExerciseDto>) => this.openExercise(e.detail)}"
+                                @check-changed="${(e: CustomEvent<boolean>) => this.setFinished(element, e.detail)}"
+                        ></exercise-card-compact>`;
+                }
                 return html`
                     <exercise-card
+                            data-exercise-card
                             .item="${element}"
                             .checked="${this.getChecked(element)}"
                             .finishedUser="${this.checks[element.exerciseId] ?? []}"
@@ -248,6 +281,23 @@ export class HomeView extends ConnectedLitElement {
         navigate(exercise ? `/exercises/${exercise.exerciseId}/edit` : "/exercises/new");
     }
 
+    private openExercise(exercise: ExerciseDto) {
+        scrollBeforeOpen = scrollParent(this)?.scrollTop;
+        navigate(`/exercises/${exercise.exerciseId}`);
+    }
+
+    /** Back from an exercise: the list continues where it was left. */
+    protected willUpdate() {
+        if (scrollBeforeOpen === undefined || !this.listReady()) return;
+        const top = scrollBeforeOpen;
+        scrollBeforeOpen = undefined;
+        void this.updateComplete.then(() => requestAnimationFrame(() => scrollParent(this)?.scrollTo(0, top)));
+    }
+
+    private listReady() {
+        return this.exercisesStatus === "idle" && this.checksSelected && this.optionsReady;
+    }
+
     /** Swaps the exercise at {@code index} with its neighbour and saves the new order. */
     private move(order: ExerciseDto[], index: number, by: -1 | 1) {
         const target = index + by;
@@ -268,7 +318,7 @@ export class HomeView extends ConnectedLitElement {
         const path = e.composedPath() as HTMLElement[];
         if (!path.some(el => el.dataset?.dragHandle !== undefined)) return;
         const list = e.currentTarget as HTMLElement;
-        const cards = [...list.querySelectorAll<HTMLElement>("exercise-card")];
+        const cards = [...list.querySelectorAll<HTMLElement>("[data-exercise-card]")];
         const from = cards.findIndex(card => path.includes(card));
         if (from < 0) return;
         e.preventDefault();

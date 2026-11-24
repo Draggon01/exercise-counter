@@ -47,6 +47,14 @@ export class ExerciseProgress extends LitElement {
     @property({type: Boolean})
     shared = false;
 
+    /** Big controls in one row (new exercise view). */
+    @property({type: Boolean})
+    compact = false;
+
+    /** On the home card: the timer opens its large view on start, and the card shows its own progress bar. */
+    @property({type: Boolean})
+    onCard = false;
+
     render() {
         const target = exerciseTarget(this.item);
         if (isTimeExercise(this.item.exerciseType)) {
@@ -54,16 +62,18 @@ export class ExerciseProgress extends LitElement {
                 <exercise-timer .targetSeconds="${target}" .completedSeconds="${this.value}"
                                 .label="${this.item.exerciseTitle}"
                                 .exerciseId="${this.shared ? this.item.exerciseId : ""}"
-                                .focusOnStart="${!this.shared}" ?offerDone="${this.shared && !this.done}"
+                                .focusOnStart="${this.onCard || !this.shared}" ?compact="${this.compact}" ?offerDone="${this.shared && !this.done}"
                                 @mark-done="${() => this.dispatchEvent(new CustomEvent("mark-done"))}"
                                 @progress-changed="${this.forward}"></exercise-timer>`;
         }
         if (isRepExercise(this.item.exerciseType)) {
             return html`
-                <rep-counter .target="${target}" .value="${this.value}"
+                <rep-counter ?compact="${this.compact}" .target="${target}" .value="${this.value}"
                              @progress-changed="${this.forward}"></rep-counter>
-                <sl-progress-bar class="${this.done ? "done" : ""}" value="${progressPercent(this.value, target)}"
-                                 label="Progress"></sl-progress-bar>`;
+                ${this.onCard ? nothing : html`
+                    <sl-progress-bar class="${this.done ? "done" : ""}" value="${progressPercent(this.value, target)}"
+                                     label="Progress"></sl-progress-bar>
+                `}`;
         }
         return nothing;
     }

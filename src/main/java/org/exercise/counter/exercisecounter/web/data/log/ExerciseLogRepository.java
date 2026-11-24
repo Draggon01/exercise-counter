@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ExerciseLogRepository extends JpaRepository<ExerciseLog, ExerciseLogId> {
+    List<ExerciseLog> findByLogIdUsername(String username);
+
     List<ExerciseLog> findByLogIdExerciseId(UUID exerciseId);
 
     /** Only the ids (no managed entities): who has progress on these exercises. */

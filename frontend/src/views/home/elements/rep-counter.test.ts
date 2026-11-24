@@ -44,6 +44,30 @@ describe("rep-counter", () => {
         expect(progress).toHaveBeenCalledWith(8);
     });
 
+    it("compact: − and + change the value, never below 0", async () => {
+        const {counter, progress} = await mount();
+        counter.compact = true;
+        counter.value = 1;
+        await counter.updateComplete;
+        const [minus, plus] = counter.shadowRoot!.querySelectorAll<HTMLElement>("sl-button");
+
+        plus.click();
+        plus.click();
+        vi.advanceTimersByTime(REP_SAVE_DEBOUNCE_MS);
+        [1, 2, 3, 4].forEach(() => minus.click());
+        vi.advanceTimersByTime(REP_SAVE_DEBOUNCE_MS);
+
+        expect(progress.mock.calls).toEqual([[3], [0]]);
+    });
+
+    it("reports the last change when removed before the delay is over", async () => {
+        const {counter, progress, type} = await mount();
+        type("9");
+        counter.remove();
+        vi.advanceTimersByTime(REP_SAVE_DEBOUNCE_MS);
+        expect(progress.mock.calls).toEqual([[9]]);
+    });
+
     it("treats negative or invalid input as 0", async () => {
         const {progress, type} = await mount();
 

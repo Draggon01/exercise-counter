@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.9",
+    "date": "2026-11-24",
+    "title": "Try the new exercise view",
+    "items": [
+      "New and optional: calmer exercise cards and a page for every exercise – turn it on in Options → General → Try the new exercise view",
+      "Big start and + / − buttons right on the card; tap the card for everything else",
+      "With the new view a running timer keeps going when you switch between the card and the exercise page",
+      "With the new view a reminder for one exercise opens it directly"
+    ]
+  },
+  {
     "version": "0.8",
     "date": "2026-11-20",
     "title": "Reminders, timer sounds and more options",

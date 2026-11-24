@@ -140,6 +140,7 @@ class RequestBodyContractTest {
         assertEquals(204, json("PUT", "/api/log/" + id, "{\"value\":42}").statusCode());
 
         assertEquals("{\"value\":42}", json("GET", "/api/log/" + id, null).body());
+        assertEquals("{\"" + id + "\":42}", json("GET", "/api/log", null).body());
     }
 
     @Test

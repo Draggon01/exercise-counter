@@ -11,6 +11,8 @@ export const ExerciseTimerEvents = {
     progressChanged: "progress-changed",
     /** "Mark as done" of a finished timer (only with `offerDone`), without detail */
     markDone: "mark-done",
+    /** detail: the large view is open (bubbles) – it must not lie in a stacking context such as a sticky box */
+    focusChanged: "timer-focus-changed",
 } as const;
 
 /**
@@ -55,6 +57,36 @@ export class ExerciseTimer extends LitElement {
         .timer-controls {
             display: flex;
             gap: 4px;
+        }
+
+        /* ---- one big row (calm card) */
+        .compact {
+            display: flex;
+            align-items: center;
+            gap: var(--app-space-2);
+        }
+
+        .compact sl-button {
+            flex: 1;
+        }
+
+        .compact sl-button.secondary {
+            flex: 0 0 auto;
+        }
+
+        .compact sl-button::part(base) {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 56px;
+            font-size: 1.1rem;
+        }
+
+        .compact .timer-display {
+            flex: 1;
+            min-height: 56px;
+            font-size: 1.6rem;
+            text-align: center;
         }
 
         /* ---- focus view while running */
@@ -154,6 +186,10 @@ export class ExerciseTimer extends LitElement {
     @property({type: Boolean})
     offerDone = false;
 
+    /** One row with a big start / pause button (new exercise view). */
+    @property({type: Boolean})
+    compact = false;
+
     /** The large focus view is shown (opens on start, can be minimized). */
     @state()
     private focused = false;
@@ -209,6 +245,47 @@ export class ExerciseTimer extends LitElement {
     }
 
     render() {
+        return html`
+            ${this.compact ? this.renderCompact() : this.renderRow()}
+            ${this.focused ? this.renderFocus() : nothing}
+        `;
+    }
+
+    private renderCompact() {
+        if (this.finished) {
+            return html`
+                <div class="compact">
+                    ${this.offerDone ? html`
+                        <sl-button size="large" variant="success" @click="${this.markDone}">✓ Mark as done</sl-button>
+                    ` : html`<div class="timer-display completed">✓ Done!</div>`}
+                    <sl-button size="large" @click="${this.reset}">Reset</sl-button>
+                </div>`;
+        }
+        if (this.running) {
+            return html`
+                <div class="compact">
+                    <button class="timer-display" title="Show large timer" @click="${this.openFocus}">
+                        ${formatDuration(this.secondsLeft)}
+                    </button>
+                    <sl-button size="large" variant="warning" @click="${this.pause}">⏸ Pause</sl-button>
+                    ${this.focusOnStart ? nothing : html`
+                        <sl-icon-button name="arrows-fullscreen" label="Show large timer"
+                                        @click="${this.openFocus}"></sl-icon-button>
+                    `}
+                </div>`;
+        }
+        return html`
+            <div class="compact">
+                <sl-button size="large" variant="primary" outline @click="${this.start}">
+                    ▶ ${this.secondsLeft === this.targetSeconds ? "Start" : "Resume"} ${formatDuration(this.secondsLeft)}
+                </sl-button>
+                ${this.focusOnStart || this.secondsLeft === this.targetSeconds ? nothing : html`
+                    <sl-button class="secondary" size="large" @click="${this.reset}">Reset</sl-button>
+                `}
+            </div>`;
+    }
+
+    private renderRow() {
         const atStart = this.secondsLeft === this.targetSeconds;
         return html`
             <div class="timer-row">
@@ -243,7 +320,6 @@ export class ExerciseTimer extends LitElement {
                     `}
                 </div>
             </div>
-            ${this.focused ? this.renderFocus() : nothing}
         `;
     }
 
@@ -304,13 +380,20 @@ export class ExerciseTimer extends LitElement {
     }
 
     private openFocus = () => {
-        this.focused = true;
+        this.setFocused(true);
         document.addEventListener("keydown", this.onKeydown);
     }
 
     private closeFocus = () => {
-        this.focused = false;
+        this.setFocused(false);
         document.removeEventListener("keydown", this.onKeydown);
+    }
+
+    private setFocused(focused: boolean) {
+        if (this.focused === focused) return;
+        this.focused = focused;
+        this.dispatchEvent(new CustomEvent<boolean>(ExerciseTimerEvents.focusChanged,
+            {detail: focused, bubbles: true, composed: true}));
     }
 
     /** Escape minimizes the focus view (the timer keeps running). */

@@ -20,18 +20,19 @@ class ReminderMessagesTest {
 
     @Test
     void oneExercise_namesItInTheTitle() {
-        PushMessage message = ReminderMessages.reminder(List.of("Push-ups"), 3 * 3600);
+        PushMessage message = ReminderMessages.reminder(List.of("Push-ups"), 3 * 3600, "/exercises/1");
 
         assertEquals("Push-ups is not done yet", message.title());
         assertEquals("3 hours left – keep your streak going 🔥", message.body());
-        assertEquals("/", message.url());
+        assertEquals("/exercises/1", message.url());
     }
 
     @Test
     void severalExercises_areListedInTheBody() {
-        PushMessage message = ReminderMessages.reminder(List.of("Push-ups", "Plank"), 1800);
+        PushMessage message = ReminderMessages.reminder(List.of("Push-ups", "Plank"), 1800, "/exercises/1");
 
         assertEquals("2 exercises are not done yet", message.title());
         assertEquals("Push-ups, Plank · 30 minutes left", message.body());
+        assertEquals("/", message.url());
     }
 }

@@ -17,3 +17,6 @@ export function backPath(search: string = window.location.search): string {
     const back = new URLSearchParams(search).get("back") ?? "";
     return BACK_TARGETS.test(back) ? back : "/";
 }
+
+/** A normal click on a link (not e.g. "open in new tab"), which the app handles itself. */
+export const isPlainClick = (e: MouseEvent) => e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey;

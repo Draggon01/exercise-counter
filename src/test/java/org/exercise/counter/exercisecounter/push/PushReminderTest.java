@@ -99,6 +99,23 @@ class PushReminderTest {
     // ---- reminders
 
     @Test
+    void opensTheExercise_onlyWithTheNewViewAndForASingleExercise() {
+        Exercise pushUps = exerciseResettingIn(30, "Push-ups");
+        onHomeList(ANNA, pushUps);
+        onHomeList(BEN, pushUps);
+        device(ANNA, DEVICE_A);
+        device(BEN, DEVICE_B);
+        UserOptions options = new UserOptions(ANNA, true);
+        options.setNewExerciseView(true);
+        optionsRepository.save(options);
+
+        reminderService.remindDue();
+
+        assertEquals("/exercises/" + pushUps.getExerciseId(), sender.messagesTo(DEVICE_A).getFirst().url());
+        assertEquals("/", sender.messagesTo(DEVICE_B).getFirst().url());
+    }
+
+    @Test
     void unfinishedExerciseShortlyBeforeTheReset_isReminded() {
         Exercise pushUps = exerciseResettingIn(30, "Push-ups");
         onHomeList(ANNA, pushUps);

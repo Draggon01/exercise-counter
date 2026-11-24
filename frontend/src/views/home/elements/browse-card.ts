@@ -1,12 +1,14 @@
 import {css, html, LitElement} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {ExerciseDto} from "../models/exerciseDto";
+import {isPlainClick} from "../../../utils/navigation";
 import {isRepExercise, isTimeExercise} from "../../../utils/exercise";
 import {formatDuration} from "../../../utils/format";
 
 /** Events of `<browse-card>`; detail is the {@link ExerciseDto}. */
 export const BrowseCardEvents = {
     select: "select-exercise",
+    open: "open-exercise",
 } as const;
 
 /**
@@ -44,6 +46,10 @@ export class BrowseCard extends LitElement {
             text-overflow: ellipsis;
         }
 
+        .headline a {
+            color: inherit;
+        }
+
         .meta {
             margin-top: 2px;
             font-size: 0.85em;
@@ -54,11 +60,17 @@ export class BrowseCard extends LitElement {
     @property({attribute: false})
     item: ExerciseDto = {exerciseId: "", exerciseTitle: "", creator: ""} as ExerciseDto;
 
+    /** The title opens the exercise's page (new exercise view). */
+    @property({type: Boolean})
+    canOpen = false;
+
     render() {
         return html`
             <div class="card">
                 <div class="text">
-                    <h2 class="headline">${this.item.exerciseTitle}</h2>
+                    <h2 class="headline">${this.canOpen ? html`
+                        <a href="/exercises/${this.item.exerciseId}" @click="${this.open}">${this.item.exerciseTitle}</a>
+                    ` : this.item.exerciseTitle}</h2>
                     <div class="meta">by ${this.item.creator}${this.goal() ? html` · ${this.goal()}` : ""}</div>
                 </div>
                 <sl-button variant="primary" size="small" @click="${this.select}">
@@ -75,6 +87,12 @@ export class BrowseCard extends LitElement {
         if (isTimeExercise(this.item.exerciseType)) return formatDuration(value);
         if (isRepExercise(this.item.exerciseType)) return `${value} reps`;
         return String(value);
+    }
+
+    private open = (e: MouseEvent) => {
+        if (!isPlainClick(e)) return;
+        e.preventDefault();
+        this.dispatchEvent(new CustomEvent<ExerciseDto>(BrowseCardEvents.open, {detail: this.item}));
     }
 
     private select = () => {

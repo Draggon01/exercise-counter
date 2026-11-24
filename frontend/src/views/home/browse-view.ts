@@ -4,7 +4,8 @@ import {pageStyles} from "../../styles/page";
 import "../../components/page-header";
 import "../../components/empty-state";
 import {toast} from "../../components/toast";
-import {navigate} from "../../utils/navigation";
+import {loadOptions, selectNewExerciseView, selectOptionsReady} from "../options/slice/optionsSlice";
+import {navigate, withBack} from "../../utils/navigation";
 import {AsyncStoreState} from "../../commons";
 import {customElement, state} from 'lit/decorators.js';
 import './elements/browse-card'
@@ -23,6 +24,9 @@ export class BrowseView extends ConnectedLitElement {
 
     @state()
     private status: AsyncStoreState = "initial";
+
+    @state()
+    private newExerciseView = false;
 
     /** Filters the loaded list by name (only in the browser). */
     @state()
@@ -52,6 +56,7 @@ export class BrowseView extends ConnectedLitElement {
     connectedCallback() {
         super.connectedCallback();
         store.dispatch(listExercisesAvailable());
+        if (!selectOptionsReady(store.getState())) store.dispatch(loadOptions());
         this.stopRefresh = onAppRefresh(() => store.dispatch(listExercisesAvailable()));
     }
 
@@ -63,6 +68,7 @@ export class BrowseView extends ConnectedLitElement {
     stateChanged(state: RootState): void {
         this.browseExercises = selectAvailableExercises(state);
         this.status = selectAvailableStatus(state);
+        this.newExerciseView = selectNewExerciseView(state);
     }
 
     protected render() {
@@ -106,7 +112,9 @@ export class BrowseView extends ConnectedLitElement {
                 </empty-state>`;
         }
         return found.map(exercise => html`
-            <browse-card .item="${exercise}" @select-exercise="${this.handleExerciseSelect}"></browse-card>
+            <browse-card .item="${exercise}" ?canOpen="${this.newExerciseView}"
+                         @open-exercise="${(e: CustomEvent<ExerciseDto>) => navigate(withBack(`/exercises/${e.detail.exerciseId}`, "/browse"))}"
+                         @select-exercise="${this.handleExerciseSelect}"></browse-card>
         `);
     }
 

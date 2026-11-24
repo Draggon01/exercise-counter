@@ -138,6 +138,10 @@ export class ExerciseView extends ConnectedLitElement {
     @state()
     private timerRunning = false;
 
+    /** The large timer is open: a sticky box would keep it below the page header. */
+    @state()
+    private timerFocused = false;
+
     @state()
     private adding = false;
 
@@ -267,10 +271,11 @@ export class ExerciseView extends ConnectedLitElement {
                     ${onList ? nothing : html`<span>· by ${exercise.creator}</span>`}
                 </div>
                 ${onList ? html`
-                    <div class="panel ${this.timerRunning ? "running" : ""}">
+                    <div class="panel ${this.timerRunning && !this.timerFocused ? "running" : ""}"
+                         @timer-focus-changed="${(e: CustomEvent<boolean>) => this.timerFocused = e.detail}">
                         ${this.progress === undefined ? html`<sl-skeleton effect="pulse"></sl-skeleton>` : keyed(this.exerciseId, html`
                             <exercise-progress .item="${exercise}" .value="${this.progress}" ?done="${done}"
-                                               shared @mark-done="${this.toggleDone}"
+                                               compact shared @mark-done="${this.toggleDone}"
                                                @progress-changed="${this.saveProgress(this.exerciseId)}"></exercise-progress>
                         `)}
                     </div>

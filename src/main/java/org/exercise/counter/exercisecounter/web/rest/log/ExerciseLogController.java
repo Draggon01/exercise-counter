@@ -12,7 +12,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Progress of the current period (timer seconds or reps) per user and exercise.
@@ -27,6 +29,13 @@ public class ExerciseLogController {
     public ExerciseLogController(ExerciseLogRepository exerciseLogRepository, ExerciseAccess exerciseAccess) {
         this.exerciseAccess = exerciseAccess;
         this.exerciseLogRepository = exerciseLogRepository;
+    }
+
+    /** The current user's saved progress of all exercises: exercise id → seconds or reps. */
+    @GetMapping
+    public Map<UUID, Long> listLogs(@AuthenticationPrincipal UserDetails user) {
+        return exerciseLogRepository.findByLogIdUsername(user.getUsername()).stream()
+                .collect(Collectors.toMap(log -> log.getLogId().getExerciseId(), ExerciseLog::getValue));
     }
 
     @GetMapping("/{exerciseId}")

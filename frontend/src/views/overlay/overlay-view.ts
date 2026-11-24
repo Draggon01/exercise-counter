@@ -4,7 +4,7 @@ import {RootState, store} from "../../store";
 import {logoutUser, selectCurrentUser} from "../login/slice/userSlice";
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {UserDto} from "../login/models/userDto";
-import {navigate} from "../../utils/navigation";
+import {isPlainClick, navigate} from "../../utils/navigation";
 import {vibrate} from "../../utils/preferences";
 import {ChangelogEntry, markChangelogSeen, selectUnseenChangelog} from "../../shared-slices/changelog/changelogSlice";
 import "../../components/changelog-dialog";
@@ -348,7 +348,7 @@ export class OverlayView extends ConnectedLitElement {
 
     /** Navigates inside the app instead of reloading (keeps modifier-clicks working). */
     private go(e: MouseEvent, path: string) {
-        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
+        if (!isPlainClick(e)) return;
         e.preventDefault();
         navigate(path);
     }

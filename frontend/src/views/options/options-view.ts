@@ -1,4 +1,4 @@
-import {css, html} from 'lit';
+import {css, html, nothing} from 'lit';
 import {touchStyles} from "../../styles/touch";
 import {pageStyles} from "../../styles/page";
 import {settingStyles} from "../../styles/settings";
@@ -265,6 +265,7 @@ export class OptionsView extends ConnectedLitElement {
                     <sl-tab-panel name="general">
                         <div class="tab-content">
                             <div class="general-form">
+                                ${this.newExerciseView ? nothing : html`
                                 <div class="setting-row">
                                     <div>
                                         <div class="setting-label">Auto-collapse on check</div>
@@ -277,6 +278,7 @@ export class OptionsView extends ConnectedLitElement {
                                             @sl-change="${(e: Event) => store.dispatch(setAutoCollapse((e.target as SlSwitch).checked))}"
                                     ></sl-switch>
                                 </div>
+                                `}
                                 <div class="setting-row">
                                     <div>
                                         <div class="setting-label">

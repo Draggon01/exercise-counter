@@ -21,6 +21,12 @@ type SliceState = {
     visible: ExerciseList,
     /** Progress of the current period per exercise (seconds or reps done); missing until loaded. */
     progress: Record<string, number>,
+    /** {@link listExerciseLogs} returned: exercises without an entry have no progress. */
+    allProgressLoaded: boolean,
+    /** Saves of the progress that are still running, per exercise. */
+    savingProgress: Record<string, number>,
+    /** Progress changed or saved since the last load started: the (older) answer must not replace it. */
+    newerProgress: Record<string, boolean>,
 }
 
 type SliceProjection = {
@@ -36,6 +42,9 @@ const initialState: SliceState = {
     available: {status: "initial", items: []},
     visible: {status: "initial", items: []},
     progress: {},
+    allProgressLoaded: false,
+    savingProgress: {},
+    newerProgress: {},
 }
 
 /** All exercises the user may see. */
@@ -82,9 +91,17 @@ export const loadExerciseLog = apiThunk<ExerciseLogDto, string>(
 export const reorderExercises = apiThunk<ExerciseDto[], string[]>(
     'selection/reorder', exerciseIds => apiPut("/api/selection/order", exerciseIds));
 
+/** Saved progress of all exercises: id → seconds or reps. */
+export const listExerciseLogs = apiThunk<Record<string, number>>(
+    'exercise/log/list', () => apiGet("/api/log"));
+
 export const saveExerciseLog = apiThunk<void, ExerciseLogDto>(
     'exercise/log/save', log => apiPut(`/api/log/${log.exerciseId}`, {value: log.value}));
 
+
+function saveEnded(state: SliceState, exerciseId: string) {
+    state.savingProgress[exerciseId] = Math.max(0, (state.savingProgress[exerciseId] ?? 0) - 1);
+}
 
 export const exerciseSlice = createSlice({
     name: 'exercise',
@@ -93,6 +110,7 @@ export const exerciseSlice = createSlice({
         /** What the user just did (timer, counter): shown at once, saved with {@link saveExerciseLog}. */
         progressChanged(state, action: PayloadAction<{ exerciseId: string, value: number }>) {
             state.progress[action.payload.exerciseId] = action.payload.value;
+            state.newerProgress[action.payload.exerciseId] = true;
         },
     },
     // list loads track their status; mutations only change data on success (their errors are shown as toasts)
@@ -126,14 +144,42 @@ export const exerciseSlice = createSlice({
             .addCase(listExercises.fulfilled, (state, action) => {
                 state.visible = {status: 'idle', items: action.payload};
             })
-            .addCase(loadExerciseLog.fulfilled, (state, action) => {
-                state.progress[action.meta.arg] = action.payload.value ?? 0;
+            .addCase(loadExerciseLog.pending, (state, action) => {
+                state.newerProgress[action.meta.arg] = !!state.savingProgress[action.meta.arg];
             })
+            .addCase(loadExerciseLog.fulfilled, (state, action) => {
+                if (!state.newerProgress[action.meta.arg]) state.progress[action.meta.arg] = action.payload.value ?? 0;
+            })
+            .addCase(listExerciseLogs.pending, state => {
+                state.newerProgress = {};
+                Object.entries(state.savingProgress).forEach(([id, count]) => {
+                    if (count > 0) state.newerProgress[id] = true;
+                });
+            })
+            .addCase(listExerciseLogs.fulfilled, (state, action) => {
+                const loaded: Record<string, number> = {...action.payload};
+                Object.keys(state.newerProgress).filter(id => state.newerProgress[id] && id in state.progress)
+                    .forEach(id => loaded[id] = state.progress[id]);
+                state.progress = loaded;
+                state.allProgressLoaded = true;
+            })
+            .addCase(listExerciseLogs.rejected, state => {
+                state.allProgressLoaded = true; // the controls work anyway, starting at 0
+            })
+            .addCase(saveExerciseLog.pending, (state, action) => {
+                const id = action.meta.arg.exerciseId;
+                state.savingProgress[id] = (state.savingProgress[id] ?? 0) + 1;
+                state.newerProgress[id] = true;
+            })
+            .addCase(saveExerciseLog.fulfilled, (state, action) => saveEnded(state, action.meta.arg.exerciseId))
+            .addCase(saveExerciseLog.rejected, (state, action) => saveEnded(state, action.meta.arg.exerciseId))
             .addCase(loadExerciseLog.rejected, (state, action) => {
                 state.progress[action.meta.arg] ??= 0;
             })
             .addCase(logoutUser.fulfilled, state => {
                 state.progress = {};
+                state.newerProgress = {};
+                state.allProgressLoaded = false;
             })
             .addCase(saveExercise.fulfilled, (state, action) => {
                 exerciseAdapter.upsertOne(state.exercises, action.payload);
@@ -165,7 +211,7 @@ export const {
 export const {progressChanged} = exerciseSlice.actions;
 
 export const selectProgress = (state: SliceProjection, exerciseId: string): number | undefined =>
-    state.exercise.progress[exerciseId];
+    state.exercise.progress[exerciseId] ?? (state.exercise.allProgressLoaded ? 0 : undefined);
 export const selectExercisesStatus = (state: SliceProjection) => state.exercise.exercises.status;
 export const selectAvailableExercises = (state: SliceProjection) => state.exercise.available.items;
 export const selectAvailableStatus = (state: SliceProjection) => state.exercise.available.status;

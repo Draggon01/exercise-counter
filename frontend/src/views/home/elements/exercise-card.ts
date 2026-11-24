@@ -17,6 +17,8 @@ import {formatGoal, streakOf} from "../../../utils/exercise";
 import "./exercise-finishers";
 import "./exercise-menu";
 import "./exercise-progress";
+import "./exercise-sort-controls";
+import {cardStyles} from "./card-styles";
 
 /**
  * Events of {@link ExerciseCard}. Detail is the card's {@link ExerciseDto}, except for
@@ -39,57 +41,11 @@ export const ExerciseCardEvents = {
  */
 @customElement("exercise-card")
 export class ExerciseCard extends ConnectedLitElement {
-    static styles = [touchStyles, css`
-        :host {
-            display: block;
-        }
-
-        /* lifted while it is dragged to a new place (home view, edit order) */
-        :host([dragging]) {
-            position: relative;
-            z-index: 5;
-        }
-
-        :host([dragging]) .card {
-            box-shadow: var(--app-shadow-raised);
-            border-color: var(--app-accent);
-        }
-
-        .drag-handle {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 44px;
-            min-height: 44px;
-            font-size: 1.25rem;
-            color: var(--app-text-muted);
-            cursor: grab;
-            /* the finger drags the card instead of scrolling the page */
-            touch-action: none;
-            user-select: none;
-        }
-
-        :host([dragging]) .drag-handle {
-            cursor: grabbing;
-        }
-
+    static styles = [cardStyles, touchStyles, css`
         .card {
             display: flex;
             flex-direction: column;
             gap: var(--app-space-3);
-            box-sizing: border-box;
-            width: 100%;
-            padding: var(--app-space-3) var(--app-space-4);
-            border: 1px solid var(--app-border);
-            border-left: 4px solid var(--app-border);
-            border-radius: var(--app-radius);
-            background: var(--app-surface);
-            box-shadow: var(--app-shadow);
-            transition: border-color 0.2s;
-        }
-
-        .card.done {
-            border-left-color: var(--app-success);
         }
 
         /* ---- header */
@@ -104,56 +60,14 @@ export class ExerciseCard extends ConnectedLitElement {
             min-width: 0;
         }
 
-        .headline {
-            margin: 0;
-            font-size: 1.1em;
-            font-weight: 600;
-            line-height: 1.3;
-            color: var(--app-text);
-            overflow-wrap: anywhere;
-        }
-
-        .done .headline {
-            color: var(--app-text-muted);
-        }
-
-        .subtitle {
-            display: flex;
-            flex-wrap: wrap;
-            gap: var(--app-space-1) var(--app-space-2);
-            margin-top: 2px;
-            font-size: 0.85em;
-            color: var(--app-text-muted);
-        }
-
-        .urgent {
-            color: var(--app-warning);
-            font-weight: 600;
-        }
-
         .actions {
             display: flex;
             align-items: center;
             flex-shrink: 0;
         }
 
-        .streak {
-            padding: 2px var(--app-space-2);
-            border-radius: var(--app-radius-pill);
-            background: var(--app-warning-soft);
-            color: var(--app-warning);
-            font-size: 0.8em;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-
         sl-icon-button {
             font-size: 1.1rem;
-            color: var(--app-text-subtle);
-        }
-
-        .reminder-icon {
-            align-self: center;
             color: var(--app-text-subtle);
         }
 
@@ -165,12 +79,6 @@ export class ExerciseCard extends ConnectedLitElement {
             gap: var(--app-space-2);
             padding-top: var(--app-space-3);
             border-top: 1px solid var(--app-divider);
-        }
-
-        @media (max-width: 400px) {
-            .card {
-                padding: var(--app-space-3);
-            }
         }
     `];
 
@@ -295,10 +203,8 @@ export class ExerciseCard extends ConnectedLitElement {
 
     private _renderSortControls() {
         return html`
-            <!-- dragged by the home view (pointer events); the arrows stay for keyboard / screen readers -->
-            <span class="drag-handle" data-drag-handle title="Drag to move"><sl-icon name="grip-vertical"></sl-icon></span>
-            <sl-icon-button name="arrow-up" label="Move up" @click="${this._moveUpClick}"></sl-icon-button>
-            <sl-icon-button name="arrow-down" label="Move down" @click="${this._moveDownClick}"></sl-icon-button>
+            <exercise-sort-controls @move-up="${this._moveUpClick}"
+                                    @move-down="${this._moveDownClick}"></exercise-sort-controls>
         `;
     }
 

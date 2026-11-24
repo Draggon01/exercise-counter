@@ -105,6 +105,10 @@ nothing distinct for now
 
 ## Learned
 
+- New exercise view (beta, `options.new_exercise_view`, plan: `.plan/exercise-v2-plan.md`): `exercise-card-compact` on home and the page `/exercises/:id` (`exercise-view`). With the option off everything must look and work as before (`exercise-card`). Timers there are the app's one `runningTimer` (`utils/running-timer.ts`, continues between home and exercise page, pauses and saves elsewhere). Elements on the card must not create a stacking context around the timer (its large view would lie below the page header)
+- Access to a single exercise: `ExerciseAccess` (`requireVisible` / `requireShared` / `requireCreator`; not visible = 404). Being on the home list grants access, so adding to it (`SelectionService.select`) requires `requireShared`
+- Progress in the store: `exercise.progress` (`saveProgress()` in `home/slice/progressSaver.ts`); a load that started before a save does not overwrite it
+
 - Missed entries ("forgot to tap Done") are added in the statistics grid: own missed squares of the last 7 periods (`StatisticService.MISSED_ENTRY_PERIODS` = `MISSED_ENTRY_PERIODS` in `utils/statistics.ts`) show a "+"; `POST /api/statistic/{id}/missed-entries` with `{date}` (closing day), only for exercises on the user's home list
 
 - Passwords: `AccountService` (min 8 characters, stored as `{bcrypt}`, read with the delegating encoder). Users change theirs in Options; admins (`app.admins` = env `APP_ADMINS`, comma separated usernames; `UserDto.admin`) create one-time reset links (`/reset-password/<token>`, 24h, only the SHA-256 of the token is stored in `password_reset`, a new link replaces the old one). Public endpoints: `/api/public/password-resets/{token}`
