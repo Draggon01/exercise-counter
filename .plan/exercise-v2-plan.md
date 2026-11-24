@@ -20,18 +20,22 @@ Legend: 🧱 backend · 🎨 frontend · 🛠 operations · **S/M/L** = effort (
 
 ## How it should look
 
-Home card (new) – tapping it opens the exercise; only the controls on the right work right on the card:
+Home card (new) – tapping it opens the exercise; only the controls (done, start / pause, − / +) work right on the card:
 ```
-┌──────────────────────────────────────────┐
-│ Knee workout  🔥 12          ( ▶ )   ( ✓ ) │   time: start / pause
-│ 20:00 · 5 hours left                       │
-│ ▓▓▓▓▓▓▓▓░░░░░░░░  (only once started)      │
-├──────────────────────────────────────────┤
-│ Push-ups  🔥 3        ( − ) 15 ( + ) ( ✓ ) │   reps: counter
-│ 40 reps · 5 hours left                     │
-└──────────────────────────────────────────┘
+┌────────────────────────────────────────────┐
+│ Knee workout  🔥 12                    ( ✓ ) │
+│ 20:00 · 5 hours left                         │
+│ ▓▓▓▓▓▓▓▓░░░░░░░░  (only once started)        │
+│ [            ▶  Start  20:00              ]  │   time: start / pause
+└────────────────────────────────────────────┘
+┌────────────────────────────────────────────┐
+│ Push-ups  🔥 3                         ( ✓ ) │
+│ 40 reps · 5 hours left                       │
+│ [   −   ]           15            [   +   ]  │   reps: counter
+└────────────────────────────────────────────┘
 ```
-On narrow phones the timer / rep controls move to a second row, so long titles keep their space.
+Start and − / + are **big**: own row, 56 px high (full width on phones), so they can be hit mid-workout. On computers they
+may sit on the right of the title, same height.
 
 Exercise page, phone (swipe) / computer (list):
 ```
@@ -63,7 +67,7 @@ Exercise page, phone (swipe) / computer (list):
 | D3 | Where is the toggle stored? | Account-wide (`options`), so phone and computer match |
 | D4 | Where are videos stored? | Files on the server outside the web root and the database (`app.media.dir`), only streamed by the backend after a permission check. Starts on the Hetzner server, may move to the private Raspberry Pi later (T12.5) |
 | D5 | Who shrinks videos? | `ffmpeg` on the server: one format that plays everywhere (iPhones record HEVC `.mov`), and it removes the recording location. Shrinking in the browser is slow and unreliable on iPhones |
-| D6 | Limits | Clips are meant to be about 3 s (said in the upload dialog), at most 15 s. Finished clip ≤ 1.5 MB, 12 steps per exercise, one video per step, **50 MB of finished videos per user** (`app.media.user-quota`, easy to raise). Raw upload ≤ 90 MB (Cloudflare's free plan stops at 100 MB) |
+| D6 | Limits | Clips are meant to be about 3 s (said in the upload dialog), at most 15 s. Finished clip ≤ 1.5 MB, 12 steps per exercise, one video **or** photo per step, **50 MB of finished videos and photos per user** (`app.media.user-quota`, easy to raise). Raw upload ≤ 90 MB (Cloudflare's free plan stops at 100 MB) |
 | D7 | Result | MP4 H.264, longest side ≤ 640 px, 30 fps, **with sound if it fits** (AAC mono 64 kbit/s), `+faststart`, JPEG poster. About 0.3 MB for 3 s. Too large: lower video quality once → drop the sound → FAILED with a clear message. **Quality must be tested with real clips first (T12.0)** |
 | D8 | What is on the card? | Title, goal · time left, own streak, reminder bell, thin progress bar, done circle, **quick control: start / pause (time) or − value + (reps)**. Moves to the page: full timer / counter, finishers, statistics, ⋯ menu, collapse |
 | D9 | Guided workout | Optional. The creator chooses per exercise: **off** (default), **fixed order** or **shuffled**. Everybody can change order and skip steps before starting, or ignore it and use the normal timer |
@@ -117,7 +121,8 @@ Today the timer covers everything with its focus view when started; then no vide
 ### [ ] T10.5 🎨 Calm card (M)
 - `views/home/elements/exercise-card-compact.ts`, shown by `home-view` if the option is on. Content: D8.
 - Title is the real link (keyboard, screen reader) stretched over the card; start / pause, − / +, the value and the done
-  circle are separate ≥ 44 px controls that never open the page.
+  circle are separate controls that never open the page. Start / pause and − / + ≥ 56 px high (− / + also ≥ 56 px wide),
+  value in large digits, done circle ≥ 44 px; enough gap so a miss does not open the exercise.
 - Quick control: time → ▶ opens the existing large focus view (minimize → card shows the running time and pause);
   reps → − / + with the value editable by tapping. Reuse `exercise-timer` / `rep-counter` with a `compact` property, no copies.
   Done cards hide the quick control.
@@ -169,6 +174,14 @@ Today the timer covers everything with its focus view when started; then no vide
 
 ---
 
+### [ ] T11.4 🧱🎨 Personal notes (S)
+- Migration `exercise_note (exercise_id → exercise, username → users, both ON DELETE CASCADE, PK (exercise_id, username), text)`.
+- `GET` / `PUT /api/exercises/{id}/note` (own note only, max. 1000 characters, empty text deletes it; `requireVisible`).
+- Page: "My notes" ("Only you can see this"), one tap to edit; nothing but a small "Add note" if empty. Not on the card.
+- Tests: others never get it, exercise and account deletion (`AccountDeletionTest`).
+
+---
+
 ## Phase 12 – Videos: backend and server
 
 ### [ ] T12.0 🛠 Try the video quality (S) – before T12.2
@@ -186,12 +199,12 @@ Today the timer covers everything with its focus view when started; then no vide
 - The deploy script is not changed.
 
 ### [ ] T12.2 🧱 Store and deliver (L)
-- Migration `exercise_video (video_id UUID PK, step_id UNIQUE → exercise_step ON DELETE CASCADE,
-  uploaded_by → users ON DELETE SET NULL, status PROCESSING|READY|FAILED, error, size_bytes, duration_ms, width, height, has_audio, created_at)`.
+- Migration `exercise_media (media_id UUID PK, step_id UNIQUE → exercise_step ON DELETE CASCADE,
+  kind VIDEO|PHOTO, uploaded_by → users ON DELETE SET NULL, status PROCESSING|READY|FAILED, error, size_bytes, duration_ms, width, height, has_audio, created_at)`.
 - Config: `app.media.dir` (empty = feature off, like the push keys; `GET /api/media/config` → `{enabled, maxBytes, maxSeconds}`),
   `app.media.ffmpeg` / `ffprobe`, limits; Spring `multipart.max-file-size` / `max-request-size`, uploads to disk, not memory.
-- `PUT /api/exercises/{id}/steps/{stepId}/video` (multipart) → 202 + status PROCESSING; `DELETE` the same path.
-- `GET /api/videos/{videoId}` and `/poster`: `requireVisible`, return a `Resource` so **range requests** work
+- `PUT /api/exercises/{id}/steps/{stepId}/media` (multipart) → 202 + status PROCESSING; `DELETE` the same path.
+- `GET /api/media/{mediaId}` (and `/api/media/config`, `/usage` must not clash with it) and `/poster`: `requireVisible`, return a `Resource` so **range requests** work
   (Safari does not play without 206), `Cache-Control: private, max-age=31536000, immutable`
   (a new upload gets a new id), `X-Content-Type-Options: nosniff`.
 - File names come only from the UUID, never from the upload. `MediaStorage` writes to temp, then moves atomically.
@@ -215,7 +228,8 @@ Today the timer covers everything with its focus view when started; then no vide
 Cascades delete rows, **not** files – every path needs it:
 - video replaced / deleted, step deleted, exercise deleted (`ExerciseService.delete`), account deleted
   (`AccountDeletionService`): collect ids before, delete the files **after commit**. Deleting while converting must be safe.
-- Handed-over exercise keeps its videos and counts towards the new creator's quota (quota = videos of own exercises).
+- Handed-over exercise keeps its videos and counts towards the new creator's quota (quota = media of own exercises).
+  Over the limit because of that: everything stays, only new uploads are blocked until below 50 MB again (+ test).
 - Nightly job deletes files without a row older than 24 h (safety net). It must do nothing if the database is unreachable.
 - Tests: `AccountDeletionTest`, delete paths, rollback keeps files.
 
@@ -267,6 +281,15 @@ Needs only Phases 10–11 (videos are shown if there are any).
 
 ---
 
+### [ ] T13.4 🧱🎨 Photo instead of a video (M)
+- Same step slot, upload, permissions, quota and cleanup as videos (`kind = PHOTO`); file picker also accepts images.
+- Convert to JPEG, longest side ≤ 1280 px, rotation applied, location / EXIF removed, raw photo ≤ 20 MB, pixel limit
+  against decompression bombs. Test iPhone HEIC; show a clear message if the format is not supported.
+- Shown in the same box as the video, tap = enlarge, no play button. Guided workout shows it like a video.
+- Tests: no EXIF in the result, replace video by photo and back (old files removed), quota.
+
+---
+
 ## Phase 14 – Try out and switch over
 
 ### [ ] T14.1 🎨 Check on devices (S)
@@ -289,9 +312,7 @@ Default on first (users can still turn it off), later remove the old card, its c
 
 | # | Idea | Effort | Opinion |
 |---|---|---|---|
-| I2 | **Personal notes** per exercise, only visible to me ("left knee: lower weight") | S | Yes – others' exercises get useful, too |
 | I3 | Tick off steps in the current period (cleared by the reset) | M | Maybe – overlaps with the guided workout |
-| I4 | Photo instead of a video per step | S | Yes – smaller, enough for poses |
 | I5 | Copy an exercise with description and videos ("make it mine") | M | Nice for groups; videos must be copied, too |
 | I6 | Cut a clip (start / end) when uploading | M | Good follow-up, `ffmpeg` can do it |
 | I7 | Mirror video left / right | S | Cheap, handy for one-sided exercises |
@@ -305,7 +326,7 @@ Default on first (users can still turn it off), later remove the old card, its c
 
 1. **Phase 10** → can go live behind the toggle (T10.1 → T10.2 → T10.3 → T10.4 → T10.5)
 2. **Phase 11** → usable without videos → **T13.3** (guided workout) any time after Phase 11
-3. **T12.0** and **T12.1** before T12.2 goes live; **T12.2 → T12.3 → T12.4 → T13.1 → T13.2** go live together
+3. **T12.0** and **T12.1** before T12.2 goes live; **T12.2 → T12.3 → T12.4 → T13.1 → T13.2** go live together; **T13.4** after them
 4. **T6.2** (backup, `feature-plan.md`) before the first real videos
 5. **Phase 14**
 
@@ -314,7 +335,7 @@ Default on first (users can still turn it off), later remove the old card, its c
 | Phase | Tasks | Done |
 |---|---|---|
 | 10 – Page and toggle | 5 | 0 |
-| 11 – Description and steps | 3 | 0 |
+| 11 – Description, steps, notes | 4 | 0 |
 | 12 – Videos: backend and server | 6 | 0 |
-| 13 – Videos: frontend, guided workout | 3 | 0 |
+| 13 – Videos: frontend, guided workout, photos | 4 | 0 |
 | 14 – Try out and switch over | 4 | 0 |
