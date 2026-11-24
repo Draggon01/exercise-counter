@@ -15,8 +15,12 @@ import {ExerciseDto} from "../models/exerciseDto";
 import {selectProgress} from "../slice/exerciseSlice";
 import {saveProgress} from "../slice/progressSaver";
 import {cardStyles} from "./card-styles";
+import "./exercise-finishers";
 import "./exercise-progress";
 import "./exercise-sort-controls";
+
+/** So many of the others who finished are named on the card. */
+const SHOWN_FINISHERS = 3;
 
 /** Events of `<exercise-card-compact>`; detail is the {@link ExerciseDto}, for `checkChanged` the new "done" state. */
 export const ExerciseCardCompactEvents = {
@@ -27,7 +31,7 @@ export const ExerciseCardCompactEvents = {
 } as const;
 
 /**
- * Calm card of the new exercise view: title, goal, time left, streak, progress; big start / count controls and the
+ * Calm card of the new exercise view: title, goal, time left, streak, the first others who finished, progress; big start / count controls and the
  * "done" circle. Tapping anywhere else opens the exercise, where everything else is.
  */
 @customElement("exercise-card-compact")
@@ -83,6 +87,10 @@ export class ExerciseCardCompact extends ConnectedLitElement {
         .headline a:focus-visible::after {
             outline: 2px solid var(--app-accent);
             outline-offset: 2px;
+        }
+
+        exercise-finishers {
+            margin-top: var(--app-space-2);
         }
 
         .done-toggle, .control, exercise-sort-controls {
@@ -175,6 +183,8 @@ export class ExerciseCardCompact extends ConnectedLitElement {
     render() {
         // also when done: the card keeps its size
         const control = !this.editMode && this.progress !== undefined;
+        const others = this.finishedUser.filter(check => check.user !== this.username)
+                .sort((a, b) => b.streak - a.streak || a.user.localeCompare(b.user));
         const streak = streakOf(this.finishedUser, this.username);
         return html`
             <article class="card ${this.checked ? "done" : ""} ${control ? "with-control" : ""}">
@@ -196,6 +206,9 @@ export class ExerciseCardCompact extends ConnectedLitElement {
                             <sl-icon class="reminder-icon" name="bell-fill" label="Reminder on"></sl-icon>
                         ` : nothing}
                     </div>
+                    ${others.length > 0 && !this.editMode ? html`
+                        <exercise-finishers .checks="${others}" .max="${SHOWN_FINISHERS}"></exercise-finishers>
+                    ` : nothing}
                 </div>
                 ${this.editMode ? html`
                     <exercise-sort-controls
