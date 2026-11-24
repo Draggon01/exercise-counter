@@ -117,8 +117,8 @@ class QueryCountTest {
 
     @Test
     void statistics_constantQueries() {
-        long small = measure(2, () -> statisticService.load(created.getFirst().getExerciseId()));
-        long large = measure(6, () -> statisticService.load(created.getFirst().getExerciseId()));
+        long small = measure(2, () -> statisticService.load(created.getFirst().getExerciseId(), USER));
+        long large = measure(6, () -> statisticService.load(created.getFirst().getExerciseId(), USER));
         assertEquals(small, large, "statistics must not issue one query per period");
     }
 

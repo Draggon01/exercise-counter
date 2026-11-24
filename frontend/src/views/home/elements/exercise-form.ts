@@ -163,7 +163,7 @@ export class ExerciseForm extends LitElement {
             <form ${ref(this.formRef)} @submit="${(e: Event) => { e.preventDefault(); this.save(); }}">
                 <fieldset>
                 <legend>Exercise</legend>
-                <sl-input name="exerciseTitle" label="Name" placeholder="e.g. Push-ups" required
+                <sl-input name="exerciseTitle" label="Name" placeholder="e.g. Push-ups" required maxlength="64"
                           .value="${exercise?.exerciseTitle ?? ""}"></sl-input>
 
                 <sl-radio-group name="measure" label="What do you count?" .value="${this.measure}"

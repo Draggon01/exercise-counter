@@ -16,15 +16,18 @@ import org.exercise.counter.exercisecounter.web.rest.error.NotFoundException;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
 import org.exercise.counter.exercisecounter.web.rest.log.ExerciseLogController;
 import org.exercise.counter.exercisecounter.web.rest.log.dto.ExerciseLogRequest;
+import org.exercise.counter.exercisecounter.web.service.CheckService;
 import org.exercise.counter.exercisecounter.web.service.ExerciseAccess;
 import org.exercise.counter.exercisecounter.web.service.ExerciseService;
 import org.exercise.counter.exercisecounter.web.service.SelectionService;
+import org.exercise.counter.exercisecounter.web.service.StatisticService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -46,6 +49,8 @@ class ExerciseServiceTest {
     @Autowired private ExerciseService exerciseService;
     @Autowired private ExerciseAccess exerciseAccess;
     @Autowired private SelectionService selectionService;
+    @Autowired private CheckService checkService;
+    @Autowired private StatisticService statisticService;
     @Autowired private ExerciseLogController logController;
     @Autowired private ExerciseRepository exerciseRepository;
     @Autowired private UserRepository userRepository;
@@ -148,6 +153,26 @@ class ExerciseServiceTest {
                 () -> logController.saveLog(privateEx.getExerciseId(), new ExerciseLogRequest(5), bob));
         assertThrows(NotFoundException.class, () -> logController.getLog(privateEx.getExerciseId(), bob));
         assertNull(logController.getLog(publicEx.getExerciseId(), bob).value());
+    }
+
+    @Test
+    void checkAndStatistics_onlyForVisibleExercises() {
+        assertThrows(NotFoundException.class, () -> checkService.check(privateEx.getExerciseId(), BOB));
+        assertThrows(NotFoundException.class, () -> statisticService.load(privateEx.getExerciseId(), BOB));
+        assertThrows(NotFoundException.class, () -> statisticService.addMissedEntry(privateEx.getExerciseId(), "2026-01-01", BOB));
+
+        checkService.check(groupEx.getExerciseId(), BOB);
+        assertEquals(List.of(BOB), statisticService.load(groupEx.getExerciseId(), BOB).finishedInformation().get("current"));
+    }
+
+    @Test
+    void title_mustFit() {
+        for (String title : List.of("", "  ", "x".repeat(65))) {
+            ExerciseDto dto = new ExerciseDto(null, title, ALICE, 1, "12:00:00", 0, null,
+                    ExerciseType.NUMBERREPEAT, "5", null, Visibility.PRIVATE, List.of(), null, null);
+            var error = assertThrows(ResponseStatusException.class, () -> exerciseService.save(dto, ALICE));
+            assertEquals(400, error.getStatusCode().value());
+        }
     }
 
     @Test

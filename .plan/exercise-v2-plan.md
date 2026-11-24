@@ -125,8 +125,9 @@ Today the timer covers everything with its focus view when started; then no vide
   value in large digits, done circle ≥ 44 px; enough gap so a miss does not open the exercise.
 - Quick control: time → ▶ opens the existing large focus view (minimize → card shows the running time and pause);
   reps → − / + with the value editable by tapping. Reuse `exercise-timer` / `rep-counter` with a `compact` property, no copies.
-  Done cards hide the quick control.
-- Done: green circle and border, muted text – no collapsing needed.
+  Done cards keep the quick control: the card must not shrink by itself.
+- Done: green circle and border, muted text, same size.
+- "New exercise" is an icon in the top bar on phones (the floating + would cover the + of a counter).
 - Edit order keeps working: same events, grip handle and arrows. `home-view` finds cards by tag name
   (`querySelectorAll("exercise-card")`) when dragging → use a shared marker class / attribute.
 - Progress bar needs each card's log: add `GET /api/log` (all logs of the user, one request), not one per card.

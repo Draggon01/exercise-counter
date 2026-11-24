@@ -46,25 +46,30 @@ public class StatisticService {
     private final FinishedUserRepository finishedUserRepository;
     private final UserRepository userRepository;
     private final UserSelectionRepository userSelectionRepository;
+    private final ExerciseAccess exerciseAccess;
 
     public StatisticService(CheckRepository checkRepository,
                             PeriodRepository periodRepository,
                             FinishedUserRepository finishedUserRepository,
                             UserRepository userRepository,
-                            UserSelectionRepository userSelectionRepository) {
+                            UserSelectionRepository userSelectionRepository,
+                            ExerciseAccess exerciseAccess) {
         this.checkRepository = checkRepository;
         this.periodRepository = periodRepository;
         this.finishedUserRepository = finishedUserRepository;
         this.userRepository = userRepository;
         this.userSelectionRepository = userSelectionRepository;
+        this.exerciseAccess = exerciseAccess;
     }
 
     /**
      * Finishers per closed period (keyed by reset day) plus {@value #CURRENT_PERIOD_KEY} for the running one.
      * Periods closed on the same day are merged. Also lists who currently has the exercise on their home page.
+     * 404 if the user may not see the exercise.
      */
     @Transactional(readOnly = true)
-    public StatisticDto load(UUID exerciseId) {
+    public StatisticDto load(UUID exerciseId, String username) {
+        exerciseAccess.requireVisible(exerciseId, username);
         Map<UUID, List<String>> finishers = finishersByPeriod(exerciseId);
         Map<String, List<String>> statistics = new HashMap<>();
         for (Period period : periodRepository.findByExerciseExerciseId(exerciseId)) {
@@ -92,6 +97,7 @@ public class StatisticService {
      */
     @Transactional
     public void addMissedEntry(UUID exerciseId, String date, String username) {
+        exerciseAccess.requireVisible(exerciseId, username);
         User user = findUser(username);
         LocalDate day = parseDay(date);
         List<Period> newestFirst = periodRepository.findByExerciseExerciseId(exerciseId).stream()

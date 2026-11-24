@@ -2,7 +2,9 @@ package org.exercise.counter.exercisecounter.web.rest.account;
 
 import org.exercise.counter.exercisecounter.web.rest.account.dto.*;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import org.exercise.counter.exercisecounter.web.security.StayLoggedIn;
 import org.exercise.counter.exercisecounter.web.security.UserSessions;
 import org.exercise.counter.exercisecounter.web.service.AccountDeletionService;
 import org.exercise.counter.exercisecounter.web.service.AccountService;
@@ -22,12 +24,14 @@ public class AccountController {
     private final AccountService accountService;
     private final AccountDeletionService deletionService;
     private final UserSessions userSessions;
+    private final StayLoggedIn stayLoggedIn;
 
     public AccountController(AccountService accountService, AccountDeletionService deletionService,
-                             UserSessions userSessions) {
+                             UserSessions userSessions, StayLoggedIn stayLoggedIn) {
         this.accountService = accountService;
         this.deletionService = deletionService;
         this.userSessions = userSessions;
+        this.stayLoggedIn = stayLoggedIn;
     }
 
     /** Deletes the own account (password needed) and logs out everywhere. */
@@ -44,10 +48,13 @@ public class AccountController {
         SecurityContextHolder.clearContext();
     }
 
+    /** Other devices have to log in again once their session ended; this one stays logged in. */
     @PutMapping("/account/password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void changePassword(@RequestBody ChangePasswordRequest request, @AuthenticationPrincipal UserDetails user) {
+    public void changePassword(@RequestBody ChangePasswordRequest request, @AuthenticationPrincipal UserDetails user,
+                               HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         accountService.changePassword(user.getUsername(), request.currentPassword(), request.newPassword());
+        stayLoggedIn.renew(user.getUsername(), httpRequest, httpResponse);
     }
 
     @GetMapping("/admin/users")

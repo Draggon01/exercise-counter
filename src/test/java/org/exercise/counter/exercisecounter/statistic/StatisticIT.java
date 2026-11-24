@@ -107,7 +107,7 @@ public class StatisticIT {
         checkRepository.save(check);
 
         // 2. Load statistics BEFORE the scheduler runs
-        StatisticDto preSchedulerStats = statisticController.load(testExercise.getExerciseId());
+        StatisticDto preSchedulerStats = statisticController.load(testExercise.getExerciseId(), buildAuth(testUser.getUsername()));
         Map<String, List<String>> preStatsMap = preSchedulerStats.finishedInformation();
 
         // Assert the user is currently checked for today
@@ -118,7 +118,7 @@ public class StatisticIT {
         exerciseResetJob.run(testExercise.getExerciseId());
 
         // 4. Load statistics AFTER the scheduler has run
-        StatisticDto postSchedulerStats = statisticController.load(testExercise.getExerciseId());
+        StatisticDto postSchedulerStats = statisticController.load(testExercise.getExerciseId(), buildAuth(testUser.getUsername()));
         Map<String, List<String>> postStatsMap = postSchedulerStats.finishedInformation();
 
         // After the scheduler runs:
@@ -155,7 +155,7 @@ public class StatisticIT {
 
         statisticController.addMissedEntry(testExercise.getExerciseId(), new MissedEntryRequest(day), buildAuth(testUser.getUsername()));
 
-        assertTrue(statisticController.load(testExercise.getExerciseId()).finishedInformation().get(day + ":" + day)
+        assertTrue(statisticController.load(testExercise.getExerciseId(), buildAuth(testUser.getUsername())).finishedInformation().get(day + ":" + day)
                 .contains(testUser.getUsername()), "the period counts as finished after adding the missed entry");
     }
 

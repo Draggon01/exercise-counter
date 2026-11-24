@@ -20,3 +20,6 @@ export function backPath(search: string = window.location.search): string {
 
 /** A normal click on a link (not e.g. "open in new tab"), which the app handles itself. */
 export const isPlainClick = (e: MouseEvent) => e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey;
+
+/** Pages outside the app shell, shown without a login. */
+export const isPublicPage = (path: string) => /^\/(login|register\/.+|reset-password\/.+)$/.test(path);

@@ -22,11 +22,10 @@ public class StatisticController {
 
     /** Finishers per period plus "current" for the running period. */
     @GetMapping
-    public StatisticDto load(@PathVariable UUID exerciseId) {
-        return statisticService.load(exerciseId);
+    public StatisticDto load(@PathVariable UUID exerciseId, @AuthenticationPrincipal UserDetails user) {
+        return statisticService.load(exerciseId, user.getUsername());
     }
 
-    /** Past periods the current user did not finish. */
     /** Mark one of the last periods as finished by the current user ("forgot to tap Done"). */
     @PostMapping("/missed-entries")
     @ResponseStatus(HttpStatus.NO_CONTENT)

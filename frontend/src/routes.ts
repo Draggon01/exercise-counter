@@ -8,7 +8,7 @@ import "./views/home/browse-view"
 import "./views/options/options-view"
 import "./views/exercise/exercise-view"
 import "./views/exercise-edit/exercise-edit-view"
-import {navigate} from "./utils/navigation";
+import {isPublicPage, navigate} from "./utils/navigation";
 
 export const routes: RouteConfig[] = [
     {
@@ -52,7 +52,9 @@ export const routes: RouteConfig[] = [
         path: '*',
         render: () => html``,
         enter: () => {
-            navigate("/");
+            // leaving the app shell (logout): the outer router (lit-router.ts) shows these pages. Navigating home
+            // from here would be sent back to /login, endlessly
+            if (!isPublicPage(window.location.pathname)) navigate("/");
             return false;
         }
     }

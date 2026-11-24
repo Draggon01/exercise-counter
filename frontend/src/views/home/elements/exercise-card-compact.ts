@@ -8,7 +8,6 @@ import {exerciseTarget, formatGoal, progressPercent, streakOf} from "../../../ut
 import {formatTimeLeft, isUrgent} from "../../../utils/format";
 import {isPlainClick} from "../../../utils/navigation";
 import {vibrate} from "../../../utils/preferences";
-import {runningTimer} from "../../../utils/running-timer";
 import {selectCurrentUser} from "../../login/slice/userSlice";
 import {selectCanChooseReminders, selectReminders} from "../../options/slice/pushSlice";
 import {CheckDto} from "../models/checkDto";
@@ -163,30 +162,8 @@ export class ExerciseCardCompact extends ConnectedLitElement {
     @state()
     private progress?: number;
 
-    @state()
-    private timerRunning = false;
-
-    private stopTimerUpdates?: () => void;
-
-    connectedCallback() {
-        super.connectedCallback();
-        this.stopTimerUpdates = runningTimer.subscribe(this.updateTimerRunning);
-    }
-
-    disconnectedCallback() {
-        super.disconnectedCallback();
-        this.stopTimerUpdates?.();
-    }
-
     protected willUpdate(changed: Map<string, unknown>) {
-        if (changed.has("item")) {
-            this.updateTimerRunning();
-            this.stateChanged(store.getState());
-        }
-    }
-
-    private updateTimerRunning = () => {
-        this.timerRunning = runningTimer.of(this.item.exerciseId) !== undefined;
+        if (changed.has("item")) this.stateChanged(store.getState());
     }
 
     stateChanged(state: RootState) {
@@ -196,8 +173,8 @@ export class ExerciseCardCompact extends ConnectedLitElement {
     }
 
     render() {
-        // done: nothing left to start (a timer that still runs stays visible)
-        const control = !this.editMode && this.progress !== undefined && (!this.checked || this.timerRunning);
+        // also when done: the card keeps its size
+        const control = !this.editMode && this.progress !== undefined;
         const streak = streakOf(this.finishedUser, this.username);
         return html`
             <article class="card ${this.checked ? "done" : ""} ${control ? "with-control" : ""}">
@@ -241,7 +218,7 @@ export class ExerciseCardCompact extends ConnectedLitElement {
 
     /** Only once something was done. */
     private renderBar() {
-        return this.progress && !this.checked ? html`
+        return this.progress ? html`
             <sl-progress-bar value="${progressPercent(this.progress, exerciseTarget(this.item))}"
                              label="Progress"></sl-progress-bar>` : nothing;
     }

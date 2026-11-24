@@ -52,10 +52,10 @@ describe("exercise-card-compact", () => {
         expect(find(".headline a")!.querySelector("sl-icon-button, exercise-progress")).toBeNull();
     });
 
-    it("done: no controls except the circle", async () => {
+    it("done: the card does not shrink, only the circle changes", async () => {
         const {find} = await mount({checked: true});
-        expect(find("exercise-progress")).toBeNull();
-        expect(find("sl-progress-bar")).toBeNull();
+        expect(find("exercise-progress")).not.toBeNull();
+        expect(find("sl-progress-bar")).not.toBeNull();
         expect(find(".done-toggle")!.getAttribute("name")).toBe("check-circle-fill");
     });
 

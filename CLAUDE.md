@@ -105,6 +105,7 @@ nothing distinct for now
 
 ## Learned
 
+- Login: the server session lasts 30 idle minutes and dies on restart; the signed `stay-logged-in` cookie (`StayLoggedIn`, 60 days after the last use, key in table `app_secret`) logs in again. Its signature contains the password hash: a password change/reset or account deletion invalidates it. `APP_SECURE_COOKIES=true` in production (https only). Frontend: `authMiddleware` sends the user to `/login` on any 401 (never when offline)
 - New exercise view (beta, `options.new_exercise_view`, plan: `.plan/exercise-v2-plan.md`): `exercise-card-compact` on home and the page `/exercises/:id` (`exercise-view`). With the option off everything must look and work as before (`exercise-card`). Timers there are the app's one `runningTimer` (`utils/running-timer.ts`, continues between home and exercise page, pauses and saves elsewhere). Elements on the card must not create a stacking context around the timer (its large view would lie below the page header)
 - Access to a single exercise: `ExerciseAccess` (`requireVisible` / `requireShared` / `requireCreator`; not visible = 404). Being on the home list grants access, so adding to it (`SelectionService.select`) requires `requireShared`
 - Progress in the store: `exercise.progress` (`saveProgress()` in `home/slice/progressSaver.ts`); a load that started before a save does not overwrite it

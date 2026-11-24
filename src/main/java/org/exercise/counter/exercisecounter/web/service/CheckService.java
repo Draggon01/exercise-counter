@@ -34,15 +34,18 @@ public class CheckService {
     private final UserSelectionRepository userSelectionRepository;
     private final PeriodRepository periodRepository;
     private final FinishedUserRepository finishedUserRepository;
+    private final ExerciseAccess exerciseAccess;
 
     public CheckService(CheckRepository checkRepository,
                         UserSelectionRepository userSelectionRepository,
                         PeriodRepository periodRepository,
-                        FinishedUserRepository finishedUserRepository) {
+                        FinishedUserRepository finishedUserRepository,
+                        ExerciseAccess exerciseAccess) {
         this.checkRepository = checkRepository;
         this.userSelectionRepository = userSelectionRepository;
         this.periodRepository = periodRepository;
         this.finishedUserRepository = finishedUserRepository;
+        this.exerciseAccess = exerciseAccess;
     }
 
     /** The exercises the user has checked in the current period (without streaks). */
@@ -74,8 +77,10 @@ public class CheckService {
         return result;
     }
 
+    /** 404 if the user may not see the exercise. */
     @Transactional
     public void check(UUID exerciseId, String username) {
+        exerciseAccess.requireVisible(exerciseId, username);
         checkRepository.insertIfAbsent(exerciseId, username);
     }
 

@@ -74,7 +74,7 @@ class StatisticServiceTest {
         period(first, Range.openClosed(day.minusDays(1), day), A);
         period(first, Range.openClosed(day, day.plusHours(2)), B); // catch-up run later that day
 
-        Map<String, List<String>> stats = statisticService.load(first.getExerciseId()).finishedInformation();
+        Map<String, List<String>> stats = statisticService.load(first.getExerciseId(), A).finishedInformation();
 
         String key = day.toLocalDate() + ":" + day.toLocalDate();
         assertEquals(Set.of(A, B), Set.copyOf(stats.get(key)));
@@ -85,8 +85,8 @@ class StatisticServiceTest {
     void participants_areTheUsersWithTheExerciseOnTheirHomePage() {
         userSelectionRepository.save(new UserSelection(new UserSelectionId(B, first.getExerciseId()), 0));
 
-        assertEquals(List.of(B), statisticService.load(first.getExerciseId()).participants());
-        assertEquals(List.of(), statisticService.load(second.getExerciseId()).participants());
+        assertEquals(List.of(B), statisticService.load(first.getExerciseId(), A).participants());
+        assertEquals(List.of(), statisticService.load(second.getExerciseId(), A).participants());
     }
 
     @Test
@@ -98,7 +98,7 @@ class StatisticServiceTest {
         statisticService.addMissedEntry(first.getExerciseId(), day(period), A);
 
         assertEquals(1, finishedUserRepository.findByPeriod_PeriodId(period.getPeriodId()).size());
-        assertEquals(List.of(A), statisticService.load(first.getExerciseId()).finishedInformation()
+        assertEquals(List.of(A), statisticService.load(first.getExerciseId(), A).finishedInformation()
                 .get(day(period) + ":" + day(period)));
     }
 

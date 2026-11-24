@@ -94,14 +94,22 @@ export class HomeView extends ConnectedLitElement {
             height: 180px;
         }
 
+        .mobile-only {
+            display: none;
+        }
+
         @media (max-width: 768px) {
-            /* the floating "+" button takes over on phones */
+            .mobile-only {
+                display: inline-block;
+            }
+
+            /* the floating "+" button (new exercise view: the icon in the top bar) takes over on phones */
             .desktop-only {
                 display: none;
             }
 
             /* room for the floating button below the last card */
-            .page-container {
+            .page-container.with-fab {
                 padding-bottom: 80px;
             }
         }
@@ -172,7 +180,7 @@ export class HomeView extends ConnectedLitElement {
 
     render() {
         return html`
-            <div class="page-container">
+            <div class="page-container ${this.newExerciseView ? "" : "with-fab"}">
             <page-header heading="${this.editMode ? "Edit order" : "My exercises"}">
                 ${this.editMode ? html`
                     <sl-button slot="actions" size="small" variant="success" @click="${this.toggleEditMode}">
@@ -184,6 +192,10 @@ export class HomeView extends ConnectedLitElement {
                         <sl-icon slot="prefix" name="plus-lg"></sl-icon>
                         New exercise
                     </sl-button>
+                    ${this.newExerciseView ? html`
+                        <sl-icon-button slot="actions" class="header-icon mobile-only" name="plus-lg" label="New exercise"
+                                        @click="${() => this.openForm()}"></sl-icon-button>
+                    ` : nothing}
                     ${this.listExercises.length > 1 ? html`
                         <sl-tooltip slot="actions" content="Edit order">
                             <sl-icon-button class="header-icon" name="arrow-down-up" label="Edit order"
@@ -194,7 +206,7 @@ export class HomeView extends ConnectedLitElement {
 
             <div class="exercise-list" @pointerdown="${this.dragStart}">${this.renderItems()}</div>
             </div>
-            ${this.editMode ? nothing : html`<fab-button label="New exercise" @click="${() => this.openForm()}"></fab-button>`}
+            ${this.editMode || this.newExerciseView || !this.optionsReady ? nothing : html`<fab-button label="New exercise" @click="${() => this.openForm()}"></fab-button>`}
             <exercise-confirm .action="${this.confirmAction}" @closed="${() => this.confirmAction = undefined}"></exercise-confirm>
         `;
     }

@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {backPath, withBack} from "./navigation";
+import {backPath, isPublicPage, withBack} from "./navigation";
 
 const search = (path: string) => path.slice(path.indexOf("?"));
 
@@ -14,5 +14,12 @@ describe("backPath", () => {
         for (const path of ["https://evil.example", "//evil.example", "/login", "/exercises/1/../../login", "/browse?x"]) {
             expect(backPath(search(withBack("/statistics/1", path)))).toBe("/");
         }
+    });
+});
+
+describe("isPublicPage", () => {
+    it("knows the pages without a login", () => {
+        ["/login", "/register/1-2", "/reset-password/abc"].forEach(path => expect(isPublicPage(path)).toBe(true));
+        ["/", "/browse", "/options/login", "/loginx"].forEach(path => expect(isPublicPage(path)).toBe(false));
     });
 });

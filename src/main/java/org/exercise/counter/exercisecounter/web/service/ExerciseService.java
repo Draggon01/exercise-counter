@@ -14,8 +14,10 @@ import org.exercise.counter.exercisecounter.web.rest.error.ForbiddenException;
 import org.exercise.counter.exercisecounter.web.rest.exercise.ExerciseMapper;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
 import org.exercise.counter.exercisecounter.web.scheduler.SchedulerService;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -28,6 +30,9 @@ import java.util.stream.Collectors;
  */
 @Service
 public class ExerciseService {
+
+    /** Length of the database column. */
+    public static final int MAX_TITLE_LENGTH = 64;
 
     private final ExerciseRepository exerciseRepository;
     private final ExerciseGroupMappingRepository exerciseGroupMappingRepository;
@@ -112,6 +117,7 @@ public class ExerciseService {
      */
     @Transactional
     public ExerciseDto save(ExerciseDto dto, String username) {
+        requireValidTitle(dto.exerciseTitle());
         requireCreator(dto.exerciseId(), username);
         Exercise saved = exerciseRepository.save(ExerciseMapper.toEntity(dto, username));
         UUID exerciseId = saved.getExerciseId();
@@ -135,6 +141,13 @@ public class ExerciseService {
         requireCreator(exerciseId, username);
         exerciseRepository.deleteById(exerciseId);
         schedulerService.cancelSchedulerFor(exerciseId);
+    }
+
+    private static void requireValidTitle(String title) {
+        if (title == null || title.isBlank() || title.length() > MAX_TITLE_LENGTH) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "The name needs 1 to " + MAX_TITLE_LENGTH + " characters");
+        }
     }
 
     /**
