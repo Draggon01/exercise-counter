@@ -1,11 +1,12 @@
 # Exercise v2 Plan
 
-Goal: **calm cards on the home page, everything else inside the exercise.** Tapping a card opens the exercise's own
+Goal: **calm cards on the home page, everything else inside the exercise.** The card keeps only
+what a quick workout needs (start the timer, count reps, done). Tapping it opens the exercise's own
 page: timer / rep counter, description, and "steps" – short videos with hints that show what to do
 (e.g. "20 min knee": 5 clips to replay while the timer runs).
 
 Rules for the whole plan
-- The home card only ever **loses** content. Anything new goes to the exercise page.
+- The home card only ever **loses** content (timer start and rep counter stay usable on it). Anything new goes to the exercise page.
 - Off by default: Options → General → "Try the new exercise view". Switched off, the app behaves exactly as today.
 - Viewing never needs a video: exercises without description or steps must look complete, too.
 
@@ -19,14 +20,18 @@ Legend: 🧱 backend · 🎨 frontend · 🛠 operations · **S/M/L** = effort (
 
 ## How it should look
 
-Home card (new) – the whole card opens the exercise, only the circle marks it as done:
+Home card (new) – tapping it opens the exercise; only the controls on the right work right on the card:
 ```
 ┌──────────────────────────────────────────┐
-│ Knee workout                🔥 12    ( ✓ ) │
+│ Knee workout  🔥 12          ( ▶ )   ( ✓ ) │   time: start / pause
 │ 20:00 · 5 hours left                       │
 │ ▓▓▓▓▓▓▓▓░░░░░░░░  (only once started)      │
+├──────────────────────────────────────────┤
+│ Push-ups  🔥 3        ( − ) 15 ( + ) ( ✓ ) │   reps: counter
+│ 40 reps · 5 hours left                     │
 └──────────────────────────────────────────┘
 ```
+On narrow phones the timer / rep controls move to a second row, so long titles keep their space.
 
 Exercise page, phone (swipe) / computer (list):
 ```
@@ -58,9 +63,10 @@ Exercise page, phone (swipe) / computer (list):
 | D3 | Where is the toggle stored? | Account-wide (`options`), so phone and computer match |
 | D4 | Where are videos stored? | Files on the server outside the web root and the database (`app.media.dir`), only streamed by the backend after a permission check |
 | D5 | Who shrinks videos? | `ffmpeg` on the server: one format that plays everywhere (iPhones record HEVC `.mov`), and it removes the recording location. Shrinking in the browser is slow and unreliable on iPhones |
-| D6 | Limits | 60 s per clip, upload ≤ 90 MB (Cloudflare's free plan stops at 100 MB), 12 steps per exercise, one video per step, 500 MB of finished videos per user |
-| D7 | Result | MP4 H.264, longest side ≤ 640 px, 30 fps, **no sound**, `+faststart`, JPEG poster. At about 800 kbit/s ≈ 3 MB for 30 s |
-| D8 | What is on the card? | Title, goal · time left, own streak, reminder bell, thin progress bar, done circle. Moves to the page: timer, rep counter, finishers, statistics, ⋯ menu, collapse |
+| D6 | Limits | Clips are meant to be about 3 s (said in the upload dialog), at most 15 s. Finished clip ≤ 1.5 MB, 12 steps per exercise, one video per step, **50 MB of finished videos per user** (`app.media.user-quota`, easy to raise). Raw upload ≤ 90 MB (Cloudflare's free plan stops at 100 MB) |
+| D7 | Result | MP4 H.264, longest side ≤ 640 px, 30 fps, **with sound if it fits** (AAC mono 64 kbit/s), `+faststart`, JPEG poster. About 0.3 MB for 3 s. Too large: lower video quality once → drop the sound → FAILED with a clear message |
+| D8 | What is on the card? | Title, goal · time left, own streak, reminder bell, thin progress bar, done circle, **quick control: start / pause (time) or − value + (reps)**. Moves to the page: full timer / counter, finishers, statistics, ⋯ menu, collapse |
+| D9 | Guided workout | Optional. The creator chooses per exercise: **off** (default), **fixed order** or **shuffled**. Everybody can change order and skip steps before starting, or ignore it and use the normal timer |
 
 ---
 
@@ -100,21 +106,29 @@ Exercise page, phone (swipe) / computer (list):
 Today the timer covers everything with its focus view when started; then no video is visible.
 - `exercise-timer`: property `focusOnStart` (default true = as today). The page sets it to false; large view stays
   available by button. Sticky at the top of the page while running, so it is visible while swiping the steps.
-- Keep: wake lock, finish sound, saving progress when the element is removed (Back while running = paused + saved).
+- Keep: wake lock, finish sound, progress is never lost. Behavior with the option off is unchanged.
+- The card has a timer, too: opening the exercise while it runs must **not** stop it. Move the running countdown out of the
+  element into `utils/running-timer.ts` (end timestamp, at most one timer running, wake lock, finish sound, saving);
+  card and page only show it. Starting another exercise's timer pauses and saves the first one.
+- Leaving both pages (e.g. to Options): pause and save as today; the same on logout.
 - Timer finished → offer "Mark as done" in place (no automatic check).
-- Tests: extend `exercise-timer.test.ts`.
+- Tests: `running-timer.test.ts` (survives card → page → card, second timer pauses the first), extend `exercise-timer.test.ts`.
 
 ### [ ] T10.5 🎨 Calm card (M)
 - `views/home/elements/exercise-card-compact.ts`, shown by `home-view` if the option is on. Content: D8.
-- Title is the real link (keyboard, screen reader) stretched over the card; the done circle is a separate ≥ 44 px button
-  that never opens the page. Done: green circle and border, muted text – no collapsing needed.
+- Title is the real link (keyboard, screen reader) stretched over the card; start / pause, − / +, the value and the done
+  circle are separate ≥ 44 px controls that never open the page.
+- Quick control: time → ▶ opens the existing large focus view (minimize → card shows the running time and pause);
+  reps → − / + with the value editable by tapping. Reuse `exercise-timer` / `rep-counter` with a `compact` property, no copies.
+  Done cards hide the quick control.
+- Done: green circle and border, muted text – no collapsing needed.
 - Edit order keeps working: same events, grip handle and arrows. `home-view` finds cards by tag name
   (`querySelectorAll("exercise-card")`) when dragging → use a shared marker class / attribute.
 - Progress bar needs each card's log: add `GET /api/log` (all logs of the user, one request), not one per card.
 - "Auto-collapse" row in Options is hidden while the new view is on.
 - Push reminder opens `/exercises/:id` for users with the option on (`ReminderMessages` / `ReminderService`),
   only if it is about a single exercise.
-- Tests: done circle does not navigate; drag order with the new card.
+- Tests: no control on the card navigates; drag order with the new card.
 
 ---
 
@@ -122,17 +136,17 @@ Today the timer covers everything with its focus view when started; then no vide
 
 ### [ ] T11.1 🧱 Data model and API (M)
 - Migration:
-  - `exercise_detail (exercise_id UUID PK → exercise ON DELETE CASCADE, description TEXT)`
-  - `exercise_step (step_id UUID PK, exercise_id → exercise ON DELETE CASCADE, position INT, title, target, hints)`;
-    index on `exercise_id`. Check the name of the exercise table in the migrations first.
+  - `exercise_detail (exercise_id UUID PK → exercise ON DELETE CASCADE, description TEXT, guided_mode OFF|ORDERED|SHUFFLED DEFAULT OFF)`
+  - `exercise_step (step_id UUID PK, exercise_id → exercise ON DELETE CASCADE, position INT, title, hints, sets INT, reps INT, duration_seconds INT, rest_seconds INT)`
+    (all four numbers optional; reps or duration, not both); index on `exercise_id`. Check the name of the exercise table in the migrations first.
 - Own tables on purpose: `PUT /api/exercises/{id}` rebuilds the whole entity, clears `lastSchedulerRun` and restarts
   the scheduler. Changing a hint must **never** move the reset or wipe fields.
 - `ExerciseDetailService`:
   - `GET /api/exercises/{id}/details` → description + ordered steps
-  - `PUT /api/exercises/{id}/description`
+  - `PUT /api/exercises/{id}/details` (description + guided mode)
   - `POST /api/exercises/{id}/steps`, `PUT|DELETE /api/exercises/{id}/steps/{stepId}`, `PUT /api/exercises/{id}/steps/order`
-- Always check that the step belongs to that exercise. Limits: description 2000, title 80, target 40
-  ("3 × 12", free text), hints 500 characters, 12 steps.
+- Always check that the step belongs to that exercise. Limits: description 2000, title 80, hints 500 characters, 12 steps, sensible ranges for the numbers.
+- The target text ("3 × 12", "3 × 30 s") is built from the numbers (`formatTarget` in `utils/format.ts` + tests).
 - Plain text only (line breaks kept by CSS), never HTML.
 - List endpoints stay unchanged: details are loaded only on the page.
 - Tests: permissions, order, limits, "editing details keeps `lastSchedulerRun` and the scheduler", query count.
@@ -168,7 +182,7 @@ Today the timer covers everything with its focus view when started; then no vide
 
 ### [ ] T12.2 🧱 Store and deliver (L)
 - Migration `exercise_video (video_id UUID PK, step_id UNIQUE → exercise_step ON DELETE CASCADE,
-  uploaded_by → users ON DELETE SET NULL, status PROCESSING|READY|FAILED, error, size_bytes, duration_ms, width, height, created_at)`.
+  uploaded_by → users ON DELETE SET NULL, status PROCESSING|READY|FAILED, error, size_bytes, duration_ms, width, height, has_audio, created_at)`.
 - Config: `app.media.dir` (empty = feature off, like the push keys; `GET /api/media/config` → `{enabled, maxBytes, maxSeconds}`),
   `app.media.ffmpeg` / `ffprobe`, limits; Spring `multipart.max-file-size` / `max-request-size`, uploads to disk, not memory.
 - `PUT /api/exercises/{id}/steps/{stepId}/video` (multipart) → 202 + status PROCESSING; `DELETE` the same path.
@@ -184,12 +198,12 @@ Today the timer covers everything with its focus view when started; then no vide
 ### [ ] T12.3 🧱 Convert (L)
 - `VideoProcessor`: queue with **one** worker (small server, timers and resets must not suffer), low priority (`nice`),
   timeout 3 min. On startup: PROCESSING rows are set to FAILED ("Please upload again") and their temp files deleted.
-- `ffprobe` first: must contain a video stream, ≤ 60 s, sane size; never trust extension or Content-Type.
+- `ffprobe` first: must contain a video stream, ≤ 15 s, sane size; never trust extension or Content-Type.
 - `ffmpeg` via `ProcessBuilder` with an argument list (no shell), `-protocol_whitelist file`, only accepted input formats
-  (`mov,mp4`, `matroska,webm`), one thread, output limit (`-fs`). Result per D7, `-an -map_metadata -1`,
-  rotation applied, HDR → SDR (iPhone), poster from 0.5 s. The original is always deleted.
+  (`mov,mp4`, `matroska,webm`), one thread, output limit (`-fs`). Result per D7, `-map_metadata -1`
+  (sound: first audio stream if there is one, fallback steps per D7; column `has_audio`), rotation applied, HDR → SDR (iPhone), poster from 0.5 s. The original is always deleted.
 - Status is polled by the page (every 2 s, only while something is PROCESSING).
-- Tests: command building (unit); real conversion only if `ffmpeg` is installed (assumption), small generated clip;
+- Tests: command building incl. fallback order (unit); clip with / without sound; real conversion only if `ffmpeg` is installed (assumption), small generated clip;
   no location in the output; garbage file → FAILED.
 
 ### [ ] T12.4 🧱 Cleaning up files (M)
@@ -202,11 +216,11 @@ Cascades delete rows, **not** files – every path needs it:
 
 ---
 
-## Phase 13 – Videos: frontend
+## Phase 13 – Videos: frontend, guided workout
 
 ### [ ] T13.1 🎨 Player (M)
 - Generic `components/loop-video.ts`: square / rectangle with poster, `muted loop playsinline preload="none"`,
-  tap = play / pause, `object-fit: contain`, states "processing" / "failed" / offline.
+  sound button only if the clip has sound (starts muted, choice kept while the page is open); tap = play / pause, `object-fit: contain`, states "processing" / "failed" / offline.
 - Only one video plays at a time; pauses when swiped away, page hidden or removed. No autoplay (mobile data).
 - Enlarge button (full screen), speed 0.5× / 1×, so the movement can be studied.
 - The service worker already ignores `/api/**`; verify playback + seeking on a real iPhone (installed app) and Android.
@@ -216,8 +230,24 @@ Cascades delete rows, **not** files – every path needs it:
   size, length (from the metadata, if the browser can read it). Hidden if `/api/media/config` says off.
 - `api/http.ts`: `apiUpload` with progress (XMLHttpRequest, `fetch` has no upload progress) and abort; same `ApiError`.
 - Progress bar, cancel, retry, warning when leaving during upload; the step's text stays saved if the upload fails.
-- Short note next to it: who can see the video (visibility of the exercise), sound is removed.
+- Short note next to it: who can see the video (visibility of the exercise), sound is kept if it fits,
+  about 3 s is ideal, how much of the 50 MB is used (`GET /api/media/usage`).
 - Tests: http upload (progress, 413, abort), slice.
+
+---
+
+### [ ] T13.3 🎨 Guided workout (L)
+Needs only Phases 10–11 (videos are shown if there are any).
+- Editor: "Guided workout" = Off / Fixed order / Shuffled, per exercise (`guided_mode`).
+- Page: "Start guided workout" next to the normal timer, only if not off and there are steps. Nothing starts by itself.
+- Start sheet: list of steps in the configured order → drag to reorder, untick to skip, "Shuffle". Last own order is
+  remembered on this device (`preferences.ts`), the creator's setup is never changed; new / deleted steps are handled.
+- Run: step with duration counts down; step with reps or without numbers waits for "Next"; sets repeat; rest in between.
+  Video, hints, "2 of 5", previous / next / pause, sound between steps (`utils/sounds.ts`), vibration, wake lock.
+- Time exercise: the elapsed workout time counts as progress (same `running-timer`, never two timers at once).
+  Rep exercise: no automatic reps. At the end offer "Mark as done".
+- Leaving midway: progress saved; the guided run itself starts over next time.
+- Tests: sequence logic as pure functions (`utils/guided-workout.ts`): sets, rests, skip, shuffle, stored order vs. changed steps.
 
 ---
 
@@ -243,9 +273,8 @@ Default on first (users can still turn it off), later remove the old card, its c
 
 | # | Idea | Effort | Opinion |
 |---|---|---|---|
-| I1 | **Guided workout**: steps get a duration, "Start" runs through them (video, countdown, sound, next step, pause between) | L | Best addition; fits "20 min knee". Prepare now: structured `duration_seconds` / `sets` / `reps` instead of only free text |
 | I2 | **Personal notes** per exercise, only visible to me ("left knee: lower weight") | S | Yes – others' exercises get useful, too |
-| I3 | Tick off steps in the current period (cleared by the reset) | M | Yes, if I1 is not built |
+| I3 | Tick off steps in the current period (cleared by the reset) | M | Maybe – overlaps with the guided workout |
 | I4 | Photo instead of a video per step | S | Yes – smaller, enough for poses |
 | I5 | Copy an exercise with description and videos ("make it mine") | M | Nice for groups; videos must be copied, too |
 | I6 | Cut a clip (start / end) when uploading | M | Good follow-up, `ffmpeg` can do it |
@@ -259,7 +288,7 @@ Default on first (users can still turn it off), later remove the old card, its c
 ## Order and dependencies
 
 1. **Phase 10** → can go live behind the toggle (T10.1 → T10.2 → T10.3 → T10.4 → T10.5)
-2. **Phase 11** → usable without videos; decide **I1** before T11.1 (changes the step table)
+2. **Phase 11** → usable without videos → **T13.3** (guided workout) any time after Phase 11
 3. **T12.1** any time before Phase 12 goes live; **T12.2 → T12.3 → T12.4 → T13.1 → T13.2** go live together
 4. **T6.2** (backup, `feature-plan.md`) before the first real videos
 5. **Phase 14**
@@ -271,5 +300,5 @@ Default on first (users can still turn it off), later remove the old card, its c
 | 10 – Page and toggle | 5 | 0 |
 | 11 – Description and steps | 3 | 0 |
 | 12 – Videos: backend and server | 4 | 0 |
-| 13 – Videos: frontend | 2 | 0 |
+| 13 – Videos: frontend, guided workout | 3 | 0 |
 | 14 – Try out and switch over | 4 | 0 |
