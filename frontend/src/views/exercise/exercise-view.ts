@@ -25,7 +25,7 @@ import {saveProgress} from "../home/slice/progressSaver";
 import {createDoneSync} from "../home/slice/doneSync";
 import {selectCurrentUser} from "../login/slice/userSlice";
 import {loadPushState, loadReminders, selectCanChooseReminders, selectReminders} from "../options/slice/pushSlice";
-import {ExerciseDetailState, loadDetails, loadExercise, selectExerciseDetail} from "./slice/exerciseDetailSlice";
+import {ExerciseDetailState, loadDetails, loadExercise, loadNote, saveNote, selectExerciseDetail} from "./slice/exerciseDetailSlice";
 import "../../components/page-header";
 import "../../components/empty-state";
 import "../home/elements/exercise-confirm";
@@ -33,6 +33,7 @@ import "../home/elements/exercise-finishers";
 import "../home/elements/exercise-menu";
 import "../home/elements/exercise-progress";
 import "./elements/exercise-description";
+import "./elements/exercise-note";
 import "./elements/exercise-steps";
 
 /**
@@ -157,6 +158,9 @@ export class ExerciseView extends ConnectedLitElement {
     private timerFocused = false;
 
     @state()
+    private savingNote = false;
+
+    @state()
     private adding = false;
 
     private back = backPath();
@@ -209,6 +213,7 @@ export class ExerciseView extends ConnectedLitElement {
         return Promise.all([
             store.dispatch(loadExercise(this.exerciseId)),
             store.dispatch(loadDetails(this.exerciseId)),
+            store.dispatch(loadNote(this.exerciseId)),
             store.dispatch(listUserChecks()),
             store.dispatch(listChecksPerExercise()),
             store.dispatch(loadReminders()),
@@ -297,6 +302,9 @@ export class ExerciseView extends ConnectedLitElement {
                     </div>
                 ` : nothing}
                 ${this.renderDetails(exercise)}
+                ${this.detail?.note === undefined ? nothing : keyed(this.exerciseId, html`
+                    <exercise-note .text="${this.detail.note}" ?saving="${this.savingNote}"
+                                   @save-note="${this.saveNote}"></exercise-note>`)}
                 ${onList ? html`<exercise-finishers .checks="${finishers}"></exercise-finishers>` : nothing}
                 <div class="actions">
                     <sl-button @click="${() => navigate(withBack(`/statistics/${this.exerciseId}`, `/exercises/${this.exerciseId}`))}">
@@ -342,6 +350,12 @@ export class ExerciseView extends ConnectedLitElement {
             ${details.steps.length > 0 ? keyed(this.exerciseId, html`
                 <exercise-steps .steps="${details.steps}"></exercise-steps>`) : nothing}
         `;
+    }
+
+    private saveNote = async (e: CustomEvent<string>) => {
+        this.savingNote = true;
+        await store.dispatch(saveNote({exerciseId: this.exerciseId, text: e.detail}));
+        this.savingNote = false;
     }
 
     private editContent = () => navigate(`/exercises/${this.exerciseId}/content`);

@@ -16,6 +16,9 @@ import org.exercise.counter.exercisecounter.web.rest.error.ForbiddenException;
 import org.exercise.counter.exercisecounter.web.rest.error.NotFoundException;
 import org.exercise.counter.exercisecounter.web.scheduler.SchedulerService;
 import org.exercise.counter.exercisecounter.web.service.ExerciseDetailService;
+import org.exercise.counter.exercisecounter.web.data.note.ExerciseNoteId;
+import org.exercise.counter.exercisecounter.web.data.note.ExerciseNoteRepository;
+import org.exercise.counter.exercisecounter.web.service.ExerciseNoteService;
 import org.exercise.counter.exercisecounter.web.service.ExerciseService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,6 +44,8 @@ class ExerciseDetailServiceTest {
     private static final String BOB = "detail-bob";
 
     @Autowired private ExerciseDetailService detailService;
+    @Autowired private ExerciseNoteService noteService;
+    @Autowired private ExerciseNoteRepository noteRepository;
     @Autowired private ExerciseService exerciseService;
     @Autowired private ExerciseRepository exerciseRepository;
     @Autowired private ExerciseStepRepository stepRepository;
@@ -184,6 +189,34 @@ class ExerciseDetailServiceTest {
         exerciseService.delete(publicId, ALICE);
 
         assertFalse(stepRepository.existsById(step));
+    }
+
+    @Test
+    void notes_arePersonal() {
+        noteService.save(publicId, " left knee: less weight ", BOB);
+
+        assertEquals("left knee: less weight", noteService.load(publicId, BOB));
+        assertEquals("", noteService.load(publicId, ALICE), "not even the creator sees it");
+        noteService.save(publicId, "changed", BOB);
+        assertEquals("changed", noteService.load(publicId, BOB));
+        noteService.save(publicId, "  ", BOB);
+        noteService.save(publicId, null, BOB);
+        assertEquals("", noteService.load(publicId, BOB));
+        assertFalse(noteRepository.existsById(new ExerciseNoteId(publicId, BOB)));
+    }
+
+    @Test
+    void notes_limitsAndAccess() {
+        assertBadRequest(() -> noteService.save(publicId, "x".repeat(1001), BOB));
+        assertThrows(NotFoundException.class, () -> noteService.load(privateId, BOB));
+        assertThrows(NotFoundException.class, () -> noteService.save(privateId, "x", BOB));
+    }
+
+    @Test
+    void notes_goWithTheExercise() {
+        noteService.save(publicId, "x", BOB);
+        exerciseService.delete(publicId, ALICE);
+        assertFalse(noteRepository.existsById(new ExerciseNoteId(publicId, BOB)));
     }
 
     private ExerciseStepDto add(String title) {

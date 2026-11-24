@@ -16,6 +16,8 @@ export type ExerciseDetailState = {
     /** description and steps; undefined until loaded */
     details?: ExerciseDetailsDto;
     detailsFailed: boolean;
+    /** the user's own note; undefined until loaded */
+    note?: string;
 };
 
 type SliceProjection = { exerciseDetail: ExerciseDetailState };
@@ -52,6 +54,14 @@ export const deleteStep = apiThunk<void, { exerciseId: string, stepId: string }>
 export const reorderSteps = apiThunk<ExerciseDetailsDto, { exerciseId: string, stepIds: string[] }>(
     'exerciseDetail/reorderSteps', ({exerciseId, stepIds}) =>
         apiPut(`${detailsUrl(exerciseId)}/steps/order`, stepIds));
+
+/** The user's own note (empty if none). */
+export const loadNote = apiThunk<{ text: string }, string>(
+    'exerciseDetail/loadNote', exerciseId => apiGet(`${detailsUrl(exerciseId)}/note`));
+
+/** An empty text deletes the note. */
+export const saveNote = apiThunk<{ text: string }, { exerciseId: string, text: string }>(
+    'exerciseDetail/saveNote', ({exerciseId, text}) => apiPut(`${detailsUrl(exerciseId)}/note`, {text}));
 
 const exerciseDetailSlice = createSlice({
     name: 'exerciseDetail',
@@ -106,6 +116,12 @@ const exerciseDetailSlice = createSlice({
             })
             .addCase(reorderSteps.fulfilled, (state, action) => {
                 if (state.exerciseId === action.meta.arg.exerciseId) state.details = action.payload;
+            })
+            .addCase(loadNote.fulfilled, (state, action) => {
+                if (state.exerciseId === action.meta.arg) state.note = action.payload.text;
+            })
+            .addCase(saveNote.fulfilled, (state, action) => {
+                if (state.exerciseId === action.meta.arg.exerciseId) state.note = action.payload.text;
             })
             .addCase(saveExercise.fulfilled, (state, action) => {
                 if (state.exerciseId === action.payload.exerciseId) state.exercise = action.payload;

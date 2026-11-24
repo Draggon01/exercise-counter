@@ -33,7 +33,10 @@ import org.exercise.counter.exercisecounter.web.service.GroupService;
 import org.exercise.counter.exercisecounter.web.data.detail.ExerciseStepRepository;
 import org.exercise.counter.exercisecounter.web.rest.detail.dto.ExerciseDetailsRequest;
 import org.exercise.counter.exercisecounter.web.rest.detail.dto.ExerciseStepRequest;
+import org.exercise.counter.exercisecounter.web.data.note.ExerciseNoteId;
+import org.exercise.counter.exercisecounter.web.data.note.ExerciseNoteRepository;
 import org.exercise.counter.exercisecounter.web.service.ExerciseDetailService;
+import org.exercise.counter.exercisecounter.web.service.ExerciseNoteService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,6 +69,8 @@ class AccountDeletionTest {
     @Autowired private PeriodRepository periodRepository;
     @Autowired private FinishedUserRepository finishedUserRepository;
     @Autowired private CheckRepository checkRepository;
+    @Autowired private ExerciseNoteService noteService;
+    @Autowired private ExerciseNoteRepository noteRepository;
     @Autowired private ExerciseDetailService detailService;
     @Autowired private ExerciseStepRepository stepRepository;
     @Autowired private ExerciseLogRepository logRepository;
@@ -172,6 +177,7 @@ class AccountDeletionTest {
         onHomeList(LEO, anna);
         checkRepository.save(new Check(new CheckId(anna.getExerciseId(), LEO)));
         logRepository.save(new ExerciseLog(new ExerciseLogId(anna.getExerciseId(), LEO), 5L, LocalDateTime.now()));
+        noteService.save(anna.getExerciseId(), "mine", LEO);
         optionsRepository.save(new UserOptions(LEO, false));
         subscriptionRepository.save(new PushSubscription("https://fcm.googleapis.com/fcm/send/del-leo", LEO, "k", "a", LocalDateTime.now()));
         groupService.create("del-group-solo", GroupVisibility.INVITE_ONLY, LEO);
@@ -183,6 +189,7 @@ class AccountDeletionTest {
         assertTrue(selectionRepository.findById(new UserSelectionId(LEO, anna.getExerciseId())).isEmpty());
         assertTrue(checkRepository.findCheckByCheckIdUsername(LEO).isEmpty());
         assertTrue(logRepository.findByLogIdExerciseId(anna.getExerciseId()).isEmpty());
+        assertFalse(noteRepository.existsById(new ExerciseNoteId(anna.getExerciseId(), LEO)));
         assertFalse(optionsRepository.existsById(LEO));
         assertTrue(subscriptionRepository.findByUsername(LEO).isEmpty());
         assertTrue(groupRepository.findByGroupName("del-group-solo").isEmpty(), "nobody left");

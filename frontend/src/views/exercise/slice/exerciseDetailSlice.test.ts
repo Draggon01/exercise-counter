@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {addStep, deleteStep, exerciseDetailReducer, loadDetails, loadExercise, selectExerciseDetail, updateStep} from "./exerciseDetailSlice";
+import {addStep, deleteStep, exerciseDetailReducer, loadDetails, loadExercise, loadNote, saveNote, selectExerciseDetail, updateStep} from "./exerciseDetailSlice";
 import {ExerciseDto} from "../../home/models/exerciseDto";
 import {saveExercise} from "../../home/slice/exerciseSlice";
 
@@ -45,6 +45,15 @@ describe("exerciseDetail slice", () => {
 
         // another exercise starts without details
         expect(exerciseDetailReducer(state, loadExercise.pending("r", "b")).details).toBeUndefined();
+    });
+
+    it("keeps the own note of the exercise that is shown", () => {
+        let state = exerciseDetailReducer(loaded, loadNote.fulfilled({text: "mine"}, "r", "a"));
+        state = exerciseDetailReducer(state, loadNote.fulfilled({text: "other"}, "r", "b"));
+        expect(state.note).toBe("mine");
+        state = exerciseDetailReducer(state, saveNote.fulfilled({text: ""}, "r", {exerciseId: "a", text: ""}));
+        expect(state.note).toBe("");
+        expect(exerciseDetailReducer(state, loadExercise.pending("r", "b")).note).toBeUndefined();
     });
 
     it("takes over saved changes", () => {

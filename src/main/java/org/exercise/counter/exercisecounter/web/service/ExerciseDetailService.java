@@ -55,7 +55,7 @@ public class ExerciseDetailService {
         exerciseAccess.requireCreator(exerciseId, username);
         ExerciseDetail detail = detailRepository.findById(exerciseId).orElseGet(() -> new ExerciseDetail(exerciseId));
         if (request.description() != null) {
-            detail.setDescription(text("The description", request.description(), MAX_DESCRIPTION));
+            detail.setDescription(PlainText.clean("The description", request.description(), MAX_DESCRIPTION));
         }
         if (request.guidedMode() != null) {
             detail.setGuidedMode(request.guidedMode());
@@ -120,7 +120,7 @@ public class ExerciseDetailService {
     }
 
     private static void apply(ExerciseStepRequest request, ExerciseStep step) {
-        String title = text("The title", request.title(), MAX_TITLE);
+        String title = PlainText.clean("The title", request.title(), MAX_TITLE);
         if (title.isEmpty()) {
             throw badRequest("A step needs a title");
         }
@@ -128,20 +128,11 @@ public class ExerciseDetailService {
             throw badRequest("A step has repetitions or a duration, not both");
         }
         step.setTitle(title);
-        step.setHints(text("The hints", request.hints(), MAX_HINTS));
+        step.setHints(PlainText.clean("The hints", request.hints(), MAX_HINTS));
         step.setSets(inRange("Sets", request.sets(), 1, 99));
         step.setReps(inRange("Repetitions", request.reps(), 1, 999));
         step.setDurationSeconds(inRange("Duration", request.durationSeconds(), 1, 3600));
         step.setRestSeconds(inRange("Rest", request.restSeconds(), 0, 600));
-    }
-
-    /** Trimmed, without NUL (PostgreSQL cannot store it); empty if missing. */
-    private static String text(String what, String value, int maxLength) {
-        String text = value == null ? "" : value.replace("\u0000", "").strip();
-        if (text.length() > maxLength) {
-            throw badRequest(what + " can have up to " + maxLength + " characters");
-        }
-        return text;
     }
 
     private static Integer inRange(String what, Integer value, int min, int max) {

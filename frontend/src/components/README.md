@@ -31,6 +31,7 @@ Belong to one feature, listed here so they are not built a second time.
 | `<exercise-content-view>` | `views/exercise/exercise-content-view.ts` | Page `/exercises/:id/content` (creator): description and steps, saved right away | ✅ |
 | `<exercise-description>` | `views/exercise/elements/exercise-description.ts` | Text with "Show more" after 3 lines (prop `text`) | ✅ |
 | `<exercise-steps>` / `<exercise-step>` | `views/exercise/elements/` | Steps: list on computers, swiped on phones (props `steps` / `step`, `number`) | ✅ |
+| `<exercise-note>` | `views/exercise/elements/exercise-note.ts` | The user's own note: one tap to edit (props `text`, `saving`; event `save-note`) | ✅ |
 | `<step-dialog>` | `views/exercise/elements/step-dialog.ts` | Add / edit a step (props `open`, `step`, `saving`; events `save-step`, `cancel`) | ✅ |
 | `<exercise-menu>` | `views/home/elements/exercise-menu.ts` | ⋯ menu of an exercise (Edit, Description & steps with `withContent`, Remind me, Hide, Delete); events `menu-edit`, `menu-content`, `menu-hide`, `menu-delete` (home card, exercise page) | ✅ |
 | `<exercise-confirm>` | `views/home/elements/exercise-confirm.ts` | Asks before delete / hide and does it: prop `action` (`{kind, exercise}`), event `closed` (detail: done?) | ✅ |

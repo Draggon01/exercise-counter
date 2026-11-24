@@ -175,7 +175,7 @@ Today the timer covers everything with its focus view when started; then no vide
 
 ---
 
-### [ ] T11.4 🧱🎨 Personal notes (S)
+### [x] T11.4 🧱🎨 Personal notes (S)
 - Migration `exercise_note (exercise_id → exercise, username → users, both ON DELETE CASCADE, PK (exercise_id, username), text)`.
 - `GET` / `PUT /api/exercises/{id}/note` (own note only, max. 1000 characters, empty text deletes it; `requireVisible`).
 - Page: "My notes" ("Only you can see this"), one tap to edit; nothing but a small "Add note" if empty. Not on the card.
@@ -336,7 +336,7 @@ Default on first (users can still turn it off), later remove the old card, its c
 | Phase | Tasks | Done |
 |---|---|---|
 | 10 – Page and toggle | 5 | 5 |
-| 11 – Description, steps, notes | 4 | 3 |
+| 11 – Description, steps, notes | 4 | 4 |
 | 12 – Videos: backend and server | 6 | 0 |
 | 13 – Videos: frontend, guided workout, photos | 4 | 0 |
 | 14 – Try out and switch over | 4 | 0 |
