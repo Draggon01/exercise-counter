@@ -31,7 +31,6 @@ public class SecurityConfig {
     private final JpaUserDetailsService userDetailsService;
     private final ObjectProvider<InMemoryUserDetailsManager> devUserDetailsService;
     private final List<String> allowedOrigins;
-    private final StayLoggedIn stayLoggedIn;
 
     /**
      * @param devUserDetailsService only available with the {@code dev} profile, see {@link DevSecurityConfig}
@@ -39,12 +38,10 @@ public class SecurityConfig {
      */
     public SecurityConfig(JpaUserDetailsService userDetailsService,
                           ObjectProvider<InMemoryUserDetailsManager> devUserDetailsService,
-                          @Value("${app.cors.allowed-origins}") List<String> allowedOrigins,
-                          StayLoggedIn stayLoggedIn) {
+                          @Value("${app.cors.allowed-origins}") List<String> allowedOrigins) {
         this.userDetailsService = userDetailsService;
         this.devUserDetailsService = devUserDetailsService;
         this.allowedOrigins = allowedOrigins;
-        this.stayLoggedIn = stayLoggedIn;
     }
 
     @Bean
@@ -70,7 +67,6 @@ public class SecurityConfig {
                         .permitAll()
                 )
                 .userDetailsService(userDetailsService)
-                .rememberMe(remember -> remember.rememberMeServices(stayLoggedIn).key(stayLoggedIn.getKey()))
                 // known sessions per user, so deleting an account can end it on all devices (UserSessions)
                 .sessionManagement(sessions -> sessions
                         .maximumSessions(-1)
