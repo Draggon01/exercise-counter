@@ -40,12 +40,22 @@ export class ExerciseProgress extends LitElement {
     @property({type: Boolean})
     done = false;
 
+    /**
+     * The exercise view: the timer is the app's running timer (goes on between card and page, saves itself),
+     * stays small on start and offers "Mark as done" at the end (event `mark-done`).
+     */
+    @property({type: Boolean})
+    shared = false;
+
     render() {
         const target = exerciseTarget(this.item);
         if (isTimeExercise(this.item.exerciseType)) {
             return html`
                 <exercise-timer .targetSeconds="${target}" .completedSeconds="${this.value}"
                                 .label="${this.item.exerciseTitle}"
+                                .exerciseId="${this.shared ? this.item.exerciseId : ""}"
+                                .focusOnStart="${!this.shared}" ?offerDone="${this.shared && !this.done}"
+                                @mark-done="${() => this.dispatchEvent(new CustomEvent("mark-done"))}"
                                 @progress-changed="${this.forward}"></exercise-timer>`;
         }
         if (isRepExercise(this.item.exerciseType)) {

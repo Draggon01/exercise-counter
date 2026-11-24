@@ -10,18 +10,18 @@ import {formatGoal, streakOf} from "../../utils/exercise";
 import {formatTimeLeft, isUrgent} from "../../utils/format";
 import {vibrate} from "../../utils/preferences";
 import {onAppRefresh} from "../../utils/refresh";
+import {runningTimer} from "../../utils/running-timer";
 import {scrollParent} from "../../utils/scroll";
 import {ExerciseDto} from "../home/models/exerciseDto";
 import {CheckDto} from "../home/models/checkDto";
 import {ExerciseConfirmAction} from "../home/elements/exercise-confirm";
 import {
     loadExerciseLog,
-    progressChanged,
-    saveExerciseLog,
     selectExercise,
     selectProgress
 } from "../home/slice/exerciseSlice";
 import {listChecksPerExercise, listUserChecks, selectAllChecks, selectChecksPerExercise} from "../home/slice/checkSlice";
+import {saveProgress} from "../home/slice/progressSaver";
 import {createDoneSync} from "../home/slice/doneSync";
 import {selectCurrentUser} from "../login/slice/userSlice";
 import {loadPushState, loadReminders, selectCanChooseReminders, selectReminders} from "../options/slice/pushSlice";
@@ -77,6 +77,15 @@ export class ExerciseView extends ConnectedLitElement {
             box-shadow: var(--app-shadow);
         }
 
+        /* stays visible below the page header while scrolling to the rest of the page */
+        .panel.running {
+            position: sticky;
+            top: var(--app-header-height);
+            z-index: 5;
+            border-color: var(--app-accent);
+            box-shadow: var(--app-shadow-raised);
+        }
+
         /* always reachable, like the bar of the exercise form */
         .actions {
             position: sticky;
@@ -127,6 +136,9 @@ export class ExerciseView extends ConnectedLitElement {
     private confirmAction?: ExerciseConfirmAction;
 
     @state()
+    private timerRunning = false;
+
+    @state()
     private adding = false;
 
     private back = backPath();
@@ -134,6 +146,7 @@ export class ExerciseView extends ConnectedLitElement {
     private doneSync = createDoneSync(() => this.requestUpdate());
 
     private stopRefresh?: () => void;
+    private stopTimerUpdates?: () => void;
 
     connectedCallback() {
         super.connectedCallback();
@@ -143,20 +156,27 @@ export class ExerciseView extends ConnectedLitElement {
         }
         // the progress is not loaded again: that would interrupt a running timer
         this.stopRefresh = onAppRefresh(() => this.load());
+        this.stopTimerUpdates = runningTimer.subscribe(this.updateTimerRunning);
         scrollParent(this)?.scrollTo(0, 0);
     }
 
     disconnectedCallback() {
         super.disconnectedCallback();
         this.stopRefresh?.();
+        this.stopTimerUpdates?.();
     }
 
     protected willUpdate(changed: PropertyValues<this>) {
         if (changed.has("exerciseId") && this.exerciseId) {
             this.back = backPath();
+            this.updateTimerRunning();
             void this.open(this.exerciseId);
             this.stateChanged(store.getState());
         }
+    }
+
+    private updateTimerRunning = () => {
+        this.timerRunning = runningTimer.of(this.exerciseId) !== undefined;
     }
 
     private async open(exerciseId: string) {
@@ -247,9 +267,10 @@ export class ExerciseView extends ConnectedLitElement {
                     ${onList ? nothing : html`<span>· by ${exercise.creator}</span>`}
                 </div>
                 ${onList ? html`
-                    <div class="panel">
+                    <div class="panel ${this.timerRunning ? "running" : ""}">
                         ${this.progress === undefined ? html`<sl-skeleton effect="pulse"></sl-skeleton>` : keyed(this.exerciseId, html`
                             <exercise-progress .item="${exercise}" .value="${this.progress}" ?done="${done}"
+                                               shared @mark-done="${this.toggleDone}"
                                                @progress-changed="${this.saveProgress(this.exerciseId)}"></exercise-progress>
                         `)}
                     </div>
@@ -298,10 +319,7 @@ export class ExerciseView extends ConnectedLitElement {
 
     /** Bound to the exercise it was rendered for: a removed timer reports its progress after the page changed. */
     private saveProgress(exerciseId: string) {
-        return (e: CustomEvent<number>) => {
-            store.dispatch(progressChanged({exerciseId, value: e.detail}));
-            store.dispatch(saveExerciseLog({exerciseId, value: e.detail}));
-        };
+        return (e: CustomEvent<number>) => saveProgress(exerciseId, e.detail);
     }
 
     private addToList = async () => {

@@ -1,5 +1,6 @@
 import { createListenerMiddleware } from '@reduxjs/toolkit';
 import { checkAuthStatus } from './authSlice';
+import {runningTimer} from "../../utils/running-timer";
 import {navigate} from "../../utils/navigation";
 import {store} from "../../store";
 import {logoutUser, saveUserInfo} from "../../views/login/slice/userSlice";
@@ -24,6 +25,12 @@ authMiddleware.startListening({
             store.dispatch(checkAuthStatus());
         }, HEALTH_CHECK_INTERVAL);
     }
+});
+
+// Save the progress of a running timer while the session still exists
+authMiddleware.startListening({
+    actionCreator: logoutUser.pending,
+    effect: () => runningTimer.pause()
 });
 
 // Stop interval on logout

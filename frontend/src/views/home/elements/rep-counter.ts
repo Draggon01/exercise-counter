@@ -43,7 +43,7 @@ export class RepCounter extends LitElement {
 
     disconnectedCallback() {
         super.disconnectedCallback();
-        if (this.debounce) clearTimeout(this.debounce);
+        if (this.debounce) this.report(); // removed before the last change was reported
     }
 
     render() {
@@ -61,9 +61,13 @@ export class RepCounter extends LitElement {
         const parsed = parseInt((e.target as HTMLInputElement).value, 10);
         this.value = Math.max(0, isNaN(parsed) ? 0 : parsed);
         if (this.debounce) clearTimeout(this.debounce);
-        this.debounce = setTimeout(
-            () => this.dispatchEvent(new CustomEvent<number>("progress-changed", {detail: this.value})),
-            REP_SAVE_DEBOUNCE_MS);
+        this.debounce = setTimeout(() => this.report(), REP_SAVE_DEBOUNCE_MS);
+    }
+
+    private report() {
+        clearTimeout(this.debounce);
+        this.debounce = undefined;
+        this.dispatchEvent(new CustomEvent<number>("progress-changed", {detail: this.value}));
     }
 }
 

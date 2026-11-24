@@ -106,7 +106,7 @@ Exercise page, phone (swipe) / computer (list):
 - Going back to home keeps the scroll position. Statistics → Back returns to the exercise if opened from there.
 - Tests: slice, goal / menu logic as pure functions.
 
-### [ ] T10.4 🎨 Timer next to other content (M)
+### [x] T10.4 🎨 Timer next to other content (M)
 Today the timer covers everything with its focus view when started; then no video is visible.
 - `exercise-timer`: property `focusOnStart` (default true = as today). The page sets it to false; large view stays
   available by button. Sticky at the top of the page while running, so it is visible while swiping the steps.
@@ -334,7 +334,7 @@ Default on first (users can still turn it off), later remove the old card, its c
 
 | Phase | Tasks | Done |
 |---|---|---|
-| 10 – Page and toggle | 5 | 3 |
+| 10 – Page and toggle | 5 | 4 |
 | 11 – Description, steps, notes | 4 | 0 |
 | 12 – Videos: backend and server | 6 | 0 |
 | 13 – Videos: frontend, guided workout, photos | 4 | 0 |

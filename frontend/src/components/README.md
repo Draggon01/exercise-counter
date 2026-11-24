@@ -65,6 +65,9 @@ Belong to one feature, listed here so they are not built a second time.
 | `withBack(path, back)` / `backPath()` | `src/utils/navigation.ts` | A sub page whose Back leads to the page it was opened from (exercise page, Browse) instead of home | ✅ |
 | `scrollParent(el)` | `src/utils/scroll.ts` | The scrolling ancestor across shadow roots (the app shell's main) | ✅ |
 | `createDoneSync(onChange)` | `src/views/home/slice/doneSync.ts` | "Mark as done" for a view (LatestValueSync + check slice) | ✅ |
+| `Countdown` | `src/utils/countdown.ts` | Countdown without UI: clock based, wake lock, finish sound, `report` for saving | ✅ |
+| `runningTimer` | `src/utils/running-timer.ts` | The app's one running exercise timer (survives card ↔ exercise page, pauses and saves elsewhere) | ✅ |
+| `saveProgress(exerciseId, value)` | `src/views/home/slice/progressSaver.ts` | Progress just made: shown at once and saved | ✅ |
 | `LatestValueSync` | `src/utils/latest-value-sync.ts` | Saving a toggle per item without flooding the server: shown at once, one request at a time, only the latest wish is sent (home: "Mark as done") | ✅ |
 | `placeTooltip(anchor, size, area)` | `src/utils/tooltip.ts` | Position of a custom tooltip: above (below if no room), always inside the visible area (statistics grid) | ✅ |
 | `newPasswordProblem(password, repeated)`, `MIN_PASSWORD_LENGTH` | `src/utils/password.ts` | New-password checks (same minimum as the backend): change password, reset page | ✅ |

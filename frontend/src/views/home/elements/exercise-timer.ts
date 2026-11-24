@@ -1,19 +1,29 @@
 import {css, html, LitElement, nothing, PropertyValues} from "lit";
-import {playTimerSound} from "../../../utils/sounds";
-import {getTimerSound, vibrate} from "../../../utils/preferences";
 import {customElement, property, state} from "lit/decorators.js";
+import {Countdown} from "../../../utils/countdown";
 import {formatDuration} from "../../../utils/format";
+import {runningTimer} from "../../../utils/running-timer";
+import {touchStyles} from "../../../styles/touch";
+
+/** Events of `<exercise-timer>`. */
+export const ExerciseTimerEvents = {
+    /** detail: seconds done (not with `exerciseId`: then the running timer saves itself) */
+    progressChanged: "progress-changed",
+    /** "Mark as done" of a finished timer (only with `offerDone`), without detail */
+    markDone: "mark-done",
+} as const;
 
 /**
  * Countdown for time exercises. While it runs, a large focus view shows the time (minimize keeps it
- * running, tapping the small display reopens it) and the screen is kept on (Wake Lock, if supported).
- * Emits `progress-changed` (detail: seconds completed) when paused, finished, reset or removed while
- * running, so the parent can save it. Plays the sound chosen in Options when finished.
+ * running, tapping the small display reopens it).
+ * Without `exerciseId` it belongs to this element: emits `progress-changed` when paused, finished, reset or removed
+ * while running, so the parent can save it. With `exerciseId` it is the app's running timer (`runningTimer`): it
+ * saves itself and goes on when another `<exercise-timer>` of that exercise takes over (card → exercise page).
  */
 @customElement("exercise-timer")
 export class ExerciseTimer extends LitElement {
 
-    static styles = css`
+    static styles = [touchStyles, css`
         .timer-row {
             display: flex;
             align-items: center;
@@ -118,7 +128,7 @@ export class ExerciseTimer extends LitElement {
                 min-width: 44px;
             }
         }
-    `;
+    `];
 
     /** Duration of the exercise in seconds. */
     @property({type: Number})
@@ -132,38 +142,70 @@ export class ExerciseTimer extends LitElement {
     @property()
     label = "";
 
-    @state()
-    private secondsLeft = 0;
+    /** Exercise whose timer survives this element; empty: the timer belongs to the element. */
+    @property()
+    exerciseId = "";
 
-    @state()
-    private running = false;
+    /** Open the large focus view on start (it can always be opened while running). */
+    @property({attribute: false})
+    focusOnStart = true;
+
+    /** Offer "Mark as done" when finished. */
+    @property({type: Boolean})
+    offerDone = false;
 
     /** The large focus view is shown (opens on start, can be minimized). */
     @state()
     private focused = false;
 
-    private interval?: ReturnType<typeof setInterval>;
-    private wakeLock?: WakeLockSentinel;
+    private readonly own = new Countdown();
+    private countdown = this.own;
+    private unsubscribe?: () => void;
+
+    connectedCallback() {
+        super.connectedCallback();
+        this.use(this.countdown);
+    }
 
     protected willUpdate(changed: PropertyValues<this>) {
-        if (changed.has("targetSeconds") || changed.has("completedSeconds")) {
-            this.stop();
-            this.secondsLeft = Math.max(0, this.targetSeconds - this.completedSeconds);
+        if (!changed.has("targetSeconds") && !changed.has("completedSeconds") && !changed.has("exerciseId")) return;
+        const running = this.exerciseId ? runningTimer.of(this.exerciseId) : undefined;
+        if (running?.target === this.targetSeconds) {
+            this.use(running); // saved progress arriving late must not stop it
+            return;
         }
+        running?.pause(); // the goal was changed
+        this.own.report = seconds => this.reportProgress(seconds);
+        this.use(this.own);
+        this.own.set(this.targetSeconds, this.completedSeconds);
     }
 
     disconnectedCallback() {
         super.disconnectedCallback();
-        if (this.running) {
+        if (this.countdown.running && !this.exerciseId) {
             // e.g. the card collapsed while the timer was running: keep what was done so far
-            this.pause();
+            this.countdown.pause();
         }
-        this.focused = false;
-        document.removeEventListener("keydown", this.onKeydown);
+        this.unsubscribe?.();
+        this.closeFocus();
+    }
+
+    private use(countdown: Countdown) {
+        this.unsubscribe?.();
+        this.countdown = countdown;
+        this.unsubscribe = countdown.subscribe(() => this.requestUpdate());
+    }
+
+    private get secondsLeft() {
+        return this.countdown.secondsLeft;
+    }
+
+    private get running() {
+        return this.countdown.running;
     }
 
     private get finished() {
-        return this.secondsLeft === 0 && this.targetSeconds > 0;
+        return this.countdown.finished;
     }
 
     render() {
@@ -181,9 +223,16 @@ export class ExerciseTimer extends LitElement {
                 `}
                 <div class="timer-controls">
                     ${this.finished ? html`
+                        ${this.offerDone ? html`
+                            <sl-button size="small" variant="success" @click="${this.markDone}">Mark as done</sl-button>
+                        ` : nothing}
                         <sl-button size="small" variant="neutral" @click="${this.reset}">Reset</sl-button>
                     ` : this.running ? html`
                         <sl-button size="small" variant="warning" @click="${this.pause}">⏸ Pause</sl-button>
+                        ${this.focusOnStart ? nothing : html`
+                            <sl-icon-button name="arrows-fullscreen" label="Show large timer"
+                                            @click="${this.openFocus}"></sl-icon-button>
+                        `}
                     ` : html`
                         <sl-button size="small" variant="primary" @click="${this.start}">
                             ${atStart ? "▶ Start" : "▶ Resume"}
@@ -212,7 +261,11 @@ export class ExerciseTimer extends LitElement {
                 </sl-progress-ring>
                 <div class="focus-controls">
                     ${done ? html`
-                        <sl-button size="large" variant="success" @click="${this.closeFocus}">Close</sl-button>
+                        ${this.offerDone ? html`
+                            <sl-button size="large" variant="success" @click="${this.markDone}">Mark as done</sl-button>
+                        ` : nothing}
+                        <sl-button size="large" variant="${this.offerDone ? "default" : "success"}"
+                                   @click="${this.closeFocus}">Close</sl-button>
                     ` : html`
                         ${this.running
                                 ? html`<sl-button size="large" variant="warning" @click="${this.pause}">⏸ Pause</sl-button>`
@@ -230,40 +283,24 @@ export class ExerciseTimer extends LitElement {
 
     private start = () => {
         if (this.running || this.finished) return;
-        this.running = true;
-        this.openFocus();
-        void this.keepScreenOn();
-        this.interval = setInterval(() => {
-            this.secondsLeft = Math.max(0, this.secondsLeft - 1);
-            if (this.secondsLeft === 0) {
-                this.stop();
-                playTimerSound(getTimerSound());
-                vibrate([200, 100, 200]);
-                this.emitProgress();
-            }
-        }, 1000);
+        if (this.exerciseId) {
+            runningTimer.start(this.exerciseId, this.countdown);
+        } else {
+            this.countdown.start();
+        }
+        if (this.focusOnStart) this.openFocus();
     }
 
-    private pause = () => {
-        this.stop();
-        this.emitProgress();
-    }
+    private pause = () => this.countdown.pause();
 
     private reset = () => {
-        this.stop();
-        this.secondsLeft = this.targetSeconds;
+        this.countdown.reset();
         this.closeFocus();
-        this.emitProgress();
     }
 
-    private stop() {
-        this.running = false;
-        if (this.interval) {
-            clearInterval(this.interval);
-            this.interval = undefined;
-        }
-        void this.wakeLock?.release().catch(() => undefined);
-        this.wakeLock = undefined;
+    private markDone = () => {
+        this.closeFocus();
+        this.dispatchEvent(new CustomEvent(ExerciseTimerEvents.markDone));
     }
 
     private openFocus = () => {
@@ -281,17 +318,12 @@ export class ExerciseTimer extends LitElement {
         if (e.key === "Escape") this.closeFocus();
     }
 
-    /** Keeps the screen on while the timer runs (not supported everywhere – then it just stays off). */
-    private async keepScreenOn() {
-        try {
-            this.wakeLock = await navigator.wakeLock?.request("screen");
-        } catch {
-            // denied (e.g. battery saver) – the timer works anyway
+    private reportProgress(seconds: number) {
+        if (this.exerciseId) {
+            runningTimer.save(this.exerciseId, seconds);
+        } else {
+            this.dispatchEvent(new CustomEvent<number>(ExerciseTimerEvents.progressChanged, {detail: seconds}));
         }
-    }
-
-    private emitProgress() {
-        this.dispatchEvent(new CustomEvent<number>("progress-changed", {detail: this.targetSeconds - this.secondsLeft}));
     }
 }
 
