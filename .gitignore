@@ -45,3 +45,6 @@ target
 
 # database dumps contain real user data – never commit them
 development/dump/
+
+# private test clips (T12.0)
+/tmpvideos/
