@@ -23,6 +23,10 @@ export const settingStyles = css`
         margin-top: 2px;
     }
 
+    .setting-description a {
+        color: var(--app-accent);
+    }
+
     .setting-control {
         width: 140px;
         flex-shrink: 0;

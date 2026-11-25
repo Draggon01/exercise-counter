@@ -8,6 +8,7 @@ import {toast} from "../../components/toast";
 import {backPath, isPlainClick, navigate, withBack} from "../../utils/navigation";
 import {exerciseTarget, formatGoal, isTimeExercise, streakOf} from "../../utils/exercise";
 import {formatTimeLeft, isUrgent} from "../../utils/format";
+import {EXERCISE_VIEW_ISSUE_URL} from "../../utils/links";
 import {vibrate} from "../../utils/preferences";
 import {onAppRefresh} from "../../utils/refresh";
 import {runningTimer} from "../../utils/running-timer";
@@ -116,7 +117,10 @@ export class ExerciseView extends ConnectedLitElement {
         }
 
         .beta {
-            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--app-space-2);
             padding-bottom: var(--app-space-3);
             font-size: 0.85em;
             text-align: center;
@@ -374,10 +378,14 @@ export class ExerciseView extends ConnectedLitElement {
                         </sl-button>
                     `}
                 </div>
-                <p class="beta">
-                    You are trying the new view. Something odd?
+                <div class="beta">
+                    <span>You are trying the new view. Any issues with it?</span>
+                    <sl-button size="small" href="${EXERCISE_VIEW_ISSUE_URL}" target="_blank" rel="noopener noreferrer">
+                        <sl-icon slot="prefix" name="github"></sl-icon>
+                        Report an issue
+                    </sl-button>
                     <a href="/options/general" @click="${this.openOptions}">Switch back in the options</a>
-                </p>
+                </div>
             </div>
         `;
     }

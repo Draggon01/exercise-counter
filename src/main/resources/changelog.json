@@ -1,7 +1,7 @@
 [
   {
     "version": "0.9",
-    "date": "2026-11-24",
+    "date": "2026-11-25",
     "title": "Try the new exercise view",
     "items": [
       "New and optional: calmer exercise cards and a page for every exercise – turn it on in Options → General → Try the new exercise view",
@@ -10,6 +10,7 @@
       "Guided workout: leads you through the steps with timer, sets, rests and videos that play by themselves – the creator turns it on in Description & steps",
       "Short videos or photos for every step: upload them in Description & steps, tap to play, with slow motion and large view",
       "Personal notes on every exercise – only you can see them",
+      "Any issues with the new view? Report them with the button at the bottom of an exercise page (needs a GitHub account)",
       "The new cards show who else already finished",
       "With the new view a running timer keeps going when you switch between the card and the exercise page",
       "With the new view a reminder for one exercise opens it directly",

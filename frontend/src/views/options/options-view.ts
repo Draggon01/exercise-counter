@@ -12,6 +12,7 @@ import "./elements/reminder-settings";
 import "./elements/account-settings";
 import "./elements/delete-account";
 import {customElement, property, query, state} from 'lit/decorators.js';
+import {EXERCISE_VIEW_ISSUE_URL} from "../../utils/links";
 import {navigate} from "../../utils/navigation";
 import {getTimerSound, isVibrationOn, setTimerSound, setVibrationOn} from "../../utils/preferences";
 import {playTimerSound, TIMER_SOUNDS, TimerSound} from "../../utils/sounds";
@@ -288,6 +289,8 @@ export class OptionsView extends ConnectedLitElement {
                                         <div class="setting-description">
                                             Simpler cards; tap one to see everything about the exercise on its own page.
                                             You can switch back at any time.
+                                            Any issues with it?
+                                            <a href="${EXERCISE_VIEW_ISSUE_URL}" target="_blank" rel="noopener noreferrer">Report them on GitHub</a>
                                         </div>
                                     </div>
                                     <sl-switch ?checked="${this.newExerciseView}" aria-label="Try the new exercise view"

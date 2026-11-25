@@ -82,6 +82,7 @@ Belong to one feature, listed here so they are not built a second time.
 | `playStepSound(kind, sound)` | `src/utils/sounds.ts` | Short go / rest signal | ✅ |
 | `apiUpload(url, file, {onProgress, signal})` | `src/api/http.ts` | Uploading a file with progress and cancel | ✅ |
 | `mediaProblem`, `videoSeconds`, `formatMegabytes` | `src/utils/media-file.ts` | Check a video or photo before uploading | ✅ |
+| `newIssueUrl(title)`, `EXERCISE_VIEW_ISSUE_URL` | `src/utils/links.ts` | Link to a new GitHub issue (public: no user data in it) | ✅ |
 | `scrollParent(el)` | `src/utils/scroll.ts` | The scrolling ancestor across shadow roots (the app shell's main) | ✅ |
 | `createDoneSync(onChange)` | `src/views/home/slice/doneSync.ts` | "Mark as done" for a view (LatestValueSync + check slice) | ✅ |
 | `Countdown` | `src/utils/countdown.ts` | Countdown without UI: clock based, wake lock, finish sound, `report` for saving | ✅ |
