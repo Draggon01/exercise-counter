@@ -59,7 +59,7 @@ describe("exercise-card-compact", () => {
         expect(find(".done-toggle")!.getAttribute("name")).toBe("check-circle-fill");
     });
 
-    it("names the first three others who finished, longest streak first", async () => {
+    it("names the first three who finished, yourself included, longest streak first", async () => {
         const check = (user: string, streak: number) => ({exerciseId: "a", user, streak});
         const {card, find} = await mount({finishedUser: [check("ben", 1), check("anna", 4), check("cleo", 2), check("dan", 1)]});
         const finishers = find("exercise-finishers") as HTMLElement & {updateComplete: Promise<unknown>};
@@ -67,10 +67,11 @@ describe("exercise-card-compact", () => {
         const texts = [...finishers.shadowRoot!.querySelectorAll(".finisher, .more")].map(e => e.textContent);
         expect(texts).toEqual(["anna 🔥4", "cleo 🔥2", "ben", "+1"]);
 
-        // nobody else: no line at all
+        // nobody: the line stays, so the card does not change its size
         card.finishedUser = [];
         await card.updateComplete;
-        expect(find("exercise-finishers")).toBeNull();
+        await finishers.updateComplete;
+        expect(finishers.shadowRoot!.textContent).toContain("nobody yet");
     });
 
     it("edit order: only the sort controls", async () => {
