@@ -191,13 +191,15 @@ Today the timer covers everything with its focus view when started; then no vide
 - Leon picks one; write the result into D6 / D7 (keep it a config value). Real clips are not committed.
 
 ### [ ] T12.1 🛠 Server preparation (S) – done by Leon, the plan only supplies the snippets
-- `apt install ffmpeg`; folder `/opt/exercise-counter/media`, owned by the backend's user, outside the web root
+- `apt install ffmpeg`; folder `/var/lib/exercise-counter/media`, owned by the backend's user, outside the web root
   and **not** inside a folder the deploy replaces; `APP_MEDIA_DIR` in `excountvars.env`.
 - nginx: `client_max_body_size 95m` **only** for the upload location (default is 1 MB → 413), longer
   `client_body_timeout` / `proxy_read_timeout`, streaming: `proxy_buffering off` for the video location.
 - Check the security headers: a CSP needs `media-src 'self' blob:`. Cloudflare must not cache `/api/**`.
 - Back up the media folder together with the database (T6.2); check free disk space first.
 - The deploy script is not changed.
+- Later (decided by Leon, only invited friends for now): run the backend as its own user instead of root (if it does), because ffmpeg
+  reads uploaded files. Do it before the app is opened to strangers.
 
 ### [ ] T12.2 🧱 Store and deliver (L)
 - Migration `exercise_media (media_id UUID PK, step_id UNIQUE → exercise_step ON DELETE CASCADE,
