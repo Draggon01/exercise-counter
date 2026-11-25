@@ -67,8 +67,8 @@ Exercise page, phone (swipe) / computer (list):
 | D3 | Where is the toggle stored? | Account-wide (`options`), so phone and computer match |
 | D4 | Where are videos stored? | Files on the server outside the web root and the database (`app.media.dir`), only streamed by the backend after a permission check. Starts on the Hetzner server, may move to the private Raspberry Pi later (T12.5) |
 | D5 | Who shrinks videos? | `ffmpeg` on the server: one format that plays everywhere (iPhones record HEVC `.mov`), and it removes the recording location. Shrinking in the browser is slow and unreliable on iPhones |
-| D6 | Limits | Clips are meant to be about 3 s (said in the upload dialog), at most 15 s. Finished clip ≤ 1.5 MB, 12 steps per exercise, one video **or** photo per step, **50 MB of finished videos and photos per user** (`app.media.user-quota`, easy to raise). Raw upload ≤ 90 MB (Cloudflare's free plan stops at 100 MB) |
-| D7 | Result | MP4 H.264, longest side ≤ 640 px, 30 fps, **with sound if it fits** (AAC mono 64 kbit/s), `+faststart`, JPEG poster. About 0.3 MB for 3 s. Too large: lower video quality once → drop the sound → FAILED with a clear message. **Quality must be tested with real clips first (T12.0)** |
+| D6 | Limits | Clips are meant to be about 3 s (said in the upload dialog), at most 15 s. Finished clip ≤ 2 MB (15 s at 800 kbit/s are about 1.6 MB), 12 steps per exercise, one video **or** photo per step, **50 MB of finished videos and photos per user** (`app.media.user-quota`, easy to raise). Raw upload ≤ 90 MB (Cloudflare's free plan stops at 100 MB) |
+| D7 | Result | MP4 H.264, longest side ≤ 640 px, 800 kbit/s (config values), 30 fps, **with sound if it fits** (AAC mono 64 kbit/s), `+faststart`, JPEG poster. About 0.1 MB per second (0.37 MB for 3.5 s). Too large: lower video quality once → drop the sound → FAILED with a clear message. **Standard for now, chosen by Leon (T12.0)**; still to check with original phone clips (iPhone HDR / rotation) |
 | D8 | What is on the card? | Title, goal · time left, own streak, reminder bell, thin progress bar, done circle, the first 3 **others** who finished (+ how many more; nothing if nobody), **quick control: start / pause (time) or − value + (reps)**. Moves to the page: full timer / counter, all finishers, statistics, ⋯ menu, collapse |
 | D9 | Guided workout | Optional. The creator chooses per exercise: **off** (default), **fixed order** or **shuffled**. Everybody can change order and skip steps before starting, or ignore it and use the normal timer |
 
@@ -188,7 +188,9 @@ Today the timer covers everything with its focus view when started; then no vide
 ### [ ] T12.0 🛠 Try the video quality (S) – before T12.2
 - Convert 4–5 real clips (iPhone and Android, portrait / landscape, fast movement, bad light) with the D7 settings and with
   640 / 720 px and 800 / 1200 / 1600 kbit/s; watch them on a phone, small and full screen, and note the sizes.
-- Leon picks one; write the result into D6 / D7 (keep it a config value). Real clips are not committed.
+- Leon picks one; write the result into D6 / D7 (keep it a config value). Real clips are not committed (`/tmpvideos/` is ignored).
+- [x] Android clips (via WhatsApp): 640 px / 800 kbit/s is more than enough.
+- [ ] Original clips: iPhone / iPad (HDR, rotation), Android by cable – at the latest with T12.3.
 
 ### [ ] T12.1 🛠 Server preparation (S) – done by Leon, the plan only supplies the snippets
 - `apt install ffmpeg`; folder `/var/lib/exercise-counter/media`, owned by the backend's user, outside the web root
