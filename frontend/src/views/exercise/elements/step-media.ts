@@ -1,4 +1,4 @@
-import {css, html, LitElement} from "lit";
+import {css, html, LitElement, PropertyValues} from "lit";
 import {customElement, property, query, state} from "lit/decorators.js";
 import {keyed} from "lit/directives/keyed.js";
 import {MediaDto} from "../models/exerciseDetailsDto";
@@ -69,8 +69,16 @@ export class StepMedia extends LitElement {
     @property()
     label = "";
 
+    /** A video plays at once, and goes on with the next one when `media` changes. */
+    @property({type: Boolean})
+    autoplay = false;
+
     @state()
     private failed = false;
+
+    protected willUpdate(changed: PropertyValues<this>) {
+        if (changed.has("media")) this.failed = false;
+    }
 
     @query("dialog")
     private dialog?: HTMLDialogElement;
@@ -85,7 +93,10 @@ export class StepMedia extends LitElement {
             return html`<div class="message">${error}</div>`;
         }
         if (kind === "VIDEO") {
-            return keyed(mediaId, html`<loop-video src="${url}" poster="${url}/poster" .label="${this.label}" ?hasSound="${hasAudio}"></loop-video>`);
+            // autoplay: the same element for all videos – phones allow sound only where the user turned it on
+            return keyed(this.autoplay || mediaId, html`
+                <loop-video src="${url}" poster="${url}/poster" .label="${this.label}" ?hasSound="${hasAudio}"
+                            ?autoplay="${this.autoplay}"></loop-video>`);
         }
         if (this.failed) {
             return html`

@@ -64,6 +64,9 @@ public class ExerciseDetailService {
         if (request.guidedMode() != null) {
             detail.setGuidedMode(request.guidedMode());
         }
+        if (request.getReadySeconds() != null) {
+            detail.setGetReadySeconds(inRange("Get ready", request.getReadySeconds(), 0, 60));
+        }
         detailRepository.save(detail);
         return details(exerciseId);
     }
@@ -123,7 +126,7 @@ public class ExerciseDetailService {
         List<ExerciseStepDto> steps = stepRepository.findByExerciseIdOrderByPosition(exerciseId).stream()
                 .map(step -> toDto(step, media.get(step.getStepId())))
                 .toList();
-        return new ExerciseDetailsDto(detail.getDescription(), detail.getGuidedMode(), steps);
+        return new ExerciseDetailsDto(detail.getDescription(), detail.getGuidedMode(), detail.getGetReadySeconds(), steps);
     }
 
     private static void apply(ExerciseStepRequest request, ExerciseStep step) {

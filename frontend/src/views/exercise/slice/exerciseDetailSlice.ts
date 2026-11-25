@@ -48,9 +48,9 @@ export const saveDescription = apiThunk<ExerciseDetailsDto, { exerciseId: string
     'exerciseDetail/saveDescription', ({exerciseId, description}) =>
         apiPut(`${detailsUrl(exerciseId)}/details`, {description}));
 
-export const saveGuidedMode = apiThunk<ExerciseDetailsDto, { exerciseId: string, guidedMode: GuidedMode }>(
-    'exerciseDetail/saveGuidedMode', ({exerciseId, guidedMode}) =>
-        apiPut(`${detailsUrl(exerciseId)}/details`, {guidedMode}));
+export const saveWorkoutSettings = apiThunk<ExerciseDetailsDto, { exerciseId: string, guidedMode?: GuidedMode, getReadySeconds?: number }>(
+    'exerciseDetail/saveWorkoutSettings', ({exerciseId, ...settings}) =>
+        apiPut(`${detailsUrl(exerciseId)}/details`, settings));
 
 export const addStep = apiThunk<ExerciseStepDto, { exerciseId: string, step: ExerciseStepRequest }>(
     'exerciseDetail/addStep', ({exerciseId, step}) => apiPost(`${detailsUrl(exerciseId)}/steps`, step));
@@ -136,9 +136,10 @@ const exerciseDetailSlice = createSlice({
                     state.details.description = action.payload.description;
                 }
             })
-            .addCase(saveGuidedMode.fulfilled, (state, action) => {
+            .addCase(saveWorkoutSettings.fulfilled, (state, action) => {
                 if (state.exerciseId === action.meta.arg.exerciseId && state.details) {
                     state.details.guidedMode = action.payload.guidedMode;
+                    state.details.getReadySeconds = action.payload.getReadySeconds;
                 }
             })
             .addCase(addStep.fulfilled, (state, action) => {

@@ -40,6 +40,32 @@ describe("loop-video", () => {
         expect(b.isPlaying()).toBe(true);
     });
 
+    it("with autoplay it plays at once and goes on with the next video", async () => {
+        const a = await show();
+        a.el.remove();
+        play.mockClear();
+        a.el.autoplay = true;
+        a.el.src = "/api/media/y";
+        document.body.append(a.el);
+        await a.el.updateComplete;
+        expect(play).toHaveBeenCalledTimes(1);
+        a.el.src = "/api/media/z";
+        await a.el.updateComplete;
+        expect(play).toHaveBeenCalledTimes(2);
+    });
+
+    it("is not failed when the browser refuses to play by itself", async () => {
+        play.mockImplementationOnce(() => Promise.reject(new DOMException("no", "NotAllowedError")));
+        const {el} = await show();
+        el.autoplay = true;
+        el.src = "/api/media/q";
+        await el.updateComplete;
+        await Promise.resolve();
+        await el.updateComplete;
+        expect(el.shadowRoot!.querySelector(".play")).not.toBeNull();
+        expect(el.shadowRoot!.querySelector(".failed")).toBeNull();
+    });
+
     it("sound button only with sound, starts off", async () => {
         const silent = await show();
         expect(silent.el.shadowRoot!.querySelector("[label^=Sound]")).toBeNull();

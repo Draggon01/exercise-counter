@@ -15,6 +15,14 @@ describe("workoutPhases", () => {
         ]);
     });
 
+    it("adds time to get ready before timed steps without a rest before them", () => {
+        const phases = workoutPhases([step("a", {sets: 2, durationSeconds: 30}), step("b", {restSeconds: 9}), step("c", {durationSeconds: 20}),
+            step("d", {durationSeconds: 10})], 5);
+        expect(phases.map(p => `${p.kind} ${p.step}/${p.set} ${p.seconds}`)).toEqual([
+            "ready 0/1 5", "work 0/1 30", "work 0/2 30", "work 1/1 undefined", "rest 2/1 9", "work 2/1 20", "ready 3/1 5", "work 3/1 10",
+        ]);
+    });
+
     it("has no rest for 0 or no rest seconds", () => {
         expect(workoutPhases([step("a", {sets: 2, restSeconds: 0}), step("b")]).map(p => p.kind)).toEqual(["work", "work", "work"]);
         expect(workoutPhases([])).toEqual([]);
@@ -111,6 +119,18 @@ describe("GuidedRun", () => {
         run.previous();
         expect(run.index).toBe(0);
         expect(run.secondsLeft).toBe(10);
+        run.previous();
+        expect(run.index).toBe(0);
+    });
+
+    it("goes back to the countdown of the previous step", () => {
+        run = new GuidedRun(workoutPhases([step("a", {durationSeconds: 10}), step("b", {durationSeconds: 10})], 5));
+        run.start();
+        vi.advanceTimersByTime(22_000); // work of b
+        expect(run.index).toBe(3);
+        run.previous();
+        expect(run.phase).toMatchObject({kind: "ready", step: 0});
+        run.next();
         run.previous();
         expect(run.index).toBe(0);
     });

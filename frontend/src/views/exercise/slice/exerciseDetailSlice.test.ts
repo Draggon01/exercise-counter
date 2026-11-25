@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {addStep, deleteStep, exerciseDetailReducer, loadDetails, loadExercise, loadNote, saveGuidedMode, saveNote, selectExerciseDetail, updateStep} from "./exerciseDetailSlice";
+import {addStep, deleteStep, exerciseDetailReducer, loadDetails, loadExercise, loadNote, saveWorkoutSettings, saveNote, selectExerciseDetail, updateStep} from "./exerciseDetailSlice";
 import {ExerciseDto} from "../../home/models/exerciseDto";
 import {saveExercise} from "../../home/slice/exerciseSlice";
 
@@ -33,7 +33,7 @@ describe("exerciseDetail slice", () => {
         const step = (id: string, title = id) =>
             ({stepId: id, title, hints: "", sets: null, reps: null, durationSeconds: null, restSeconds: null});
         const arg = {exerciseId: "a", stepId: "1", step: step("1")};
-        const details = {description: "", guidedMode: "OFF" as const, steps: [step("1")]};
+        const details = {description: "", guidedMode: "OFF" as const, getReadySeconds: 5, steps: [step("1")]};
         let state = exerciseDetailReducer(loaded, loadDetails.fulfilled(details, "r", "a"));
         state = exerciseDetailReducer(state, addStep.fulfilled(step("2"), "r", arg));
         state = exerciseDetailReducer(state, updateStep.fulfilled(step("1", "new"), "r", arg));
@@ -48,10 +48,10 @@ describe("exerciseDetail slice", () => {
     });
 
     it("takes over only the guided mode when that is saved", () => {
-        const details = {description: "old", guidedMode: "OFF" as const, steps: []};
+        const details = {description: "old", guidedMode: "OFF" as const, getReadySeconds: 5, steps: []};
         let state = exerciseDetailReducer(loaded, loadDetails.fulfilled(details, "r", "a"));
-        const saved = {description: "other", guidedMode: "SHUFFLED" as const, steps: []};
-        state = exerciseDetailReducer(state, saveGuidedMode.fulfilled(saved, "r", {exerciseId: "a", guidedMode: "SHUFFLED"}));
+        const saved = {description: "other", guidedMode: "SHUFFLED" as const, getReadySeconds: 5, steps: []};
+        state = exerciseDetailReducer(state, saveWorkoutSettings.fulfilled(saved, "r", {exerciseId: "a", guidedMode: "SHUFFLED"}));
         expect(state.details).toEqual({...details, guidedMode: "SHUFFLED"});
     });
 

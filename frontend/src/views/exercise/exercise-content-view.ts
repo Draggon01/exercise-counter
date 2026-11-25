@@ -23,7 +23,7 @@ import {
     MAX_STEPS,
     reorderSteps,
     saveDescription,
-    saveGuidedMode,
+    saveWorkoutSettings,
     selectExerciseDetail,
     updateStep
 } from "./slice/exerciseDetailSlice";
@@ -37,6 +37,9 @@ import {hasPendingMedia, MediaPolling} from "./media-polling";
 import {MediaConfigDto, MediaUsageDto} from "./models/exerciseDetailsDto";
 import {loadMediaConfig, loadMediaUsage, MediaUpload, selectMedia} from "./slice/mediaSlice";
 import {formatMegabytes} from "../../utils/media-file";
+
+/** Choices for the countdown before timed steps. */
+const GET_READY_SECONDS = [0, 3, 5, 10, 15];
 
 /** Page /exercises/:id/content: the creator edits description and steps. Every change is saved right away. */
 @customElement("exercise-content-view")
@@ -274,10 +277,17 @@ export class ExerciseContentView extends ConnectedLitElement {
                 ${steps.length > 0 ? html`
                     <sl-radio-group label="Guided workout" .value="${live(details.guidedMode)}"
                                     help-text="Leads through the steps one by one, with rests. Everybody can change the order or leave out steps."
-                                    @sl-change="${this.saveGuidedMode}">
+                                    @sl-change="${(e: Event) => this.saveWorkout({guidedMode: (e.target as SlRadioGroup).value as GuidedMode})}">
                         <sl-radio-button value="OFF">Off</sl-radio-button>
                         <sl-radio-button value="ORDERED">Fixed order</sl-radio-button>
                         <sl-radio-button value="SHUFFLED">Shuffled</sl-radio-button>
+                    </sl-radio-group>` : nothing}
+                ${steps.length > 0 && details.guidedMode !== "OFF" ? html`
+                    <sl-radio-group label="Get ready" .value="${live(String(details.getReadySeconds))}"
+                                    help-text="Countdown before a step with a time, if there is no rest before it."
+                                    @sl-change="${(e: Event) => this.saveWorkout({getReadySeconds: Number((e.target as SlRadioGroup).value)})}">
+                        ${GET_READY_SECONDS.map(seconds => html`
+                            <sl-radio-button value="${seconds}">${seconds === 0 ? "Off" : `${seconds} s`}</sl-radio-button>`)}
                     </sl-radio-group>` : nothing}
             </div>
         `;
@@ -308,13 +318,12 @@ export class ExerciseContentView extends ConnectedLitElement {
         if (saveDescription.fulfilled.match(result)) toast("Description saved", "success", 2000);
     }
 
-    private saveGuidedMode = async (e: Event) => {
-        const guidedMode = (e.target as SlRadioGroup).value as GuidedMode;
+    private saveWorkout = async (settings: { guidedMode?: GuidedMode, getReadySeconds?: number }) => {
         const exerciseId = this.exerciseId;
         // tapping here leaves the description field: both belong to one row, so one after the other
         await this.descriptionSaved;
-        const result = await store.dispatch(saveGuidedMode({exerciseId, guidedMode}));
-        if (saveGuidedMode.fulfilled.match(result)) toast("Guided workout saved", "success", 2000);
+        const result = await store.dispatch(saveWorkoutSettings({exerciseId, ...settings}));
+        if (saveWorkoutSettings.fulfilled.match(result)) toast("Guided workout saved", "success", 2000);
         else this.requestUpdate(); // shows the saved value again
     }
 

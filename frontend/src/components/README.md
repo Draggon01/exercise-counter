@@ -18,7 +18,7 @@ Generic UI that is not tied to one feature. Import once (side-effect import) whe
 | `<auth-card>` | `auth-card.ts` | Centered branded card for pages outside the app shell | props: `heading`, `subtitle`; default slot: form; slot `footer` | login, register | ✅ |
 | `<changelog-dialog>` | `changelog-dialog.ts` | "What's new" dialog with unseen changelog entries | props: `open`, `entries`; event `close` (parent marks them seen) | overlay | ✅ |
 | `<fab-button>` | `fab-button.ts` | Main "create" action on phones: round button fixed above the bottom nav (hidden above 768px – keep a normal button for desktop with class `desktop-only`, and add ~80px bottom padding so it does not cover the last item) | props: `icon` (default `plus-lg`), `label` (accessible name); `click` | home (New exercise), groups (New group) | ✅ |
-| `<loop-video>` | `loop-video.ts` | Short clip: tap to play in a loop, one at a time, sound / speed / large view, never autoplay | props: `src`, `poster`, `label`, `hasSound` | step-media | ✅ |
+| `<loop-video>` | `loop-video.ts` | Short clip: tap to play in a loop, one at a time, sound / speed / large view, plays by itself only with `autoplay` | props: `src`, `poster`, `label`, `hasSound`, `autoplay` | step-media | ✅ |
 | `<changelog-entries>` | `changelog-entries.ts` | List of changelog entries (version, title, date, items) | prop: `entries` | changelog-dialog, options | ✅ |
 
 ## Feature elements — `src/views/<feature>/elements/`

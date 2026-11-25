@@ -8,7 +8,7 @@ const media = (mediaId: string, status: MediaDto["status"]): MediaDto =>
     ({mediaId, kind: "VIDEO", status, error: null, durationMs: null, width: null, height: null, hasAudio: false});
 const details = (m: MediaDto | null, title = "a"): ExerciseDetailsDto => ({
     description: "", guidedMode: "OFF",
-    steps: [{stepId: "s", title, hints: "", sets: null, reps: null, durationSeconds: null, restSeconds: null, media: m}],
+    getReadySeconds: 5, steps: [{stepId: "s", title, hints: "", sets: null, reps: null, durationSeconds: null, restSeconds: null, media: m}],
 });
 const arg = {exerciseId: "e", stepId: "s", file: {} as File};
 const loaded = [loadExercise.pending("r", "e"), loadExercise.fulfilled({exerciseId: "e"} as ExerciseDto, "r", "e"),

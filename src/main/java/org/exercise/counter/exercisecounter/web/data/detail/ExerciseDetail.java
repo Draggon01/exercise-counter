@@ -25,6 +25,10 @@ public class ExerciseDetail {
     @Column(name = "guided_mode", nullable = false)
     private GuidedMode guidedMode = GuidedMode.OFF;
 
+    /** Countdown before a timed step of the guided workout; 0 = off. */
+    @Column(name = "get_ready_seconds", nullable = false)
+    private int getReadySeconds = 5;
+
     public ExerciseDetail() {
     }
 
@@ -50,5 +54,13 @@ public class ExerciseDetail {
 
     public void setGuidedMode(GuidedMode guidedMode) {
         this.guidedMode = guidedMode;
+    }
+
+    public int getGetReadySeconds() {
+        return getReadySeconds;
+    }
+
+    public void setGetReadySeconds(int getReadySeconds) {
+        this.getReadySeconds = getReadySeconds;
     }
 }

@@ -85,19 +85,25 @@ class ExerciseDetailServiceTest {
 
     @Test
     void update_changesOnlyWhatIsSet() {
-        detailService.update(publicId, new ExerciseDetailsRequest("  Slow\nand steady ", null), ALICE);
-        detailService.update(publicId, new ExerciseDetailsRequest(null, GuidedMode.SHUFFLED), ALICE);
+        detailService.update(publicId, new ExerciseDetailsRequest("  Slow\nand steady ", null, null), ALICE);
+        detailService.update(publicId, new ExerciseDetailsRequest(null, GuidedMode.SHUFFLED, null), ALICE);
 
         var details = detailService.load(publicId, BOB);
         assertEquals("Slow\nand steady", details.description());
         assertEquals(GuidedMode.SHUFFLED, details.guidedMode());
+        assertEquals(5, details.getReadySeconds(), "default");
+
+        detailService.update(publicId, new ExerciseDetailsRequest(null, null, 0), ALICE);
+        assertEquals(0, detailService.load(publicId, BOB).getReadySeconds());
+        assertBadRequest(() -> detailService.update(publicId, new ExerciseDetailsRequest(null, null, 61), ALICE));
+        assertBadRequest(() -> detailService.update(publicId, new ExerciseDetailsRequest(null, null, -1), ALICE));
     }
 
     @Test
     void onlyTheCreatorChanges_othersReadWhatTheySee() {
         UUID step = add("Wall sit").stepId();
         for (Executable change : List.<Executable>of(
-                () -> detailService.update(publicId, new ExerciseDetailsRequest("x", null), BOB),
+                () -> detailService.update(publicId, new ExerciseDetailsRequest("x", null, null), BOB),
                 () -> detailService.addStep(publicId, request("x"), BOB),
                 () -> detailService.updateStep(publicId, step, request("x"), BOB),
                 () -> detailService.deleteStep(publicId, step, BOB),
@@ -146,7 +152,7 @@ class ExerciseDetailServiceTest {
 
     @Test
     void limits() {
-        assertBadRequest(() -> detailService.update(publicId, new ExerciseDetailsRequest("x".repeat(2001), null), ALICE));
+        assertBadRequest(() -> detailService.update(publicId, new ExerciseDetailsRequest("x".repeat(2001), null, null), ALICE));
         for (ExerciseStepRequest bad : List.of(
                 request(" "), request(null), request("x".repeat(81)),
                 new ExerciseStepRequest("x", "x".repeat(501), null, null, null, null),
@@ -169,7 +175,7 @@ class ExerciseDetailServiceTest {
         exercise = exerciseRepository.save(exercise);
         assertFalse(schedulerService.isScheduled(publicId));
 
-        detailService.update(publicId, new ExerciseDetailsRequest("text", GuidedMode.ORDERED), ALICE);
+        detailService.update(publicId, new ExerciseDetailsRequest("text", GuidedMode.ORDERED, null), ALICE);
         UUID step = add("a").stepId();
         detailService.updateStep(publicId, step, request("b"), ALICE);
 
@@ -183,7 +189,7 @@ class ExerciseDetailServiceTest {
 
     @Test
     void deletingTheExercise_removesTheDetails() {
-        detailService.update(publicId, new ExerciseDetailsRequest("text", null), ALICE);
+        detailService.update(publicId, new ExerciseDetailsRequest("text", null, null), ALICE);
         UUID step = add("a").stepId();
 
         exerciseService.delete(publicId, ALICE);

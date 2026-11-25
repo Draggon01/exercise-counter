@@ -8,28 +8,37 @@ export interface WorkoutStep {
     restSeconds: number | null;
 }
 
-/** One part of the workout: a set of a step, or the rest before the next one. */
+/** One part of the workout: a set of a step, the rest before the next one, or a countdown to get into position. */
 export interface WorkoutPhase {
-    kind: "work" | "rest";
-    /** index of the step; of the upcoming one while resting */
+    kind: "work" | "rest" | "ready";
+    /** index of the step; of the upcoming one while resting / getting ready */
     step: number;
-    /** 1-based; of the upcoming set while resting */
+    /** 1-based; of the upcoming set while resting / getting ready */
     set: number;
     sets: number;
     /** ends by itself; undefined: waits for "Next" */
     seconds?: number;
 }
 
-/** The sets of all steps, with rests in between (none after the last set of the workout). */
-export function workoutPhases(steps: readonly WorkoutStep[]): WorkoutPhase[] {
+/**
+ * The sets of all steps, with rests in between (none after the last set of the workout).
+ * @param getReady seconds to get into position before a step that starts its timer without a rest before it; 0 = none
+ */
+export function workoutPhases(steps: readonly WorkoutStep[], getReady = 0): WorkoutPhase[] {
     const work = steps.flatMap((step, i) => {
         const sets = step.sets ?? 1;
         return Array.from({length: sets}, (_, set): WorkoutPhase =>
             ({kind: "work", step: i, set: set + 1, sets, seconds: step.durationSeconds ?? undefined}));
     });
-    return work.flatMap((phase, i) => {
+    return work.flatMap((phase, i): WorkoutPhase[] => {
         const rest = steps[phase.step].restSeconds;
-        return rest && i < work.length - 1 ? [phase, {...work[i + 1], kind: "rest" as const, seconds: rest}] : [phase];
+        const rested = i > 0 && steps[work[i - 1].step].restSeconds;
+        const ready = getReady > 0 && !rested && phase.set === 1 && phase.seconds !== undefined;
+        return [
+            ...(ready ? [{...phase, kind: "ready" as const, seconds: getReady}] : []),
+            phase,
+            ...(rest && i < work.length - 1 ? [{...work[i + 1], kind: "rest" as const, seconds: rest}] : []),
+        ];
     });
 }
 
@@ -123,13 +132,14 @@ export class GuidedRun {
         this.changed();
     }
 
-    /** Back to the previous set (rests are skipped). */
+    /** Back to the previous set (rests are skipped; with its countdown to get ready). */
     previous() {
         if (this.finished) return;
         this.tick();
         if (this.finished) return;
         let index = this.index - 1;
-        while (index >= 0 && this.phases[index].kind === "rest") index--;
+        while (index >= 0 && this.phases[index].kind !== "work") index--;
+        if (index > 0 && this.phases[index - 1].kind === "ready") index--;
         this.index = Math.max(0, index);
         this.phaseMs = 0;
         this.changed();

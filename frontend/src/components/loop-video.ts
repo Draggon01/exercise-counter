@@ -1,4 +1,4 @@
-import {css, html, LitElement, nothing} from "lit";
+import {css, html, LitElement, nothing, PropertyValues} from "lit";
 import {customElement, property, query, state} from "lit/decorators.js";
 import {touchStyles} from "../styles/touch";
 
@@ -9,7 +9,7 @@ let soundOn = false;
 let playing: LoopVideo | undefined;
 
 /**
- * Short clip that plays in a loop after a tap (never by itself: mobile data). Only one plays at a time; it stops when
+ * Short clip that plays in a loop after a tap (by itself only with `autoplay`). Only one plays at a time; it stops when
  * scrolled away, hidden or removed. Sound (if it has some) starts off.
  */
 @customElement("loop-video")
@@ -117,6 +117,10 @@ export class LoopVideo extends LitElement {
     @property({type: Boolean})
     hasSound = false;
 
+    /** Plays at once, also when `src` changes (guided workout). Not if the device asks for less motion. */
+    @property({type: Boolean})
+    autoplay = false;
+
     @state()
     private isPlaying = false;
 
@@ -152,6 +156,16 @@ export class LoopVideo extends LitElement {
         this.pause();
     }
 
+    protected willUpdate(changed: PropertyValues<this>) {
+        if (changed.has("src")) this.failed = false;
+    }
+
+    protected updated(changed: PropertyValues<this>) {
+        if (!changed.has("src") || !this.autoplay || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        this.video.defaultPlaybackRate = this.video.playbackRate = this.slow ? 0.5 : 1;
+        void this.play(true);
+    }
+
     render() {
         return html`
             <div class="box">
@@ -185,15 +199,24 @@ export class LoopVideo extends LitElement {
         else void this.play();
     }
 
-    private async play() {
+    /** @param automatic without a tap: the browser may refuse it, with sound or at all */
+    private async play(automatic = false) {
         if (playing !== this) playing?.pause();
         playing = this;
         this.requestUpdate(); // the sound may have been switched at another one
         try {
             await this.video.play();
         } catch (e) {
-            // paused again before it started is fine
-            if ((e as DOMException).name !== "AbortError") this.failed = true;
+            const reason = (e as DOMException).name;
+            if (automatic && reason === "NotAllowedError") {
+                if (this.video.muted) return; // the play button is there
+                soundOn = false;
+                this.video.muted = true;
+                this.requestUpdate();
+                await this.video.play().catch(() => undefined);
+            } else if (reason !== "AbortError") { // paused again before it started is fine
+                this.failed = true;
+            }
         }
     }
 

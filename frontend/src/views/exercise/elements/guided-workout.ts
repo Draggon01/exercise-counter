@@ -1,6 +1,5 @@
 import {css, html, LitElement, nothing} from "lit";
 import {customElement, property, query, state} from "lit/decorators.js";
-import {keyed} from "lit/directives/keyed.js";
 import {touchStyles} from "../../../styles/touch";
 import {formatDuration, formatTarget} from "../../../utils/format";
 import {GuidedRun, workoutPhases} from "../../../utils/guided-workout";
@@ -100,7 +99,7 @@ export class GuidedWorkout extends LitElement {
             --indicator-color: var(--app-accent);
         }
 
-        .rest sl-progress-ring {
+        .rest sl-progress-ring, .ready sl-progress-ring {
             --indicator-color: var(--app-warning);
         }
 
@@ -133,6 +132,14 @@ export class GuidedWorkout extends LitElement {
             color: var(--app-success);
         }
 
+        .ahead {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
         .controls {
             display: grid;
             grid-template-columns: auto 1fr 1fr;
@@ -156,6 +163,10 @@ export class GuidedWorkout extends LitElement {
 
     @property({attribute: false})
     steps: ExerciseStepDto[] = [];
+
+    /** Seconds to get into position before timed steps; 0 = none. */
+    @property({attribute: false})
+    getReady = 0;
 
     /** Title of the exercise. */
     @property()
@@ -191,7 +202,7 @@ export class GuidedWorkout extends LitElement {
 
     protected willUpdate() {
         if (this.run || this.steps.length === 0) return;
-        this.run = new GuidedRun(workoutPhases(this.steps));
+        this.run = new GuidedRun(workoutPhases(this.steps, this.getReady));
         this.run.onPhase = this.phaseStarted;
         this.run.start();
         this.run.subscribe(() => this.requestUpdate());
@@ -211,6 +222,7 @@ export class GuidedWorkout extends LitElement {
                     <sl-icon-button name="x-lg" label="${run.finished ? "Close" : "End workout"}" @click="${this.requestClose}"></sl-icon-button>
                 </div>
                 ${run.finished ? this.renderFinished(run) : this.renderPhase(run)}
+                ${this.renderNextVideo(run)}
                 <confirm-dialog label="End workout?" confirmLabel="End workout" cancelLabel="Continue" variant="primary"
                                 .open="${this.confirmEnd}" @confirm="${this.close}" @cancel="${this.keepGoing}">
                     Next time it starts from the beginning.
@@ -232,10 +244,11 @@ export class GuidedWorkout extends LitElement {
             <div class="content ${media ? "with-media" : ""}">
                 <div aria-live="polite">
                     ${rest ? html`<div class="muted">Rest · next</div>` : nothing}
+                    ${kind === "ready" ? html`<div class="muted">Get ready</div>` : nothing}
                     <h2>${step.title}</h2>
                     ${sets > 1 ? html`<div class="muted">Set ${set} of ${sets}</div>` : nothing}
                 </div>
-                ${media ? keyed(step.stepId, html`<step-media .media="${media}" .label="${step.title}"></step-media>`) : nothing}
+                ${media ? html`<step-media .media="${media}" .label="${step.title}" autoplay></step-media>` : nothing}
                 ${left !== undefined && seconds !== undefined ? html`
                     <sl-progress-ring value="${left / seconds * 100}" label="Time left">
                         <span class="big ring ${left >= 3600 ? "long" : ""}">${formatDuration(left)}</span>
@@ -251,10 +264,18 @@ export class GuidedWorkout extends LitElement {
                         ? html`<sl-button size="large" variant="${waiting ? "default" : "warning"}" @click="${this.pause}">⏸ Pause</sl-button>`
                         : html`<sl-button size="large" variant="primary" @click="${() => run.start()}">▶ Resume</sl-button>`}
                 <sl-button class="next" size="large" variant="${waiting && run.running ? "primary" : "default"}" @click="${() => run.next()}">
-                    ${rest ? "Skip rest" : run.index === run.phases.length - 1 ? "Finish" : "Next"}
+                    ${rest ? "Skip rest" : kind === "ready" ? "Start now" : run.index === run.phases.length - 1 ? "Finish" : "Next"}
                 </sl-button>
             </div>
         `;
+    }
+
+    /** Loads the video of the next step ahead, so it plays at once. */
+    private renderNextVideo(run: GuidedRun) {
+        const media = run.finished ? undefined : this.steps[run.phase.step + 1]?.media;
+        return media?.kind === "VIDEO" && media.status === "READY"
+            ? html`<video class="ahead" src="/api/media/${media.mediaId}" preload="auto" muted playsinline aria-hidden="true"></video>`
+            : nothing;
     }
 
     private renderFinished(run: GuidedRun) {
@@ -278,7 +299,7 @@ export class GuidedWorkout extends LitElement {
             vibrate([200, 100, 200]);
             this.report();
         } else {
-            playStepSound(this.run.phase.kind, getTimerSound());
+            playStepSound(this.run.phase.kind === "work" ? "work" : "rest", getTimerSound());
             vibrate(150);
         }
     }

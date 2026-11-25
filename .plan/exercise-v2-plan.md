@@ -192,7 +192,7 @@ Today the timer covers everything with its focus view when started; then no vide
 - [x] Android clips (via WhatsApp): 640 px / 800 kbit/s is more than enough.
 - [ ] Original clips: iPhone / iPad (HDR, rotation), Android by cable – at the latest with T12.3.
 
-### [ ] T12.1 🛠 Server preparation (S) – done by Leon, the plan only supplies the snippets
+### [x] T12.1 🛠 Server preparation (S) – done by Leon, the plan only supplies the snippets
 - `apt install ffmpeg`; folder `/var/lib/exercise-counter/media`, owned by the backend's user, outside the web root
   and **not** inside a folder the deploy replaces; `APP_MEDIA_DIR` in `excountvars.env`.
 - nginx: `client_max_body_size 95m` **only** for the upload location (default is 1 MB → 413), longer
@@ -281,6 +281,8 @@ Needs only Phases 10–11 (videos are shown if there are any).
   Video, hints, "2 of 5", previous / next / pause, sound between steps (`utils/sounds.ts`), vibration, wake lock.
 - Time exercise: the elapsed workout time counts as progress (same `running-timer`, never two timers at once).
   Rep exercise: no automatic reps. At the end offer "Mark as done".
+- Added later (Leon): "Get ready" countdown before timed steps without a rest before them, per exercise (off / 3 / 5 / 10 / 15 s,
+  default 5); the video of the current or coming step plays by itself here (only here), the next one is loaded ahead.
 - Leaving midway: progress saved; the guided run itself starts over next time.
 - Tests: sequence logic as pure functions (`utils/guided-workout.ts`): sets, rests, skip, shuffle, stored order vs. changed steps.
 
@@ -341,6 +343,6 @@ Default on first (users can still turn it off), later remove the old card, its c
 |---|---|---|
 | 10 – Page and toggle | 5 | 5 |
 | 11 – Description, steps, notes | 4 | 4 |
-| 12 – Videos: backend and server | 6 | 3 |
+| 12 – Videos: backend and server | 6 | 4 |
 | 13 – Videos: frontend, guided workout, photos | 4 | 4 |
 | 14 – Try out and switch over | 4 | 0 |

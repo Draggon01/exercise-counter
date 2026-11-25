@@ -131,7 +131,7 @@ class AccountDeletionTest {
         period(pushUps, LEO, ANNA, BEN);
         period(pushUps, LEO, BEN);
         period(pushUps, BEN);
-        detailService.update(pushUps.getExerciseId(), new ExerciseDetailsRequest("Elbows in", null), LEO);
+        detailService.update(pushUps.getExerciseId(), new ExerciseDetailsRequest("Elbows in", null, null), LEO);
         detailService.addStep(pushUps.getExerciseId(), step("Warm up"), LEO);
 
         var result = deletionService.deleteAccount(LEO, PASSWORD);

@@ -277,7 +277,7 @@ export class ExerciseView extends ConnectedLitElement {
                             .steps="${this.detail?.details?.steps ?? []}" .mode="${this.detail?.details?.guidedMode ?? "OFF"}"
                             @start-workout="${this.startWorkout}" @cancel="${() => this.workoutDialogOpen = false}"></workout-dialog>
             ${this.workoutSteps ? html`
-                <guided-workout .steps="${this.workoutSteps}" .label="${exercise?.exerciseTitle ?? ""}"
+                <guided-workout .steps="${this.workoutSteps}" .getReady="${this.detail?.details?.getReadySeconds ?? 0}" .label="${exercise?.exerciseTitle ?? ""}"
                                 ?offerDone="${this.ownChecks !== undefined && !this.isDone()}" @mark-done="${this.toggleDone}"
                                 @workout-progress="${(e: CustomEvent<number>) => this.saveWorkout(e.detail)}"
                                 @workout-closed="${() => this.workoutSteps = undefined}"></guided-workout>` : nothing}

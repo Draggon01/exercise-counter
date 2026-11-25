@@ -43,5 +43,7 @@ export interface ExerciseStepDto extends ExerciseStepRequest {
 export interface ExerciseDetailsDto {
     description: string;
     guidedMode: GuidedMode;
+    /** countdown before timed steps of the guided workout; 0 = off */
+    getReadySeconds: number;
     steps: ExerciseStepDto[];
 }
