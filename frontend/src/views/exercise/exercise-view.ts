@@ -5,7 +5,7 @@ import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from "../../store";
 import {pageStyles} from "../../styles/page";
 import {toast} from "../../components/toast";
-import {backPath, navigate, withBack} from "../../utils/navigation";
+import {backPath, isPlainClick, navigate, withBack} from "../../utils/navigation";
 import {exerciseTarget, formatGoal, isTimeExercise, streakOf} from "../../utils/exercise";
 import {formatTimeLeft, isUrgent} from "../../utils/format";
 import {vibrate} from "../../utils/preferences";
@@ -98,6 +98,7 @@ export class ExerciseView extends ConnectedLitElement {
             position: sticky;
             bottom: 0;
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
             gap: var(--app-space-2);
             padding: var(--app-space-3) 0;
@@ -112,6 +113,18 @@ export class ExerciseView extends ConnectedLitElement {
 
         .add-content {
             align-self: flex-start;
+        }
+
+        .beta {
+            margin: 0;
+            padding-bottom: var(--app-space-3);
+            font-size: 0.85em;
+            text-align: center;
+            color: var(--app-text-muted);
+        }
+
+        .beta a {
+            color: var(--app-accent);
         }
 
         .details-failed {
@@ -261,7 +274,7 @@ export class ExerciseView extends ConnectedLitElement {
         const exercise = this.detail?.exercise;
         return html`
             <div class="page-container" ?inert="${this.workoutSteps !== undefined}">
-                <page-header heading="${exercise?.exerciseTitle ?? "Exercise"}" backTo="${this.back}">
+                <page-header wrap heading="${exercise?.exerciseTitle ?? "Exercise"}" backTo="${this.back}">
                     ${exercise && this.isOnList(exercise) ? html`
                         <exercise-menu slot="actions" .item="${exercise}" withContent
                                        @menu-content="${this.editContent}"
@@ -361,6 +374,10 @@ export class ExerciseView extends ConnectedLitElement {
                         </sl-button>
                     `}
                 </div>
+                <p class="beta">
+                    You are trying the new view. Something odd?
+                    <a href="/options/general" @click="${this.openOptions}">Switch back in the options</a>
+                </p>
             </div>
         `;
     }
@@ -378,7 +395,7 @@ export class ExerciseView extends ConnectedLitElement {
             return exercise.creator !== this.username ? nothing : html`
                 <sl-button class="add-content" variant="text" size="small" @click="${this.editContent}">
                     <sl-icon slot="prefix" name="plus-lg"></sl-icon>
-                    Add description or steps
+                    Add description, steps or videos
                 </sl-button>`;
         }
         return html`
@@ -386,6 +403,11 @@ export class ExerciseView extends ConnectedLitElement {
                 <exercise-description .text="${details.description}"></exercise-description>` : nothing}
             ${details.steps.length > 0 ? keyed(this.exerciseId, html`
                 <exercise-steps .steps="${details.steps}"></exercise-steps>`) : nothing}
+            ${exercise.creator === this.username ? html`
+                <sl-button class="add-content" variant="text" size="small" @click="${this.editContent}">
+                    <sl-icon slot="prefix" name="pencil"></sl-icon>
+                    Edit steps & videos
+                </sl-button>` : nothing}
         `;
     }
 
@@ -410,6 +432,12 @@ export class ExerciseView extends ConnectedLitElement {
         this.savingNote = true;
         await store.dispatch(saveNote({exerciseId: this.exerciseId, text: e.detail}));
         this.savingNote = false;
+    }
+
+    private openOptions = (e: MouseEvent) => {
+        if (!isPlainClick(e)) return;
+        e.preventDefault();
+        navigate("/options/general");
     }
 
     private editContent = () => navigate(`/exercises/${this.exerciseId}/content`);

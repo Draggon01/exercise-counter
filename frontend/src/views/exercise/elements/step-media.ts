@@ -4,7 +4,7 @@ import {keyed} from "lit/directives/keyed.js";
 import {MediaDto} from "../models/exerciseDetailsDto";
 import "../../../components/loop-video";
 
-/** Video or photo of a step, in a square. */
+/** Video or photo of a step. */
 @customElement("step-media")
 export class StepMedia extends LitElement {
 
@@ -15,8 +15,9 @@ export class StepMedia extends LitElement {
 
         loop-video, .photo, .message {
             width: 100%;
-            aspect-ratio: 1;
+            aspect-ratio: var(--ratio, 1);
             max-height: 50vh;
+            margin: 0 auto;
         }
 
         .photo {
@@ -77,7 +78,11 @@ export class StepMedia extends LitElement {
     private failed = false;
 
     protected willUpdate(changed: PropertyValues<this>) {
-        if (changed.has("media")) this.failed = false;
+        if (!changed.has("media")) return;
+        this.failed = false;
+        const {width, height} = this.media;
+        // the shape of the picture, but neither a tower nor a stripe
+        this.style.setProperty("--ratio", String(width && height ? Math.min(4 / 3, Math.max(3 / 4, width / height)) : 1));
     }
 
     @query("dialog")

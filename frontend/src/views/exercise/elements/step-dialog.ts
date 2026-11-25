@@ -26,13 +26,18 @@ export class StepDialog extends LitElement {
 
         .row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
             gap: var(--app-space-3);
         }
 
         sl-radio-group::part(button-group),
         sl-radio-group::part(button-group__base) {
             width: 100%;
+        }
+
+        /* large text */
+        sl-radio-group::part(button-group__base) {
+            flex-wrap: wrap;
         }
 
         sl-radio-button {
@@ -82,7 +87,7 @@ export class StepDialog extends LitElement {
                           .value="${step?.title ?? ""}"></sl-input>
                 <sl-radio-group label="How much?" .value="${this.measure}"
                                 @sl-change="${(e: Event) => this.measure = (e.target as SlRadioGroup).value as Measure}">
-                    <sl-radio-button value="none">Open</sl-radio-button>
+                    <sl-radio-button value="none">No limit</sl-radio-button>
                     <sl-radio-button value="reps">Reps</sl-radio-button>
                     <sl-radio-button value="time">Time</sl-radio-button>
                 </sl-radio-group>

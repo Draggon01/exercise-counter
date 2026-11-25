@@ -69,7 +69,7 @@ export class ExerciseMenu extends ConnectedLitElement {
                         <sl-menu-item value="edit"><sl-icon slot="prefix" name="pencil"></sl-icon>Edit</sl-menu-item>
                         ${this.withContent ? html`
                             <sl-menu-item value="content">
-                                <sl-icon slot="prefix" name="card-text"></sl-icon>Description & steps
+                                <sl-icon slot="prefix" name="card-text"></sl-icon>Description, steps & videos
                             </sl-menu-item>
                         ` : nothing}
                     ` : nothing}

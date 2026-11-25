@@ -7,7 +7,7 @@ export function navigate(path: string) {
 }
 
 /** Pages a sub page may lead back to instead of home. */
-const BACK_TARGETS = /^\/(browse|exercises\/[\w-]+)$/;
+const BACK_TARGETS = /^\/(browse|exercises\/[\w-]+(\/content)?)$/;
 
 /** `path`, whose Back button then leads to `back` (read with {@link backPath}). */
 export const withBack = (path: string, back: string) => `${path}?back=${encodeURIComponent(back)}`;

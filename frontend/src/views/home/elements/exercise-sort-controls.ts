@@ -1,5 +1,5 @@
-import {css, html, LitElement} from "lit";
-import {customElement} from "lit/decorators.js";
+import {css, html, LitElement, nothing} from "lit";
+import {customElement, property} from "lit/decorators.js";
 import {touchStyles} from "../../../styles/touch";
 
 /**
@@ -40,11 +40,16 @@ export class ExerciseSortControls extends LitElement {
         }
     `];
 
+    /** Only the grip; the arrows are offered elsewhere, e.g. in a menu. */
+    @property({type: Boolean})
+    gripOnly = false;
+
     render() {
         return html`
             <span class="drag-handle" data-drag-handle title="Drag to move"><sl-icon name="grip-vertical"></sl-icon></span>
-            <sl-icon-button name="arrow-up" label="Move up" @click="${() => this.emit("move-up")}"></sl-icon-button>
-            <sl-icon-button name="arrow-down" label="Move down" @click="${() => this.emit("move-down")}"></sl-icon-button>
+            ${this.gripOnly ? nothing : html`
+                <sl-icon-button name="arrow-up" label="Move up" @click="${() => this.emit("move-up")}"></sl-icon-button>
+                <sl-icon-button name="arrow-down" label="Move down" @click="${() => this.emit("move-down")}"></sl-icon-button>`}
         `;
     }
 

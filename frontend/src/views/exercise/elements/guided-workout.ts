@@ -116,12 +116,12 @@ export class GuidedWorkout extends LitElement {
         }
 
         .with-media {
-            --ring-size: min(45vw, 22vh, 200px);
+            --ring-size: min(45vw, 21vh, 200px);
         }
 
         step-media {
             flex-shrink: 0;
-            width: min(100%, 34vh);
+            width: min(100%, 27vh);
         }
 
         .ring.long {
@@ -141,8 +141,8 @@ export class GuidedWorkout extends LitElement {
         }
 
         .controls {
-            display: grid;
-            grid-template-columns: auto 1fr 1fr;
+            display: flex;
+            flex-wrap: wrap;
             gap: var(--app-space-3);
             width: 100%;
             max-width: 560px;
@@ -150,7 +150,11 @@ export class GuidedWorkout extends LitElement {
         }
 
         .controls.end {
-            grid-template-columns: 1fr;
+            flex-direction: column;
+        }
+
+        .controls sl-button:not(:first-child) {
+            flex: 1;
         }
 
         .controls sl-button::part(base) {

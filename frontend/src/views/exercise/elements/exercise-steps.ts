@@ -107,7 +107,7 @@ export class ExerciseSteps extends LitElement {
             <section aria-label="Steps">
                 <ol class="${count > 1 ? "swipe" : ""}" tabindex="${count > 1 ? 0 : -1}" @scroll="${this.onScroll}">
                     ${repeat(this.steps, step => step.stepId, (step, i) => html`
-                        <li><exercise-step .step="${step}" .number="${i + 1}"></exercise-step></li>
+                        <li><exercise-step .step="${step}" .number="${count > 1 ? i + 1 : 0}"></exercise-step></li>
                     `)}
                 </ol>
                 ${count > 1 ? html`

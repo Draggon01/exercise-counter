@@ -299,14 +299,16 @@ Needs only Phases 10–11 (videos are shown if there are any).
 
 ## Phase 14 – Try out and switch over
 
-### [ ] T14.1 🎨 Check on devices (S)
+### [~] T14.1 🎨 Check on devices (S)
 Phone + computer, light + dark, long titles, 0 / 1 / 12 steps, no description, slow network, offline, screen reader,
 large text. Option off: app unchanged.
+- [x] Headless Firefox: 320 / 390 / 1100 px, light + dark, long titles, 0 / 1 / 4 / 12 steps, offline, 200 % text, option off, another user.
+- [ ] Leon: real iPhone and Android, screen reader, slow network.
 
-### [ ] T14.2 📋 Feedback (S)
+### [x] T14.2 📋 Feedback (S)
 One line on the page while in beta: "New view – something odd?" → Options → General to switch off. Collect for a few weeks.
 
-### [ ] T14.3 📋 Changelog and docs (S)
+### [x] T14.3 📋 Changelog and docs (S)
 - Entry for each phase that reaches users ("New, can be turned on in Options → General: …").
 - `CLAUDE.md`: new folders, `ExerciseAccess`, media config, "cascades do not delete files".
 
@@ -345,4 +347,4 @@ Default on first (users can still turn it off), later remove the old card, its c
 | 11 – Description, steps, notes | 4 | 4 |
 | 12 – Videos: backend and server | 6 | 4 |
 | 13 – Videos: frontend, guided workout, photos | 4 | 4 |
-| 14 – Try out and switch over | 4 | 0 |
+| 14 – Try out and switch over | 4 | 2 |

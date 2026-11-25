@@ -8,6 +8,8 @@ import {touchStyles} from "../styles/touch";
  * Stays at the top while the page scrolls. On phones (≤768px) it is the app's top bar: full width,
  * back arrow as icon, actions as icons – the app shell shows no header of its own there.
  *
+ * `wrap`: a long heading may use two lines (titles written by users).
+ *
  * @example
  * <page-header heading="Statistics" backTo="/">
  *     <sl-icon-button slot="actions" name="arrow-down-up" label="Edit order"></sl-icon-button>
@@ -36,6 +38,15 @@ export class PageHeader extends LitElement {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+
+        :host([wrap]) h2 {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            line-height: 1.25;
+            white-space: normal;
+            overflow-wrap: anywhere;
         }
 
         .actions {

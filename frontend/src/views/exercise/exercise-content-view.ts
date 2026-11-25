@@ -2,14 +2,14 @@ import {css, html, nothing} from "lit";
 import {customElement, property, state} from "lit/decorators.js";
 import {live} from "lit/directives/live.js";
 import {repeat} from "lit/directives/repeat.js";
-import type {SlRadioGroup, SlTextarea} from "@shoelace-style/shoelace";
+import type {SlRadioGroup, SlSelectEvent, SlTextarea} from "@shoelace-style/shoelace";
 import {ConnectedLitElement} from "../../connectedLitElement";
 import {RootState, store} from "../../store";
 import {pageStyles} from "../../styles/page";
 import {touchStyles} from "../../styles/touch";
 import {toast} from "../../components/toast";
 import {formatTarget} from "../../utils/format";
-import {navigate} from "../../utils/navigation";
+import {isPlainClick, navigate, withBack} from "../../utils/navigation";
 import {moveItem} from "../../utils/reorder";
 import {SortableController} from "../../utils/sortable";
 import {selectCurrentUser} from "../login/slice/userSlice";
@@ -96,8 +96,8 @@ export class ExerciseContentView extends ConnectedLitElement {
             cursor: pointer;
         }
 
-        step-media-editor {
-            flex: 1 0 100%;
+        .danger-item::part(base) {
+            color: var(--app-danger);
         }
 
         .step-title {
@@ -110,6 +110,21 @@ export class ExerciseContentView extends ConnectedLitElement {
             color: var(--app-text-muted);
         }
 
+        .note {
+            display: flex;
+            flex-direction: column;
+            gap: var(--app-space-2);
+            font-size: 0.9em;
+        }
+
+        .note sl-icon {
+            vertical-align: -0.125em;
+        }
+
+        .note a {
+            color: var(--app-accent);
+        }
+
         .add {
             align-self: flex-start;
         }
@@ -117,6 +132,11 @@ export class ExerciseContentView extends ConnectedLitElement {
         sl-radio-group::part(button-group),
         sl-radio-group::part(button-group__base) {
             width: 100%;
+        }
+
+        /* large text */
+        sl-radio-group::part(button-group__base) {
+            flex-wrap: wrap;
         }
 
         sl-radio-button {
@@ -128,12 +148,6 @@ export class ExerciseContentView extends ConnectedLitElement {
             height: 120px;
         }
 
-        /* phones: the arrows need the room of the title; sorting works with the grip */
-        @media (max-width: 480px) {
-            .step-text {
-                flex-basis: 100%;
-            }
-        }
     `];
 
     @property()
@@ -248,22 +262,27 @@ export class ExerciseContentView extends ConnectedLitElement {
                 <div class="steps" @pointerdown="${this.sortable.start}">
                     ${repeat(steps, step => step.stepId, (step, i) => html`
                         <div class="step">
-                            <button class="step-text" title="Edit step" @click="${() => this.openDialog(step)}">
-                                <div class="step-title">${i + 1}. ${step.title}</div>
-                                <div class="step-target">${formatTarget(step)}</div>
-                            </button>
-                            ${steps.length > 1 ? html`
-                                <exercise-sort-controls @move-up="${() => this.move(i, i - 1)}"
-                                                        @move-down="${() => this.move(i, i + 1)}"></exercise-sort-controls>
-                            ` : nothing}
-                            <sl-icon-button name="pencil" label="Edit ${step.title}"
-                                            @click="${() => this.openDialog(step)}"></sl-icon-button>
-                            <sl-icon-button name="trash" label="Delete ${step.title}"
-                                            @click="${() => this.stepToDelete = step}"></sl-icon-button>
                             ${this.mediaConfig?.enabled || step.media ? html`
                                 <step-media-editor .exerciseId="${this.exerciseId}" .step="${step}"
                                                    .config="${this.mediaConfig}" .upload="${this.uploads[step.stepId]}"></step-media-editor>
                             ` : nothing}
+                            <button class="step-text" title="Edit step" @click="${() => this.openDialog(step)}">
+                                <div class="step-title">${i + 1}. ${step.title}</div>
+                                <div class="step-target">${formatTarget(step)}</div>
+                            </button>
+                            <sl-dropdown placement="bottom-end" hoist>
+                                <sl-icon-button slot="trigger" name="three-dots-vertical" label="Actions for ${step.title}"></sl-icon-button>
+                                <sl-menu @sl-select="${(e: SlSelectEvent) => this.stepAction(e.detail.item.value, step, i)}">
+                                    <sl-menu-item value="edit"><sl-icon slot="prefix" name="pencil"></sl-icon>Edit</sl-menu-item>
+                                    ${steps.length > 1 ? html`
+                                        <sl-menu-item value="up" ?disabled="${i === 0}"><sl-icon slot="prefix" name="arrow-up"></sl-icon>Move up</sl-menu-item>
+                                        <sl-menu-item value="down" ?disabled="${i === steps.length - 1}"><sl-icon slot="prefix" name="arrow-down"></sl-icon>Move down</sl-menu-item>
+                                    ` : nothing}
+                                    <sl-divider></sl-divider>
+                                    <sl-menu-item value="delete" class="danger-item"><sl-icon slot="prefix" name="trash"></sl-icon>Delete</sl-menu-item>
+                                </sl-menu>
+                            </sl-dropdown>
+                            ${steps.length > 1 ? html`<exercise-sort-controls gripOnly></exercise-sort-controls>` : nothing}
                         </div>
                     `)}
                 </div>
@@ -294,14 +313,34 @@ export class ExerciseContentView extends ConnectedLitElement {
     }
 
     private renderMediaNote(visibility?: string) {
-        const who = visibility === "PUBLIC" ? "Everybody" : visibility === "GROUPS" ? "The groups it is shared with" : "Only you";
         const usage = this.mediaUsage;
+        const edit = html`<a href="/exercises/${this.exerciseId}/edit" @click="${this.openEdit}">Change</a>`;
         return html`
-            <p class="muted">
-                Videos: about 3 seconds are ideal, at most ${this.mediaConfig?.maxSeconds}. Sound is kept if it fits.
-                ${who} can see videos and photos of this exercise.
-                ${usage ? html`You use ${formatMegabytes(usage.usedBytes)} of ${formatMegabytes(usage.quotaBytes)}.` : nothing}
-            </p>`;
+            <div class="muted note">
+                <div><sl-icon name="eye"></sl-icon>
+                    ${visibility === "PUBLIC" ? html`Everybody can see this exercise with its videos and photos.`
+                            : visibility === "GROUPS" ? html`The groups you share this exercise with see its videos and photos, too.`
+                            : html`This exercise is private, so only you (and who already has it on their list) can see its videos and photos. Share it, and the others see them, too.`}
+                    ${edit}
+                </div>
+                <div><sl-icon name="camera-video"></sl-icon>
+                    About 3 seconds are ideal, at most ${this.mediaConfig?.maxSeconds}. Sound is kept if it fits.
+                    ${usage ? html`You use ${formatMegabytes(usage.usedBytes)} of ${formatMegabytes(usage.quotaBytes)}.` : nothing}
+                </div>
+            </div>`;
+    }
+
+    private openEdit = (e: MouseEvent) => {
+        if (!isPlainClick(e)) return;
+        e.preventDefault();
+        navigate(withBack(`/exercises/${this.exerciseId}/edit`, `/exercises/${this.exerciseId}/content`));
+    }
+
+    private stepAction(action: string, step: ExerciseStepDto, index: number) {
+        if (action === "edit") this.openDialog(step);
+        else if (action === "up") void this.move(index, index - 1);
+        else if (action === "down") void this.move(index, index + 1);
+        else if (action === "delete") this.stepToDelete = step;
     }
 
     private openDialog(step?: ExerciseStepDto) {

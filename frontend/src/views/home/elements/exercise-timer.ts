@@ -62,16 +62,18 @@ export class ExerciseTimer extends LitElement {
         /* ---- one big row (calm card) */
         .compact {
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
             gap: var(--app-space-2);
         }
 
         .compact sl-button {
-            flex: 1;
+            flex: 1000 1 auto;
         }
 
+        /* as small as possible next to the main button, full width below it */
         .compact sl-button.secondary {
-            flex: 0 0 auto;
+            flex: 1 0 auto;
         }
 
         .compact sl-button::part(base) {

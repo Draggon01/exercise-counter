@@ -60,6 +60,7 @@ export class ExerciseStep extends LitElement {
     @property({attribute: false})
     step!: ExerciseStepDto;
 
+    /** 0: not shown */
     @property({type: Number})
     number = 1;
 
@@ -68,12 +69,12 @@ export class ExerciseStep extends LitElement {
         const media = this.step.media?.status === "FAILED" ? null : this.step.media;
         return html`
             <div class="${media ? "with-media" : ""}">
-            ${media ? html`<step-media .media="${media}" .label="${this.step.title}"></step-media>` : nothing}
-            <div>
-            <h3>${this.number}. ${this.step.title}</h3>
-            ${target ? html`<div class="target">${target}</div>` : nothing}
-            ${this.step.hints ? html`<p class="hints">${this.step.hints}</p>` : nothing}
-            </div>
+                ${media ? html`<step-media .media="${media}" .label="${this.step.title}"></step-media>` : nothing}
+                <div>
+                    <h3>${this.number ? `${this.number}. ` : ""}${this.step.title}</h3>
+                    ${target ? html`<div class="target">${target}</div>` : nothing}
+                    ${this.step.hints ? html`<p class="hints">${this.step.hints}</p>` : nothing}
+                </div>
             </div>
         `;
     }
