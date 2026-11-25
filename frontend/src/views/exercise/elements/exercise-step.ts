@@ -1,6 +1,7 @@
 import {css, html, LitElement, nothing} from "lit";
 import {customElement, property} from "lit/decorators.js";
 import {formatTarget} from "../../../utils/format";
+import "./step-media";
 import {ExerciseStepDto} from "../models/exerciseDetailsDto";
 
 /** One step of an exercise: title, how often / long, hints. */
@@ -16,6 +17,23 @@ export class ExerciseStep extends LitElement {
             border-radius: var(--app-radius);
             background: var(--app-surface);
             box-shadow: var(--app-shadow);
+        }
+
+        step-media {
+            margin-bottom: var(--app-space-3);
+        }
+
+        /* computers: picture left, text right */
+        @media (min-width: 769px) {
+            .with-media {
+                display: grid;
+                grid-template-columns: 260px 1fr;
+                gap: var(--app-space-4);
+            }
+
+            .with-media step-media {
+                margin: 0;
+            }
         }
 
         h3 {
@@ -47,10 +65,16 @@ export class ExerciseStep extends LitElement {
 
     render() {
         const target = formatTarget(this.step);
+        const media = this.step.media?.status === "FAILED" ? null : this.step.media;
         return html`
+            <div class="${media ? "with-media" : ""}">
+            ${media ? html`<step-media .media="${media}" .label="${this.step.title}"></step-media>` : nothing}
+            <div>
             <h3>${this.number}. ${this.step.title}</h3>
             ${target ? html`<div class="target">${target}</div>` : nothing}
             ${this.step.hints ? html`<p class="hints">${this.step.hints}</p>` : nothing}
+            </div>
+            </div>
         `;
     }
 }

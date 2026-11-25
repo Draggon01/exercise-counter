@@ -18,6 +18,7 @@ Generic UI that is not tied to one feature. Import once (side-effect import) whe
 | `<auth-card>` | `auth-card.ts` | Centered branded card for pages outside the app shell | props: `heading`, `subtitle`; default slot: form; slot `footer` | login, register | ✅ |
 | `<changelog-dialog>` | `changelog-dialog.ts` | "What's new" dialog with unseen changelog entries | props: `open`, `entries`; event `close` (parent marks them seen) | overlay | ✅ |
 | `<fab-button>` | `fab-button.ts` | Main "create" action on phones: round button fixed above the bottom nav (hidden above 768px – keep a normal button for desktop with class `desktop-only`, and add ~80px bottom padding so it does not cover the last item) | props: `icon` (default `plus-lg`), `label` (accessible name); `click` | home (New exercise), groups (New group) | ✅ |
+| `<loop-video>` | `loop-video.ts` | Short clip: tap to play in a loop, one at a time, sound / speed / large view, never autoplay | props: `src`, `poster`, `label`, `hasSound` | step-media | ✅ |
 | `<changelog-entries>` | `changelog-entries.ts` | List of changelog entries (version, title, date, items) | prop: `entries` | changelog-dialog, options | ✅ |
 
 ## Feature elements — `src/views/<feature>/elements/`
@@ -34,6 +35,8 @@ Belong to one feature, listed here so they are not built a second time.
 | `<exercise-note>` | `views/exercise/elements/exercise-note.ts` | The user's own note: one tap to edit (props `text`, `saving`; event `save-note`) | ✅ |
 | `<workout-dialog>` | `views/exercise/elements/workout-dialog.ts` | Before a guided workout: order, skip, shuffle; remembered on the device (props `open`, `exerciseId`, `steps`, `mode`; events `start-workout` (detail steps), `cancel`) | ✅ |
 | `<guided-workout>` | `views/exercise/elements/guided-workout.ts` | Full screen through the steps (props `steps`, `label`, `offerDone`; events `GuidedWorkoutEvents`) | ✅ |
+| `<step-media>` / `<step-media-editor>` | `views/exercise/elements/` | Video or photo of a step (props `media`, `label`) / add, replace, remove it with upload progress | ✅ |
+| `MediaPolling` | `views/exercise/media-polling.ts` | Controller: looks whether videos are converted | ✅ |
 | `<step-dialog>` | `views/exercise/elements/step-dialog.ts` | Add / edit a step (props `open`, `step`, `saving`; events `save-step`, `cancel`) | ✅ |
 | `<exercise-menu>` | `views/home/elements/exercise-menu.ts` | ⋯ menu of an exercise (Edit, Description & steps with `withContent`, Remind me, Hide, Delete); events `menu-edit`, `menu-content`, `menu-hide`, `menu-delete` (home card, exercise page) | ✅ |
 | `<exercise-confirm>` | `views/home/elements/exercise-confirm.ts` | Asks before delete / hide and does it: prop `action` (`{kind, exercise}`), event `closed` (detail: done?) | ✅ |
@@ -77,6 +80,8 @@ Belong to one feature, listed here so they are not built a second time.
 | `workoutPhases`, `applyOrder`, `shuffle`, `GuidedRun` | `src/utils/guided-workout.ts` | Sequence and clock of a guided workout, without UI | ✅ |
 | `ScreenLock` | `src/utils/screen-lock.ts` | Keep the screen on while something runs (`on()` / `off()`) | ✅ |
 | `playStepSound(kind, sound)` | `src/utils/sounds.ts` | Short go / rest signal | ✅ |
+| `apiUpload(url, file, {onProgress, signal})` | `src/api/http.ts` | Uploading a file with progress and cancel | ✅ |
+| `mediaProblem`, `videoSeconds`, `formatMegabytes` | `src/utils/media-file.ts` | Check a video or photo before uploading | ✅ |
 | `scrollParent(el)` | `src/utils/scroll.ts` | The scrolling ancestor across shadow roots (the app shell's main) | ✅ |
 | `createDoneSync(onChange)` | `src/views/home/slice/doneSync.ts` | "Mark as done" for a view (LatestValueSync + check slice) | ✅ |
 | `Countdown` | `src/utils/countdown.ts` | Countdown without UI: clock based, wake lock, finish sound, `report` for saving | ✅ |

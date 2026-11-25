@@ -11,6 +11,7 @@ export const errorToastMiddleware = createListenerMiddleware();
 const SILENT_ACTIONS = new Set(["auth/checkStatus", "user/login", "user/data", "user/register", "register/checkUsername", "resetPassword/check", "account/changePassword", "account/delete",
     // shown on the exercise page itself
     "exerciseDetail/load", "exerciseDetail/loadDetails", "exerciseDetail/loadNote",
+    "exerciseDetail/refreshMedia", "media/config", "media/usage", "media/upload",
     // background state of reminders (home page): the options show what is missing instead
     "push/load", "push/reminders"]);
 

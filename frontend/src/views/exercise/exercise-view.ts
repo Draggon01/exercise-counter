@@ -26,6 +26,7 @@ import {createDoneSync} from "../home/slice/doneSync";
 import {selectCurrentUser} from "../login/slice/userSlice";
 import {loadPushState, loadReminders, selectCanChooseReminders, selectReminders} from "../options/slice/pushSlice";
 import {ExerciseStepDto} from "./models/exerciseDetailsDto";
+import {hasPendingMedia, MediaPolling} from "./media-polling";
 import {ExerciseDetailState, loadDetails, loadExercise, loadNote, saveNote, selectExerciseDetail} from "./slice/exerciseDetailSlice";
 import "../../components/page-header";
 import "../../components/empty-state";
@@ -183,6 +184,8 @@ export class ExerciseView extends ConnectedLitElement {
 
     private back = backPath();
 
+    private polling = new MediaPolling(this);
+
     private doneSync = createDoneSync(() => this.requestUpdate());
 
     private stopRefresh?: () => void;
@@ -242,6 +245,7 @@ export class ExerciseView extends ConnectedLitElement {
 
     stateChanged(state: RootState) {
         this.detail = selectExerciseDetail(state, this.exerciseId);
+        this.polling.update(this.exerciseId, hasPendingMedia(this.detail.details));
         this.username = selectCurrentUser(state)?.username ?? "";
         if (state.checks.checks.status === "idle") {
             this.ownChecks = selectAllChecks(state);

@@ -32,6 +32,11 @@ import "../../components/empty-state";
 import "../../components/page-header";
 import "../home/elements/exercise-sort-controls";
 import "./elements/step-dialog";
+import "./elements/step-media-editor";
+import {hasPendingMedia, MediaPolling} from "./media-polling";
+import {MediaConfigDto, MediaUsageDto} from "./models/exerciseDetailsDto";
+import {loadMediaConfig, loadMediaUsage, MediaUpload, selectMedia} from "./slice/mediaSlice";
+import {formatMegabytes} from "../../utils/media-file";
 
 /** Page /exercises/:id/content: the creator edits description and steps. Every change is saved right away. */
 @customElement("exercise-content-view")
@@ -60,6 +65,7 @@ export class ExerciseContentView extends ConnectedLitElement {
         .step {
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
             gap: var(--app-space-1);
             padding: var(--app-space-2) var(--app-space-3);
             border: 1px solid var(--app-border);
@@ -85,6 +91,10 @@ export class ExerciseContentView extends ConnectedLitElement {
             font: inherit;
             text-align: left;
             cursor: pointer;
+        }
+
+        step-media-editor {
+            flex: 1 0 100%;
         }
 
         .step-title {
@@ -117,10 +127,6 @@ export class ExerciseContentView extends ConnectedLitElement {
 
         /* phones: the arrows need the room of the title; sorting works with the grip */
         @media (max-width: 480px) {
-            .step {
-                flex-wrap: wrap;
-            }
-
             .step-text {
                 flex-basis: 100%;
             }
@@ -152,6 +158,17 @@ export class ExerciseContentView extends ConnectedLitElement {
     /** The last save of the description (resolves also if it failed). */
     private descriptionSaved?: Promise<unknown>;
 
+    @state()
+    private mediaConfig?: MediaConfigDto;
+
+    @state()
+    private mediaUsage?: MediaUsageDto;
+
+    @state()
+    private uploads: Record<string, MediaUpload> = {};
+
+    private polling = new MediaPolling(this, () => store.dispatch(loadMediaUsage()));
+
     private sortable = new SortableController(this, {
         items: ".step",
         move: (from, to) => this.move(from, to),
@@ -167,10 +184,17 @@ export class ExerciseContentView extends ConnectedLitElement {
     private load() {
         store.dispatch(loadExercise(this.exerciseId));
         store.dispatch(loadDetails(this.exerciseId));
+        store.dispatch(loadMediaConfig());
+        store.dispatch(loadMediaUsage());
     }
 
     stateChanged(state: RootState) {
         this.detail = selectExerciseDetail(state, this.exerciseId);
+        this.polling.update(this.exerciseId, hasPendingMedia(this.detail.details));
+        const media = selectMedia(state);
+        this.mediaConfig = media.config;
+        this.mediaUsage = media.usage;
+        this.uploads = media.uploads;
         this.username = selectCurrentUser(state)?.username ?? "";
     }
 
@@ -233,6 +257,10 @@ export class ExerciseContentView extends ConnectedLitElement {
                                             @click="${() => this.openDialog(step)}"></sl-icon-button>
                             <sl-icon-button name="trash" label="Delete ${step.title}"
                                             @click="${() => this.stepToDelete = step}"></sl-icon-button>
+                            ${this.mediaConfig?.enabled || step.media ? html`
+                                <step-media-editor .exerciseId="${this.exerciseId}" .step="${step}"
+                                                   .config="${this.mediaConfig}" .upload="${this.uploads[step.stepId]}"></step-media-editor>
+                            ` : nothing}
                         </div>
                     `)}
                 </div>
@@ -242,6 +270,7 @@ export class ExerciseContentView extends ConnectedLitElement {
                         Add step
                     </sl-button>
                 ` : html`<p class="muted">An exercise can have up to ${MAX_STEPS} steps.</p>`}
+                ${steps.length > 0 && this.mediaConfig?.enabled ? this.renderMediaNote(exercise.visibility) : nothing}
                 ${steps.length > 0 ? html`
                     <sl-radio-group label="Guided workout" .value="${live(details.guidedMode)}"
                                     help-text="Leads through the steps one by one, with rests. Everybody can change the order or leave out steps."
@@ -252,6 +281,17 @@ export class ExerciseContentView extends ConnectedLitElement {
                     </sl-radio-group>` : nothing}
             </div>
         `;
+    }
+
+    private renderMediaNote(visibility?: string) {
+        const who = visibility === "PUBLIC" ? "Everybody" : visibility === "GROUPS" ? "The groups it is shared with" : "Only you";
+        const usage = this.mediaUsage;
+        return html`
+            <p class="muted">
+                Videos: about 3 seconds are ideal, at most ${this.mediaConfig?.maxSeconds}. Sound is kept if it fits.
+                ${who} can see videos and photos of this exercise.
+                ${usage ? html`You use ${formatMegabytes(usage.usedBytes)} of ${formatMegabytes(usage.quotaBytes)}.` : nothing}
+            </p>`;
     }
 
     private openDialog(step?: ExerciseStepDto) {

@@ -1,6 +1,6 @@
 import {afterEach, describe, expect, it, vi} from "vitest";
 import {configureStore} from "@reduxjs/toolkit";
-import {apiDelete, apiGet, apiPost, apiPut, apiThunk, ApiRequestError, toApiError} from "./http";
+import {apiDelete, apiGet, apiPost, apiPut, apiThunk, ApiRequestError, apiUpload, toApiError} from "./http";
 
 function respond(status: number, body?: string, contentType = "application/json") {
     const fetchMock = vi.fn().mockResolvedValue(new Response(body ?? null, {
@@ -118,5 +118,66 @@ describe("apiThunk", () => {
 
         expect(load.rejected.match(result)).toBe(true);
         expect(result.payload).toEqual({status: 401, message: "Unauthorized"});
+    });
+});
+
+describe("uploads", () => {
+    class FakeXhr {
+        static last: FakeXhr;
+        upload: { onprogress?: (e: unknown) => void } = {};
+        status = 0;
+        statusText = "";
+        responseText = "";
+        withCredentials = false;
+        onload = () => {};
+        onerror = () => {};
+        onabort = () => {};
+        onloadend = () => {};
+        sent?: FormData;
+        constructor() { FakeXhr.last = this; }
+        open = vi.fn();
+        send = (form: FormData) => { this.sent = form; };
+        abort = () => this.onabort();
+        answer(status: number, text: string) {
+            this.status = status;
+            this.responseText = text;
+            this.onload();
+            this.onloadend();
+        }
+    }
+    const file = new File(["x"], "clip.mp4", {type: "video/mp4"});
+    const upload = (options = {}) => {
+        vi.stubGlobal("XMLHttpRequest", FakeXhr);
+        return apiUpload<{ a: number }>("/api/u", file, options);
+    };
+
+    it("sends the file and reports progress", async () => {
+        const onProgress = vi.fn();
+        const result = upload({onProgress});
+        FakeXhr.last.upload.onprogress!({lengthComputable: true, loaded: 1, total: 4});
+        FakeXhr.last.answer(202, '{"a":1}');
+        expect(await result).toEqual({a: 1});
+        expect(onProgress).toHaveBeenCalledWith(0.25);
+        expect(FakeXhr.last.open).toHaveBeenCalledWith("PUT", "/api/u");
+        expect((FakeXhr.last.sent!.get("file") as File).name).toBe("clip.mp4");
+    });
+
+    it("passes on the backend's message, also explains a 413 of the web server", async () => {
+        let result = upload();
+        FakeXhr.last.answer(400, '{"error":"not a video"}');
+        await expect(result).rejects.toMatchObject({status: 400, message: "not a video"});
+        result = upload();
+        FakeXhr.last.answer(413, "<html>nginx</html>");
+        await expect(result).rejects.toMatchObject({status: 413, message: "The file is too large"});
+    });
+
+    it("can be cancelled and notices a lost connection", async () => {
+        const controller = new AbortController();
+        let result = upload({signal: controller.signal});
+        controller.abort();
+        await expect(result).rejects.toMatchObject({message: "Cancelled"});
+        result = upload();
+        FakeXhr.last.onerror();
+        await expect(result).rejects.toMatchObject({status: 0, message: "Server not reachable"});
     });
 });

@@ -3,6 +3,7 @@ import {AsyncStoreState} from "../../../commons";
 import {apiDelete, apiGet, apiPost, apiPut, apiThunk} from "../../../api/http";
 import {ExerciseDto} from "../../home/models/exerciseDto";
 import {ExerciseDetailsDto, ExerciseStepDto, ExerciseStepRequest, GuidedMode} from "../models/exerciseDetailsDto";
+import {deleteMedia, uploadMedia} from "./mediaSlice";
 import {saveExercise} from "../../home/slice/exerciseSlice";
 import {logoutUser} from "../../login/slice/userSlice";
 
@@ -18,11 +19,14 @@ export type ExerciseDetailState = {
     detailsFailed: boolean;
     /** the user's own note; undefined until loaded */
     note?: string;
+    /** counts changes of videos and photos: a refresh that started before one is ignored */
+    mediaVersion: number;
+    refreshedVersion: number;
 };
 
 type SliceProjection = { exerciseDetail: ExerciseDetailState };
 
-const initialState: ExerciseDetailState = {exerciseId: "", status: "initial", notFound: false, detailsFailed: false};
+const initialState: ExerciseDetailState = {exerciseId: "", status: "initial", notFound: false, detailsFailed: false, mediaVersion: 0, refreshedVersion: 0};
 
 /** The exercise of the exercise page (does not have to be on the home list). Failures are shown on the page. */
 export const loadExercise = apiThunk<ExerciseDto, string>(
@@ -35,6 +39,10 @@ export const MAX_STEPS = 12;
 
 export const loadDetails = apiThunk<ExerciseDetailsDto, string>(
     'exerciseDetail/loadDetails', exerciseId => apiGet(`${detailsUrl(exerciseId)}/details`));
+
+/** Only takes over videos and photos, so it does not disturb editing (polled while they are converted). */
+export const refreshMedia = apiThunk<ExerciseDetailsDto, string>(
+    'exerciseDetail/refreshMedia', exerciseId => apiGet(`${detailsUrl(exerciseId)}/details`));
 
 export const saveDescription = apiThunk<ExerciseDetailsDto, { exerciseId: string, description: string }>(
     'exerciseDetail/saveDescription', ({exerciseId, description}) =>
@@ -77,7 +85,7 @@ const exerciseDetailSlice = createSlice({
                 // loading the same exercise again keeps showing it; another one starts empty
                 return state.exerciseId === action.meta.arg
                     ? {...state, status: "loading"}
-                    : {exerciseId: action.meta.arg, status: "loading", notFound: false, detailsFailed: false};
+                    : {...initialState, exerciseId: action.meta.arg, status: "loading"};
             })
             .addCase(loadExercise.fulfilled, (state, action) => {
                 if (state.exerciseId !== action.meta.arg) return; // answer for a page that was left
@@ -99,6 +107,28 @@ const exerciseDetailSlice = createSlice({
             })
             .addCase(loadDetails.rejected, (state, action) => {
                 if (state.exerciseId === action.meta.arg) state.detailsFailed = true;
+            })
+            .addCase(refreshMedia.pending, (state, action) => {
+                if (state.exerciseId === action.meta.arg) state.refreshedVersion = state.mediaVersion;
+            })
+            .addCase(refreshMedia.fulfilled, (state, action) => {
+                if (state.exerciseId !== action.meta.arg || state.refreshedVersion !== state.mediaVersion) return;
+                state.details?.steps.forEach(step => {
+                    const loaded = action.payload.steps.find(s => s.stepId === step.stepId);
+                    if (loaded) step.media = loaded.media;
+                });
+            })
+            .addCase(uploadMedia.fulfilled, (state, action) => {
+                if (state.exerciseId !== action.meta.arg.exerciseId) return;
+                state.mediaVersion++;
+                const step = state.details?.steps.find(s => s.stepId === action.meta.arg.stepId);
+                if (step) step.media = action.payload;
+            })
+            .addCase(deleteMedia.fulfilled, (state, action) => {
+                if (state.exerciseId !== action.meta.arg.exerciseId) return;
+                state.mediaVersion++;
+                const step = state.details?.steps.find(s => s.stepId === action.meta.arg.stepId);
+                if (step) step.media = null;
             })
             .addCase(saveDescription.fulfilled, (state, action) => {
                 // only the description: a step may have been changed at the same time

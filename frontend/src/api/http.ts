@@ -70,6 +70,44 @@ export const apiPost = <T = void>(url: string, body?: Body) => request<T>("POST"
 export const apiPut = <T = void>(url: string, body?: Body) => request<T>("PUT", url, body);
 export const apiDelete = <T = void>(url: string, body?: Body) => request<T>("DELETE", url, body);
 
+/**
+ * Sends a file as multipart field `file` (PUT), with progress (0–1; `fetch` cannot report it). Aborting rejects.
+ */
+export function apiUpload<T>(url: string, file: File, options: { onProgress?: (part: number) => void, signal?: AbortSignal } = {}): Promise<T> {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const abort = () => xhr.abort();
+        const fail = (status: number, message: string) => reject(new ApiRequestError(status, message));
+        xhr.open("PUT", url);
+        xhr.withCredentials = true;
+        xhr.upload.onprogress = e => {
+            if (e.lengthComputable) options.onProgress?.(e.loaded / e.total);
+        };
+        xhr.onload = () => {
+            let body: { error?: string, detail?: string } | undefined;
+            try {
+                body = JSON.parse(xhr.responseText);
+            } catch {
+                // e.g. an error page of the web server
+            }
+            if (xhr.status >= 200 && xhr.status < 300) resolve(body as T);
+            else if (xhr.status === 413) fail(413, body?.error ?? "The file is too large");
+            else fail(xhr.status, body?.error ?? body?.detail ?? (xhr.statusText || `Request failed (${xhr.status})`));
+        };
+        xhr.onerror = () => fail(0, NOT_REACHABLE);
+        xhr.onabort = () => fail(0, "Cancelled");
+        xhr.onloadend = () => options.signal?.removeEventListener("abort", abort);
+        if (options.signal?.aborted) {
+            fail(0, "Cancelled");
+            return;
+        }
+        options.signal?.addEventListener("abort", abort);
+        const form = new FormData();
+        form.append("file", file);
+        xhr.send(form);
+    });
+}
+
 /** Converts anything thrown by a request into a serialisable {@link ApiError}. */
 export function toApiError(e: unknown): ApiError {
     if (e instanceof ApiRequestError) {

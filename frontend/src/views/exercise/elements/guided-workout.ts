@@ -1,5 +1,6 @@
 import {css, html, LitElement, nothing} from "lit";
 import {customElement, property, query, state} from "lit/decorators.js";
+import {keyed} from "lit/directives/keyed.js";
 import {touchStyles} from "../../../styles/touch";
 import {formatDuration, formatTarget} from "../../../utils/format";
 import {GuidedRun, workoutPhases} from "../../../utils/guided-workout";
@@ -7,6 +8,7 @@ import {getTimerSound, vibrate} from "../../../utils/preferences";
 import {playStepSound, playTimerSound} from "../../../utils/sounds";
 import {ExerciseStepDto} from "../models/exerciseDetailsDto";
 import "../../../components/confirm-dialog";
+import "./step-media";
 
 /** Events of `<guided-workout>`. */
 export const GuidedWorkoutEvents = {
@@ -114,6 +116,15 @@ export class GuidedWorkout extends LitElement {
             font-size: calc(var(--ring-size) * 0.24);
         }
 
+        .with-media {
+            --ring-size: min(45vw, 22vh, 200px);
+        }
+
+        step-media {
+            flex-shrink: 0;
+            width: min(100%, 34vh);
+        }
+
         .ring.long {
             font-size: calc(var(--ring-size) * 0.17);
         }
@@ -211,18 +222,20 @@ export class GuidedWorkout extends LitElement {
     private renderPhase(run: GuidedRun) {
         const {kind, set, sets, seconds} = run.phase;
         const step = this.steps[run.phase.step];
+        const media = step.media?.status === "READY" ? step.media : undefined;
         const left = run.secondsLeft;
         const rest = kind === "rest";
         // the sets are shown on their own line
         const amount = step.reps != null ? formatTarget({reps: step.reps}) : "";
         const waiting = seconds === undefined;
         return html`
-            <div class="content">
+            <div class="content ${media ? "with-media" : ""}">
                 <div aria-live="polite">
                     ${rest ? html`<div class="muted">Rest · next</div>` : nothing}
                     <h2>${step.title}</h2>
                     ${sets > 1 ? html`<div class="muted">Set ${set} of ${sets}</div>` : nothing}
                 </div>
+                ${media ? keyed(step.stepId, html`<step-media .media="${media}" .label="${step.title}"></step-media>`) : nothing}
                 ${left !== undefined && seconds !== undefined ? html`
                     <sl-progress-ring value="${left / seconds * 100}" label="Time left">
                         <span class="big ring ${left >= 3600 ? "long" : ""}">${formatDuration(left)}</span>

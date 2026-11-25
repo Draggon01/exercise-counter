@@ -253,14 +253,14 @@ Not needed for the start (50 MB per user is little), but must not become a rewri
 
 ## Phase 13 – Videos: frontend, guided workout
 
-### [ ] T13.1 🎨 Player (M)
+### [x] T13.1 🎨 Player (M)
 - Generic `components/loop-video.ts`: square / rectangle with poster, `muted loop playsinline preload="none"`,
   sound button only if the clip has sound (starts muted, choice kept while the page is open); tap = play / pause, `object-fit: contain`, states "processing" / "failed" / offline.
 - Only one video plays at a time; pauses when swiped away, page hidden or removed. No autoplay (mobile data).
 - Enlarge button (full screen), speed 0.5× / 1×, so the movement can be studied.
 - The service worker already ignores `/api/**`; verify playback + seeking on a real iPhone (installed app) and Android.
 
-### [ ] T13.2 🎨 Upload (M)
+### [x] T13.2 🎨 Upload (M)
 - `input type="file" accept="video/*"` in the step editor (phones offer "record" and "library"), checked before sending:
   size, length (from the metadata, if the browser can read it). Hidden if `/api/media/config` says off.
 - `api/http.ts`: `apiUpload` with progress (XMLHttpRequest, `fetch` has no upload progress) and abort; same `ApiError`.
@@ -286,7 +286,7 @@ Needs only Phases 10–11 (videos are shown if there are any).
 
 ---
 
-### [ ] T13.4 🧱🎨 Photo instead of a video (M)
+### [x] T13.4 🧱🎨 Photo instead of a video (M)
 - Same step slot, upload, permissions, quota and cleanup as videos (`kind = PHOTO`); file picker also accepts images.
 - Convert to JPEG, longest side ≤ 1280 px, rotation applied, location / EXIF removed, raw photo ≤ 20 MB, pixel limit
   against decompression bombs. Test iPhone HEIC; show a clear message if the format is not supported.
@@ -342,5 +342,5 @@ Default on first (users can still turn it off), later remove the old card, its c
 | 10 – Page and toggle | 5 | 5 |
 | 11 – Description, steps, notes | 4 | 4 |
 | 12 – Videos: backend and server | 6 | 3 |
-| 13 – Videos: frontend, guided workout, photos | 4 | 1 |
+| 13 – Videos: frontend, guided workout, photos | 4 | 4 |
 | 14 – Try out and switch over | 4 | 0 |
