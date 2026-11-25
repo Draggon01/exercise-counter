@@ -18,6 +18,7 @@ import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.data.userselection.UserSelectionRepository;
 import org.exercise.counter.exercisecounter.web.scheduler.SchedulerService;
+import org.exercise.counter.exercisecounter.web.service.media.MediaService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -57,13 +58,14 @@ public class AccountDeletionService {
     private final GroupRepository groupRepository;
     private final UserOptionsRepository optionsRepository;
     private final SchedulerService schedulerService;
+    private final MediaService mediaService;
 
     public AccountDeletionService(AccountService accountService, UserRepository userRepository,
                                   ExerciseRepository exerciseRepository, UserSelectionRepository selectionRepository,
                                   FinishedUserRepository finishedUserRepository, CheckRepository checkRepository,
                                   ExerciseLogRepository logRepository, UserGroupMappingRepository memberRepository,
                                   GroupRepository groupRepository, UserOptionsRepository optionsRepository,
-                                  SchedulerService schedulerService) {
+                                  SchedulerService schedulerService, MediaService mediaService) {
         this.accountService = accountService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
@@ -75,6 +77,7 @@ public class AccountDeletionService {
         this.groupRepository = groupRepository;
         this.optionsRepository = optionsRepository;
         this.schedulerService = schedulerService;
+        this.mediaService = mediaService;
     }
 
     /** What happened to the exercises the user created. */
@@ -127,6 +130,7 @@ public class AccountDeletionService {
                 exerciseRepository.save(exercise);
                 handedOver.put(id, heir.get());
             } else {
+                mediaService.exercisesAreDeleted(List.of(id));
                 logRepository.deleteByExerciseId(id);
                 exerciseRepository.delete(exercise); // cascades home lists, checks, periods, groups, reminders
                 deleted.add(id);

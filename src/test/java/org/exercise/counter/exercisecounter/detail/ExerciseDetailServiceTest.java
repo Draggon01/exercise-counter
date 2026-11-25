@@ -118,7 +118,7 @@ class ExerciseDetailServiceTest {
         detailService.updateStep(publicId, b.stepId(), new ExerciseStepRequest("b2", "Back flat", 3, null, 30, 15), ALICE);
         var details = detailService.reorderSteps(publicId, List.of(c.stepId(), a.stepId(), b.stepId()), ALICE);
         assertEquals(List.of("c", "a", "b2"), titles(details.steps()));
-        assertEquals(new ExerciseStepDto(b.stepId(), "b2", "Back flat", 3, null, 30, 15), details.steps().getLast());
+        assertEquals(new ExerciseStepDto(b.stepId(), "b2", "Back flat", 3, null, 30, 15, null), details.steps().getLast());
 
         detailService.deleteStep(publicId, a.stepId(), ALICE);
         add("d");

@@ -9,6 +9,8 @@ import org.exercise.counter.exercisecounter.web.rest.detail.dto.ExerciseDetailsR
 import org.exercise.counter.exercisecounter.web.rest.detail.dto.ExerciseStepDto;
 import org.exercise.counter.exercisecounter.web.rest.detail.dto.ExerciseStepRequest;
 import org.exercise.counter.exercisecounter.web.rest.error.NotFoundException;
+import org.exercise.counter.exercisecounter.web.rest.media.dto.MediaDto;
+import org.exercise.counter.exercisecounter.web.service.media.MediaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,12 +38,14 @@ public class ExerciseDetailService {
     private final ExerciseDetailRepository detailRepository;
     private final ExerciseStepRepository stepRepository;
     private final ExerciseAccess exerciseAccess;
+    private final MediaService mediaService;
 
     public ExerciseDetailService(ExerciseDetailRepository detailRepository, ExerciseStepRepository stepRepository,
-                                 ExerciseAccess exerciseAccess) {
+                                 ExerciseAccess exerciseAccess, MediaService mediaService) {
         this.detailRepository = detailRepository;
         this.stepRepository = stepRepository;
         this.exerciseAccess = exerciseAccess;
+        this.mediaService = mediaService;
     }
 
     @Transactional(readOnly = true)
@@ -74,7 +78,7 @@ public class ExerciseDetailService {
         int position = steps.isEmpty() ? 0 : steps.getLast().getPosition() + 1;
         ExerciseStep step = new ExerciseStep(exerciseId, position);
         apply(request, step);
-        return toDto(stepRepository.save(step));
+        return toDto(stepRepository.save(step), null);
     }
 
     @Transactional
@@ -82,13 +86,15 @@ public class ExerciseDetailService {
         exerciseAccess.requireCreator(exerciseId, username);
         ExerciseStep step = requireStep(exerciseId, stepId);
         apply(request, step);
-        return toDto(stepRepository.save(step));
+        return toDto(stepRepository.save(step), mediaService.ofStep(stepId).orElse(null));
     }
 
     @Transactional
     public void deleteStep(UUID exerciseId, UUID stepId, String username) {
         exerciseAccess.requireCreator(exerciseId, username);
-        stepRepository.delete(requireStep(exerciseId, stepId));
+        ExerciseStep step = requireStep(exerciseId, stepId);
+        mediaService.stepIsDeleted(stepId);
+        stepRepository.delete(step);
     }
 
     @Transactional
@@ -113,8 +119,9 @@ public class ExerciseDetailService {
 
     private ExerciseDetailsDto details(UUID exerciseId) {
         ExerciseDetail detail = detailRepository.findById(exerciseId).orElseGet(() -> new ExerciseDetail(exerciseId));
+        Map<UUID, MediaDto> media = mediaService.ofExercise(exerciseId);
         List<ExerciseStepDto> steps = stepRepository.findByExerciseIdOrderByPosition(exerciseId).stream()
-                .map(ExerciseDetailService::toDto)
+                .map(step -> toDto(step, media.get(step.getStepId())))
                 .toList();
         return new ExerciseDetailsDto(detail.getDescription(), detail.getGuidedMode(), steps);
     }
@@ -146,8 +153,8 @@ public class ExerciseDetailService {
         return new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
     }
 
-    private static ExerciseStepDto toDto(ExerciseStep step) {
+    private static ExerciseStepDto toDto(ExerciseStep step, MediaDto media) {
         return new ExerciseStepDto(step.getStepId(), step.getTitle(), step.getHints(), step.getSets(), step.getReps(),
-                step.getDurationSeconds(), step.getRestSeconds());
+                step.getDurationSeconds(), step.getRestSeconds(), media);
     }
 }

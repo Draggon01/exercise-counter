@@ -14,6 +14,7 @@ import org.exercise.counter.exercisecounter.web.rest.error.ForbiddenException;
 import org.exercise.counter.exercisecounter.web.rest.exercise.ExerciseMapper;
 import org.exercise.counter.exercisecounter.web.rest.exercise.dto.ExerciseDto;
 import org.exercise.counter.exercisecounter.web.scheduler.SchedulerService;
+import org.exercise.counter.exercisecounter.web.service.media.MediaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,7 @@ public class ExerciseService {
     private final SchedulerService schedulerService;
     private final SelectionService selectionService;
     private final ExerciseAccess exerciseAccess;
+    private final MediaService mediaService;
 
     public ExerciseService(ExerciseRepository exerciseRepository,
                            ExerciseGroupMappingRepository exerciseGroupMappingRepository,
@@ -48,7 +50,8 @@ public class ExerciseService {
                            UserSelectionRepository userSelectionRepository,
                            SchedulerService schedulerService,
                            SelectionService selectionService,
-                           ExerciseAccess exerciseAccess) {
+                           ExerciseAccess exerciseAccess,
+                           MediaService mediaService) {
         this.exerciseRepository = exerciseRepository;
         this.exerciseGroupMappingRepository = exerciseGroupMappingRepository;
         this.userGroupMappingRepository = userGroupMappingRepository;
@@ -56,6 +59,7 @@ public class ExerciseService {
         this.schedulerService = schedulerService;
         this.selectionService = selectionService;
         this.exerciseAccess = exerciseAccess;
+        this.mediaService = mediaService;
     }
 
     /**
@@ -139,6 +143,7 @@ public class ExerciseService {
     @Transactional
     public void delete(UUID exerciseId, String username) {
         requireCreator(exerciseId, username);
+        mediaService.exercisesAreDeleted(List.of(exerciseId));
         exerciseRepository.deleteById(exerciseId);
         schedulerService.cancelSchedulerFor(exerciseId);
     }

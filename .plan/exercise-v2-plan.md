@@ -203,7 +203,7 @@ Today the timer covers everything with its focus view when started; then no vide
 - Later (decided by Leon, only invited friends for now): run the backend as its own user instead of root (if it does), because ffmpeg
   reads uploaded files. Do it before the app is opened to strangers.
 
-### [ ] T12.2 🧱 Store and deliver (L)
+### [x] T12.2 🧱 Store and deliver (L)
 - Migration `exercise_media (media_id UUID PK, step_id UNIQUE → exercise_step ON DELETE CASCADE,
   kind VIDEO|PHOTO, uploaded_by → users ON DELETE SET NULL, status PROCESSING|READY|FAILED, error, size_bytes, duration_ms, width, height, has_audio, created_at)`.
 - Config: `app.media.dir` (empty = feature off, like the push keys; `GET /api/media/config` → `{enabled, maxBytes, maxSeconds}`),
@@ -218,7 +218,7 @@ Today the timer covers everything with its focus view when started; then no vide
   uploads (a cross-site form can send multipart).
 - Tests: permission matrix, range → 206, too large, quota, feature off.
 
-### [ ] T12.3 🧱 Convert (L)
+### [x] T12.3 🧱 Convert (L)
 - `VideoProcessor`: queue with **one** worker (small server, timers and resets must not suffer), low priority (`nice`),
   timeout 3 min. On startup: PROCESSING rows are set to FAILED ("Please upload again") and their temp files deleted.
 - `ffprobe` first: must contain a video stream, ≤ 15 s, sane size; never trust extension or Content-Type.
@@ -229,7 +229,7 @@ Today the timer covers everything with its focus view when started; then no vide
 - Tests: command building incl. fallback order (unit); clip with / without sound; real conversion only if `ffmpeg` is installed (assumption), small generated clip;
   no location in the output; garbage file → FAILED.
 
-### [ ] T12.4 🧱 Cleaning up files (M)
+### [x] T12.4 🧱 Cleaning up files (M)
 Cascades delete rows, **not** files – every path needs it:
 - video replaced / deleted, step deleted, exercise deleted (`ExerciseService.delete`), account deleted
   (`AccountDeletionService`): collect ids before, delete the files **after commit**. Deleting while converting must be safe.
@@ -341,6 +341,6 @@ Default on first (users can still turn it off), later remove the old card, its c
 |---|---|---|
 | 10 – Page and toggle | 5 | 5 |
 | 11 – Description, steps, notes | 4 | 4 |
-| 12 – Videos: backend and server | 6 | 0 |
+| 12 – Videos: backend and server | 6 | 3 |
 | 13 – Videos: frontend, guided workout, photos | 4 | 1 |
 | 14 – Try out and switch over | 4 | 0 |
