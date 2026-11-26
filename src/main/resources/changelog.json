@@ -16,7 +16,8 @@
       "With the new view a reminder for one exercise opens it directly",
       "You stay logged in while you use the app – no more logout in the middle of an exercise",
       "If your login has ended, you are sent to the login page right away",
-      "Being offline no longer sends you to the login page"
+      "Being offline no longer sends you to the login page",
+      "Editing an exercise no longer ends its current period early: a weekly exercise you change on day 2 still resets after the week"
     ]
   },
   {

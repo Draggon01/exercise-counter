@@ -122,8 +122,12 @@ public class ExerciseService {
     @Transactional
     public ExerciseDto save(ExerciseDto dto, String username) {
         requireValidTitle(dto.exerciseTitle());
-        requireCreator(dto.exerciseId(), username);
-        Exercise saved = exerciseRepository.save(ExerciseMapper.toEntity(dto, username));
+        Exercise existing = requireCreator(dto.exerciseId(), username);
+        Exercise exercise = ExerciseMapper.toEntity(dto, username);
+        if (existing != null) {
+            schedulerService.keepCurrentPeriod(exercise, existing.getLastSchedulerRun());
+        }
+        Exercise saved = exerciseRepository.save(exercise);
         UUID exerciseId = saved.getExerciseId();
 
         replaceGroupMappings(exerciseId, dto.groups(), username);
@@ -157,16 +161,18 @@ public class ExerciseService {
 
     /**
      * Only the creator may change an existing exercise. New exercises ({@code null} id or unknown id) pass.
+     *
+     * @return the exercise before the change, null for a new one
      */
-    private void requireCreator(UUID exerciseId, String username) {
+    private Exercise requireCreator(UUID exerciseId, String username) {
         if (exerciseId == null) {
-            return;
+            return null;
         }
-        exerciseRepository.findById(exerciseId).ifPresent(existing -> {
-            if (!username.equals(existing.getCreator())) {
-                throw new ForbiddenException(username + " is not the creator of exercise " + existing.getExerciseId());
-            }
-        });
+        Exercise existing = exerciseRepository.findById(exerciseId).orElse(null);
+        if (existing != null && !username.equals(existing.getCreator())) {
+            throw new ForbiddenException(username + " is not the creator of exercise " + existing.getExerciseId());
+        }
+        return existing;
     }
 
     /**

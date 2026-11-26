@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -80,14 +81,42 @@ public class SchedulerService {
     }
 
     /**
+     * An edit keeps the running period: the next reset is counted from the last one with the new
+     * settings (a weekly exercise edited on day 2 still resets on day 7, not tomorrow). If the new
+     * settings say the period is already over (fewer days, earlier time), it ends at the next reset
+     * time from now instead of right away – remembered in {@code resetNotBefore}, so a restart keeps it.
+     *
+     * @param edited   the exercise as it will be saved
+     * @param lastRun  last reset of the exercise before the edit (null: it never reset)
+     */
+    public void keepCurrentPeriod(Exercise edited, LocalDateTime lastRun) {
+        edited.setLastSchedulerRun(lastRun);
+        edited.setResetNotBefore(null);
+        if (lastRun == null) {
+            return;
+        }
+        Instant now = clock.instant();
+        Instant next = ResetSchedule.nextRun(edited.getStartTime(), edited.zone(), edited.getDaysRepeat(), lastRun, now);
+        if (!next.isAfter(now.plusSeconds(1))) {
+            edited.setResetNotBefore(ResetSchedule.nextRun(edited.getStartTime(), edited.zone(),
+                    edited.getDaysRepeat(), null, now));
+        }
+    }
+
+    /**
      * When the next reset is due: {@code lastSchedulerRun + daysRepeat} days at the reset time in the
-     * exercise's time zone, or the next occurrence of the reset time for new exercises. Overdue (the
-     * server was down): right away. See {@link ResetSchedule}.
+     * exercise's time zone, or the next occurrence of the reset time for new exercises, but not before
+     * {@code resetNotBefore} (see {@link #keepCurrentPeriod}). Overdue (the server was down): right away.
+     * See {@link ResetSchedule}.
      */
     public Instant calculateNextRunInstant(Exercise exercise) {
         Instant now = clock.instant();
         Instant next = ResetSchedule.nextRun(exercise.getStartTime(), exercise.zone(), exercise.getDaysRepeat(),
                 exercise.getLastSchedulerRun(), now);
+        Instant notBefore = exercise.getResetNotBefore();
+        if (notBefore != null && notBefore.isAfter(next)) {
+            return notBefore;
+        }
         if (exercise.getLastSchedulerRun() != null && !next.isAfter(now.plusSeconds(1))) {
             log.warn("Exercise {} missed its scheduled reset, running it now", exercise.getExerciseId());
         }

@@ -63,6 +63,7 @@ public class ExerciseResetJob {
             exercise.setExerciseValue(String.valueOf(value + increase));
         }
         exercise.setLastSchedulerRun(nowUtc);
+        exercise.setResetNotBefore(null);
         exerciseRepository.save(exercise);
 
         List<String> finishers = collectAndClearChecks(exerciseId);

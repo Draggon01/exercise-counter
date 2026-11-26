@@ -29,7 +29,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -201,6 +204,22 @@ class ExerciseServiceTest {
                 ExerciseType.NUMBERREPEAT, "1", null, Visibility.PUBLIC, List.of(), 0L, 99);
 
         assertEquals(4, exerciseService.save(edit, ALICE).position());
+    }
+
+    @Test
+    void edit_keepsTheRunningPeriod() {
+        LocalDateTime lastRun = LocalDateTime.now(ZoneOffset.UTC).minusDays(1);
+        publicEx.setDaysRepeat(7);
+        publicEx.setLastSchedulerRun(lastRun);
+        exerciseRepository.save(publicEx);
+        ExerciseDto edit = new ExerciseDto(publicEx.getExerciseId(), "renamed", ALICE, 7, "12:00:00", 0, "UTC",
+                ExerciseType.NUMBERREPEAT, "1", null, Visibility.PUBLIC, List.of(), 0L, 0);
+
+        ExerciseDto saved = exerciseService.save(edit, ALICE);
+
+        Exercise stored = exerciseRepository.findById(publicEx.getExerciseId()).orElseThrow();
+        assertEquals(lastRun.truncatedTo(ChronoUnit.SECONDS), stored.getLastSchedulerRun().truncatedTo(ChronoUnit.SECONDS));
+        assertTrue(saved.timeLeftSeconds() > 4 * 24 * 3600, "about 6 days left, not one: " + saved.timeLeftSeconds());
     }
 
     @Test

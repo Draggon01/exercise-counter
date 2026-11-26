@@ -2,6 +2,7 @@ package org.exercise.counter.exercisecounter.web.data.exercise;
 
 import jakarta.persistence.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -47,6 +48,10 @@ public class Exercise {
 
     @Column
     private LocalDateTime lastSchedulerRun;
+
+    /** The next reset is not before this moment (set by an edit that would end the period at once). */
+    @Column(name = "reset_not_before")
+    private Instant resetNotBefore;
 
     /** IANA time zone of {@link #startTime} (e.g. Europe/Vienna); null for old rows → {@link #utcOffset}. */
     @Column(name = "time_zone")
@@ -130,6 +135,14 @@ public class Exercise {
 
     public LocalDateTime getLastSchedulerRun() {
         return this.lastSchedulerRun;
+    }
+
+    public Instant getResetNotBefore() {
+        return this.resetNotBefore;
+    }
+
+    public void setResetNotBefore(Instant resetNotBefore) {
+        this.resetNotBefore = resetNotBefore;
     }
 
     public void setExerciseId(UUID exerciseId) {

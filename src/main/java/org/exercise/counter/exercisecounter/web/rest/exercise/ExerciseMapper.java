@@ -47,8 +47,9 @@ public final class ExerciseMapper {
     }
 
     /**
-     * Builds the entity to save. {@code lastSchedulerRun} is reset on purpose: after an edit the
-     * scheduler recalculates the next reset from the (possibly changed) start time.
+     * Builds the entity to save. {@code lastSchedulerRun} is left empty: the client must not set it;
+     * for an edit {@code ExerciseService} takes it over from the stored exercise
+     * ({@code SchedulerService.keepCurrentPeriod}), so the running period is not cut short.
      *
      * @param creator the authenticated user – the creator sent by the client is ignored
      */
