@@ -65,15 +65,13 @@ describe("exercise-timer", () => {
         expect(progress).toHaveBeenLastCalledWith(3);
     });
 
-    it("compact: a finished timer shows a calm status and a small Reset", async () => {
+    it("compact: a finished timer only shows a small Reset", async () => {
         const {timer} = await mount(60, 60);
         timer.compact = true;
         await timer.updateComplete;
 
-        const status = timer.shadowRoot!.querySelector(".compact .finished")!;
-        expect(status.textContent!.trim()).toBe("Timer finished");
-        expect(timer.shadowRoot!.querySelector(".compact .timer-display")).toBeNull();
-        expect(timer.shadowRoot!.querySelector("sl-button.secondary")!.textContent!.trim()).toBe("Reset");
+        expect(timer.shadowRoot!.querySelector(".compact.done")).not.toBeNull();
+        expect(buttons(timer)).toEqual(["Reset"]);
     });
 
     it("reset reports 0", async () => {

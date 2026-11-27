@@ -84,21 +84,17 @@ export class ExerciseTimer extends LitElement {
             font-size: 1.1rem;
         }
 
-        /* status in the size of the buttons next to it (the card header already says "Done") */
-        .compact .finished {
-            flex: 1000 1 auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--app-space-2);
-            min-height: 56px;
-            padding: 0 var(--app-space-3);
-            box-sizing: border-box;
-            border-radius: var(--sl-border-radius-medium);
-            background: var(--app-success-soft);
-            color: var(--app-success-strong);
-            font-size: 1.1rem;
-            font-weight: 600;
+        .compact.done {
+            justify-content: flex-end;
+        }
+
+        .compact.done sl-button {
+            flex: 0 0 auto;
+        }
+
+        .compact.done sl-button::part(base) {
+            min-height: var(--sl-input-height-small); /* 44px on touch screens (theme.css) */
+            font-size: var(--sl-button-font-size-small);
         }
 
         .compact .timer-display {
@@ -272,17 +268,14 @@ export class ExerciseTimer extends LitElement {
 
     private renderCompact() {
         if (this.finished) {
-            return html`
+            // done: the card header already says so – only a small Reset, so the card stays small
+            return this.offerDone ? html`
                 <div class="compact">
-                    ${this.offerDone ? html`
-                        <sl-button size="large" variant="success" @click="${this.markDone}">✓ Mark as done</sl-button>
-                    ` : html`
-                        <div class="finished" role="status">
-                            <sl-icon name="check-circle-fill"></sl-icon>
-                            Timer finished
-                        </div>
-                    `}
+                    <sl-button size="large" variant="success" @click="${this.markDone}">✓ Mark as done</sl-button>
                     <sl-button class="secondary" size="large" @click="${this.reset}">Reset</sl-button>
+                </div>` : html`
+                <div class="compact done">
+                    <sl-button size="small" @click="${this.reset}">Reset</sl-button>
                 </div>`;
         }
         if (this.running) {
