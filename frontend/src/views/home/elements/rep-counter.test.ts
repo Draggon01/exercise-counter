@@ -60,6 +60,66 @@ describe("rep-counter", () => {
         expect(progress.mock.calls).toEqual([[3], [0]]);
     });
 
+    describe("compact on a touch screen: tap outside after typing", () => {
+        const touch = (coarse: boolean) => vi.stubGlobal("matchMedia",
+            (query: string) => ({matches: coarse && query === "(pointer: coarse)"}));
+        afterEach(() => {
+            document.body.replaceChildren(); // removed counters end their guard
+            vi.unstubAllGlobals();
+        });
+
+        async function editing(coarse = true) {
+            touch(coarse);
+            const mounted = await mount();
+            mounted.counter.compact = true;
+            await mounted.counter.updateComplete;
+            const input = mounted.counter.shadowRoot!.querySelector("sl-input")!;
+            const outside = document.createElement("button");
+            document.body.append(outside);
+            const opened = vi.fn();
+            outside.addEventListener("click", opened);
+            input.dispatchEvent(new Event("sl-focus"));
+            input.dispatchEvent(new Event("sl-blur"));
+            return {...mounted, input, outside, opened};
+        }
+
+        it("only ends the input, the card below is not opened", async () => {
+            const {outside, opened} = await editing();
+            outside.click();
+            expect(opened).not.toHaveBeenCalled();
+
+            outside.click(); // the next tap works again
+            expect(opened).toHaveBeenCalledTimes(1);
+        });
+
+        it("− / + of the same counter keep working", async () => {
+            const {counter, progress} = await editing();
+            counter.shadowRoot!.querySelectorAll<HTMLElement>("sl-button")[1].click();
+            vi.advanceTimersByTime(REP_SAVE_DEBOUNCE_MS);
+            expect(progress).toHaveBeenLastCalledWith(6);
+        });
+
+        it("a later tap (keyboard closed with Done) works normally", async () => {
+            const {outside, opened} = await editing();
+            vi.advanceTimersByTime(1000);
+            outside.click();
+            expect(opened).toHaveBeenCalledTimes(1);
+        });
+
+        it("with a mouse every click works as usual", async () => {
+            const {outside, opened} = await editing(false);
+            outside.click();
+            expect(opened).toHaveBeenCalledTimes(1);
+        });
+
+        it("Enter closes the keyboard", async () => {
+            const {input} = await editing();
+            const blur = vi.spyOn(input as HTMLElement, "blur");
+            input.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter"}));
+            expect(blur).toHaveBeenCalled();
+        });
+    });
+
     it("reports the last change when removed before the delay is over", async () => {
         const {counter, progress, type} = await mount();
         type("9");

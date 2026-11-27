@@ -5,6 +5,7 @@
     "title": "Who is in a group",
     "items": [
       "Groups: tap the number of members to see who is in a group and who is invited",
+      "New exercise view: after typing a number of repetitions, tapping outside only closes the keyboard and saves – it no longer opens another exercise by accident",
       "New exercise view: a finished timer only shows Reset, so the card stays small",
       "New exercise view: the exercise page no longer shows an empty \"Finished by\" line"
     ]
