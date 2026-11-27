@@ -84,19 +84,6 @@ export class ExerciseTimer extends LitElement {
             font-size: 1.1rem;
         }
 
-        .compact.done {
-            justify-content: flex-end;
-        }
-
-        .compact.done sl-button {
-            flex: 0 0 auto;
-        }
-
-        .compact.done sl-button::part(base) {
-            min-height: var(--sl-input-height-small); /* 44px on touch screens (theme.css) */
-            font-size: var(--sl-button-font-size-small);
-        }
-
         .compact .timer-display {
             flex: 1;
             min-height: 56px;
@@ -268,14 +255,14 @@ export class ExerciseTimer extends LitElement {
 
     private renderCompact() {
         if (this.finished) {
-            // done: the card header already says so – only a small Reset, so the card stays small
+            // done: the card header already says so – only Reset, in the place and size of Start
             return this.offerDone ? html`
                 <div class="compact">
                     <sl-button size="large" variant="success" @click="${this.markDone}">✓ Mark as done</sl-button>
                     <sl-button class="secondary" size="large" @click="${this.reset}">Reset</sl-button>
                 </div>` : html`
-                <div class="compact done">
-                    <sl-button size="small" @click="${this.reset}">Reset</sl-button>
+                <div class="compact">
+                    <sl-button size="large" @click="${this.reset}">Reset</sl-button>
                 </div>`;
         }
         if (this.running) {
