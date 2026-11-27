@@ -84,6 +84,23 @@ export class ExerciseTimer extends LitElement {
             font-size: 1.1rem;
         }
 
+        /* status in the size of the buttons next to it (the card header already says "Done") */
+        .compact .finished {
+            flex: 1000 1 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--app-space-2);
+            min-height: 56px;
+            padding: 0 var(--app-space-3);
+            box-sizing: border-box;
+            border-radius: var(--sl-border-radius-medium);
+            background: var(--app-success-soft);
+            color: var(--app-success-strong);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
         .compact .timer-display {
             flex: 1;
             min-height: 56px;
@@ -259,8 +276,13 @@ export class ExerciseTimer extends LitElement {
                 <div class="compact">
                     ${this.offerDone ? html`
                         <sl-button size="large" variant="success" @click="${this.markDone}">✓ Mark as done</sl-button>
-                    ` : html`<div class="timer-display completed">✓ Done!</div>`}
-                    <sl-button size="large" @click="${this.reset}">Reset</sl-button>
+                    ` : html`
+                        <div class="finished" role="status">
+                            <sl-icon name="check-circle-fill"></sl-icon>
+                            Timer finished
+                        </div>
+                    `}
+                    <sl-button class="secondary" size="large" @click="${this.reset}">Reset</sl-button>
                 </div>`;
         }
         if (this.running) {
