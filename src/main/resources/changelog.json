@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.10",
+    "date": "2026-11-27",
+    "title": "Who is in a group",
+    "items": [
+      "Groups: tap the number of members to see who is in a group and who is invited",
+      "New exercise view: a finished timer only shows Reset, so the card stays small",
+      "New exercise view: the exercise page no longer shows an empty \"Finished by\" line"
+    ]
+  },
+  {
     "version": "0.9",
     "date": "2026-11-27",
     "title": "Try the new exercise view",
@@ -17,7 +27,6 @@
       "You stay logged in while you use the app – no more logout in the middle of an exercise",
       "If your login has ended, you are sent to the login page right away",
       "Being offline no longer sends you to the login page",
-      "Groups: tap the number of members to see who is in a group and who is invited",
       "Editing an exercise no longer ends its current period early: a weekly exercise you change on day 2 still resets after the week"
     ]
   },
