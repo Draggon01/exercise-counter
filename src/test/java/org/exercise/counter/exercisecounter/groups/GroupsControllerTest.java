@@ -7,7 +7,9 @@ import org.exercise.counter.exercisecounter.web.data.groups.UserGroupMappingRepo
 import org.exercise.counter.exercisecounter.web.data.user.User;
 import org.exercise.counter.exercisecounter.web.data.user.UserRepository;
 import org.exercise.counter.exercisecounter.web.rest.groups.GroupsController;
+import org.exercise.counter.exercisecounter.web.rest.error.NotFoundException;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.CreateGroupRequestDto;
+import org.exercise.counter.exercisecounter.web.rest.groups.dto.GroupMembersDto;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.InvitationRequest;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.UserGroupMappingDto;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,6 +47,27 @@ class GroupsControllerTest {
             }
         }
         groupsController.create(new CreateGroupRequestDto(GROUP, GroupVisibility.INVITE_ONLY), auth("grp-alice"));
+    }
+
+    @Test
+    void members_listsMembersAndInvitationsSorted() {
+        groupsController.invite(GROUP, new InvitationRequest("grp-carol"), auth("grp-alice"));
+        groupsController.invite(GROUP, new InvitationRequest("grp-bob"), auth("grp-alice"));
+        groupsController.accept(GROUP, auth("grp-bob"));
+
+        GroupMembersDto members = groupsController.members(GROUP, auth("grp-bob"));
+
+        assertEquals(List.of("grp-alice", "grp-bob"), members.members());
+        assertEquals(List.of("grp-carol"), members.invited());
+    }
+
+    @Test
+    void members_notVisibleToOthersOrInvited() {
+        groupsController.invite(GROUP, new InvitationRequest("grp-carol"), auth("grp-alice"));
+
+        assertThrows(NotFoundException.class, () -> groupsController.members(GROUP, auth("grp-bob")));
+        assertThrows(NotFoundException.class, () -> groupsController.members(GROUP, auth("grp-carol")));
+        assertThrows(NotFoundException.class, () -> groupsController.members("unknown", auth("grp-alice")));
     }
 
     @Test

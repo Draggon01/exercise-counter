@@ -6,6 +6,7 @@ import org.exercise.counter.exercisecounter.web.rest.error.ForbiddenException;
 import org.exercise.counter.exercisecounter.web.rest.error.NotFoundException;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.ExerciseGroupMappingDto;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.GroupInformationDto;
+import org.exercise.counter.exercisecounter.web.rest.groups.dto.GroupMembersDto;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.UserGroupMappingDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -69,6 +70,27 @@ public class GroupService {
                         mapping.getGroup() == null ? null : mapping.getGroup().getVisibility(),
                         memberCounts.getOrDefault(mapping.getUserGroupMappingId().getGroupId(), 0L)))
                 .toList());
+    }
+
+    /**
+     * Who is in the group: members and pending invitations, sorted by name. Only members may look
+     * (an invitation is not enough); for everyone else the group does not exist.
+     */
+    @Transactional(readOnly = true)
+    public GroupMembersDto members(String groupName, String username) {
+        UUID groupId = membership(groupName, username)
+                .filter(mapping -> !isInvitation(mapping))
+                .map(mapping -> mapping.getUserGroupMappingId().getGroupId())
+                .orElseThrow(() -> new NotFoundException("Group not found"));
+        Map<Boolean, List<String>> byInvitation = userGroupMappingRepository.findByUserGroupMappingId_GroupId(groupId).stream()
+                .collect(Collectors.partitioningBy(GroupService::isInvitation, Collectors.mapping(
+                        mapping -> mapping.getUserGroupMappingId().getUsername(),
+                        Collectors.collectingAndThen(Collectors.toList(), GroupService::sortedByName))));
+        return new GroupMembersDto(byInvitation.get(false), byInvitation.get(true));
+    }
+
+    private static List<String> sortedByName(List<String> names) {
+        return names.stream().sorted(String.CASE_INSENSITIVE_ORDER).toList();
     }
 
     @Transactional(readOnly = true)

@@ -15,13 +15,16 @@ import {
     inviteUserToGroup,
     joinPublicGroup,
     listUserMappings,
+    loadGroupMembers,
     searchPublicGroups,
+    selectGroupMembers,
     selectPublicGroupSearchResults,
     selectUserMappingByUser
 } from "./slice/groupSlice";
 import {selectCurrentUser} from "../login/slice/userSlice";
 import {GroupInformationDto} from "./models/GroupInformationDto";
 import {GroupVisibility} from "./models/GroupVisibility";
+import {GroupMembersDto} from "./models/GroupMembersDto";
 import {AsyncStoreState} from "../../commons";
 import {pageStyles} from "../../styles/page";
 import {validateForm} from "../../utils/form";
@@ -96,9 +99,81 @@ export class GroupsView extends ConnectedLitElement {
             background: var(--app-surface);
         }
 
+        /* tap name / member count: who is in the group */
         .group-text {
             flex: 1;
             min-width: 0;
+            min-height: 44px;
+            padding: 0;
+            border: none;
+            background: none;
+            color: inherit;
+            font: inherit;
+            text-align: left;
+        }
+
+        button.group-text {
+            cursor: pointer;
+        }
+
+        .member-count {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--app-space-1);
+            color: var(--app-accent);
+        }
+
+        .member-count sl-icon {
+            font-size: 0.8em;
+        }
+
+        /* member list */
+        .people h4 {
+            margin: var(--app-space-4) 0 var(--app-space-2);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--app-text-muted);
+        }
+
+        .people h4:first-child {
+            margin-top: 0;
+        }
+
+        .people ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .people li {
+            display: flex;
+            align-items: center;
+            gap: var(--app-space-3);
+            padding: var(--app-space-2) 0;
+            border-bottom: 1px solid var(--app-divider);
+            overflow-wrap: anywhere;
+        }
+
+        .people li:last-child {
+            border-bottom: none;
+        }
+
+        .people sl-avatar {
+            --size: 2.25rem;
+            flex-shrink: 0;
+        }
+
+        .people .invited sl-avatar {
+            opacity: 0.6;
+        }
+
+        .you {
+            color: var(--app-text-muted);
+        }
+
+        .people sl-skeleton {
+            height: 2.25rem;
+            margin: var(--app-space-2) 0;
         }
 
         .group-name {
@@ -259,6 +334,16 @@ export class GroupsView extends ConnectedLitElement {
     @state()
     private inviteTo?: string;
 
+    /** Group whose members are shown (dialog open while set). */
+    @state()
+    private membersOf?: string;
+
+    @state()
+    private members: { groupName?: string, status: AsyncStoreState, members?: GroupMembersDto } = {status: "initial"};
+
+    @state()
+    private username = "";
+
     /** Group to leave (confirm dialog open while set). */
     @state()
     private leaveGroup?: string;
@@ -282,10 +367,12 @@ export class GroupsView extends ConnectedLitElement {
     stateChanged(state: RootState): void {
         const user = selectCurrentUser(state);
         if (user) {
+            this.username = user.username;
             this.groups = selectUserMappingByUser(state, user.username)?.groupInformation ?? [];
         }
         this.status = state.group.userMappings.status;
         this.joinResults = selectPublicGroupSearchResults(state);
+        this.members = selectGroupMembers(state);
     }
 
     protected render() {
@@ -321,6 +408,7 @@ export class GroupsView extends ConnectedLitElement {
             ${this.renderCreateDialog()}
             ${this.renderJoinDialog()}
             ${this.renderInviteDialog()}
+            ${this.renderMembersDialog()}
             <confirm-dialog label="Leave group" confirmLabel="Leave group" cancelLabel="Stay"
                             .open="${this.leaveGroup !== undefined}"
                             @confirm="${this.confirmLeave}"
@@ -352,15 +440,19 @@ export class GroupsView extends ConnectedLitElement {
         return memberships.map(group => html`
             <div class="group">
                 <div class="group-icon"><sl-icon name="people-fill"></sl-icon></div>
-                <div class="group-text">
+                <button class="group-text" title="Show members"
+                        @click="${() => this.openMembers(group.groupName)}">
                     <div class="group-name">${group.groupName}</div>
                     <div class="group-meta">
-                        <span>${group.memberCount} ${group.memberCount === 1 ? "member" : "members"}</span>
+                        <span class="member-count">
+                            ${group.memberCount} ${group.memberCount === 1 ? "member" : "members"}
+                            <sl-icon name="chevron-right"></sl-icon>
+                        </span>
                         <span class="badge ${group.visibility === "PUBLIC" ? "public" : "invite-only"}">
                             ${VISIBILITY_LABEL[group.visibility] ?? group.visibility}
                         </span>
                     </div>
-                </div>
+                </button>
                 <div class="group-actions">
                     <sl-tooltip content="Invite someone">
                         <sl-icon-button name="person-plus" label="Invite someone to ${group.groupName}"
@@ -462,6 +554,61 @@ export class GroupsView extends ConnectedLitElement {
                 <sl-button slot="footer" variant="primary" @click="${this.invite}">Send invitation</sl-button>
             </sl-dialog>
         `;
+    }
+
+    private renderMembersDialog() {
+        const open = this.membersOf !== undefined;
+        const list = this.members.groupName === this.membersOf ? this.members : {status: "loading" as AsyncStoreState};
+        return html`
+            <sl-dialog label="${this.membersOf ?? ""}" .open="${open}"
+                       @sl-request-close="${(e: Event) => { if (e.target === e.currentTarget) this.membersOf = undefined; }}">
+                ${open ? html`<div class="people">${this.renderPeople(list)}</div>` : nothing}
+                <sl-button slot="footer" @click="${() => this.membersOf = undefined}">Close</sl-button>
+                <sl-button slot="footer" variant="primary" @click="${this.inviteFromMembers}">
+                    <sl-icon slot="prefix" name="person-plus"></sl-icon>
+                    Invite someone
+                </sl-button>
+            </sl-dialog>
+        `;
+    }
+
+    private renderPeople(list: { status: AsyncStoreState, members?: GroupMembersDto }) {
+        if (!list.members) {
+            return list.status === "error" ? html`
+                <empty-state icon="cloud-slash" heading="Could not load the members">
+                    <sl-button @click="${() => this.membersOf && store.dispatch(loadGroupMembers(this.membersOf))}">
+                        Try again
+                    </sl-button>
+                </empty-state>` : [1, 2, 3].map(() => html`<sl-skeleton effect="pulse"></sl-skeleton>`);
+        }
+        const {members, invited} = list.members;
+        return html`
+            <h4>${members.length} ${members.length === 1 ? "member" : "members"}</h4>
+            <ul>${members.map(name => this.renderPerson(name, false))}</ul>
+            ${invited.length > 0 ? html`
+                <h4>Invited, not joined yet</h4>
+                <ul>${invited.map(name => this.renderPerson(name, true))}</ul>
+            ` : nothing}
+        `;
+    }
+
+    private renderPerson(name: string, invited: boolean) {
+        return html`
+            <li class="${invited ? "invited" : ""}">
+                <sl-avatar initials="${name.slice(0, 2).toUpperCase()}" label="${name}"></sl-avatar>
+                <span>${name}${name === this.username ? html` <span class="you">(you)</span>` : nothing}</span>
+            </li>`;
+    }
+
+    private openMembers = (groupName: string) => {
+        this.membersOf = groupName;
+        store.dispatch(loadGroupMembers(groupName));
+    }
+
+    private inviteFromMembers = () => {
+        const group = this.membersOf;
+        this.membersOf = undefined;
+        this.inviteTo = group;
     }
 
     private openCreate = () => {

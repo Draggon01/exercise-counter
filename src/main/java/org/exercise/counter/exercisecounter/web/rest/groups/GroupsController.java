@@ -2,6 +2,7 @@ package org.exercise.counter.exercisecounter.web.rest.groups;
 
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.CreateGroupRequestDto;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.ExerciseGroupMappingDto;
+import org.exercise.counter.exercisecounter.web.rest.groups.dto.GroupMembersDto;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.InvitationRequest;
 import org.exercise.counter.exercisecounter.web.rest.groups.dto.UserGroupMappingDto;
 import org.exercise.counter.exercisecounter.web.service.GroupService;
@@ -65,6 +66,12 @@ public class GroupsController {
     @DeleteMapping("/{groupName}/membership")
     public UserGroupMappingDto leave(@PathVariable String groupName, @AuthenticationPrincipal UserDetails user) {
         return groupService.leave(groupName, user.getUsername());
+    }
+
+    /** Members and pending invitations; only for members of the group (others: 404). */
+    @GetMapping("/{groupName}/members")
+    public GroupMembersDto members(@PathVariable String groupName, @AuthenticationPrincipal UserDetails user) {
+        return groupService.members(groupName, user.getUsername());
     }
 
     /** @return {@code false} if the user does not exist or is already in the group */

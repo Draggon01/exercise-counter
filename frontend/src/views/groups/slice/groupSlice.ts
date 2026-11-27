@@ -3,6 +3,7 @@ import {createEntityAdapter, createSlice, EntityState, Reducer} from "@reduxjs/t
 import {ExerciseGroupMappingDto} from "../models/ExerciseGroupMappingDto";
 import {UserGroupMappingDto} from "../models/UserGroupMappingDto";
 import {GroupVisibility} from "../models/GroupVisibility";
+import {GroupMembersDto} from "../models/GroupMembersDto";
 import {apiDelete, apiGet, apiPost, apiThunk} from "../../../api/http";
 
 type SliceState = {
@@ -15,6 +16,12 @@ type SliceState = {
     publicGroupSearch: {
         status: AsyncStoreState;
         results: string[];
+    },
+    /** Members of the group whose member list is open. */
+    groupMembers: {
+        groupName?: string;
+        status: AsyncStoreState;
+        members?: GroupMembersDto;
     }
 }
 
@@ -36,6 +43,9 @@ const initialState: SliceState = {
     publicGroupSearch: {
         status: "initial",
         results: []
+    },
+    groupMembers: {
+        status: "initial"
     }
 }
 
@@ -69,6 +79,10 @@ export const inviteUserToGroup = apiThunk<boolean, [string, string]>(
 
 export const acceptGroupToUser = apiThunk<UserGroupMappingDto, string>(
     'userMappings/accept', groupName => apiPost(`${groupUrl(groupName)}/accept`));
+
+/** Members and pending invitations of a group (only for its members). */
+export const loadGroupMembers = apiThunk<GroupMembersDto, string>(
+    'group/members', groupName => apiGet(`${groupUrl(groupName)}/members`));
 
 export const groupSlice = createSlice({
     name: 'group',
@@ -141,6 +155,21 @@ export const groupSlice = createSlice({
                 state.publicGroupSearch.status = 'idle';
                 state.publicGroupSearch.results = action.payload;
             })
+            .addCase(loadGroupMembers.pending, (state, action) => {
+                if (state.groupMembers.groupName !== action.meta.arg) {
+                    state.groupMembers.members = undefined; // another group: do not show the old list
+                }
+                state.groupMembers.groupName = action.meta.arg;
+                state.groupMembers.status = 'loading';
+            })
+            .addCase(loadGroupMembers.rejected, (state, action) => {
+                if (state.groupMembers.groupName === action.meta.arg) state.groupMembers.status = 'error';
+            })
+            .addCase(loadGroupMembers.fulfilled, (state, action) => {
+                if (state.groupMembers.groupName !== action.meta.arg) return; // answer for a list closed meanwhile
+                state.groupMembers.status = 'idle';
+                state.groupMembers.members = action.payload;
+            })
             .addCase(joinPublicGroup.fulfilled, (state, action) => {
                 state.publicGroupSearch.results = [];
                 userMappingsAdapter.upsertOne(state.userMappings, action.payload);
@@ -168,5 +197,7 @@ export const {
     selectAll: selectAllUserMappings,
     selectById: selectUserMappingByUser,
 } = userMappingsAdapter.getSelectors((state: SliceProjection) => state.group.userMappings);
+
+export const selectGroupMembers = (state: SliceProjection) => state.group.groupMembers;
 
 export const selectPublicGroupSearchResults = (state: SliceProjection) => state.group.publicGroupSearch.results;
