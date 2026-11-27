@@ -359,7 +359,7 @@ export class ExerciseView extends ConnectedLitElement {
                 ${this.detail?.note === undefined ? nothing : keyed(this.exerciseId, html`
                     <exercise-note .text="${this.detail.note}" ?saving="${this.savingNote}"
                                    @save-note="${this.saveNote}"></exercise-note>`)}
-                ${onList ? html`<exercise-finishers .checks="${finishers}"></exercise-finishers>` : nothing}
+                ${onList && finishers.length > 0 ? html`<exercise-finishers .checks="${finishers}"></exercise-finishers>` : nothing}
                 <div class="actions">
                     <sl-button @click="${() => navigate(withBack(`/statistics/${this.exerciseId}`, `/exercises/${this.exerciseId}`))}">
                         <sl-icon slot="prefix" name="bar-chart"></sl-icon>
